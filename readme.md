@@ -1,0 +1,1 @@
+# misc commands, codes and comfigurations
