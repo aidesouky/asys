@@ -1,0 +1,116 @@
+DECLARE
+   V_PHASE        VARCHAR2 (100);
+   V_DEV_PHASE    VARCHAR2 (100);
+   V_STATUS       VARCHAR2 (100);
+   V_DEV_STATUS   VARCHAR2 (100);
+   V_MESSAGE      VARCHAR2 (100);
+   V_REQID        NUMBER (15);
+   V_PID          BOOLEAN;
+BEGIN
+   FND_GLOBAL.APPS_INITIALIZE (2887, 50757, 222);
+   V_REQID :=
+      FND_REQUEST.SUBMIT_REQUEST (
+         APPLICATION   => 'AR',
+         PROGRAM       => 'RAXMTR',
+         DESCRIPTION   => NULL,
+         START_TIME    => NULL,
+         SUB_REQUEST   => FALSE,
+         ARGUMENT1     => '1',
+         ARGUMENT2     => -99,
+         ARGUMENT3     => '3001',
+         ARGUMENT4     => 'Opening Balance',
+         ARGUMENT5     => TO_CHAR (SYSDATE, 'RR-MON-DD'),
+         ARGUMENT6     => NULL,
+         ARGUMENT7     => NULL,
+         ARGUMENT8     => NULL,
+         ARGUMENT9     => NULL,
+         ARGUMENT10    => NULL,
+         ARGUMENT11    => NULL,
+         ARGUMENT12    => NULL,
+         ARGUMENT13    => NULL,
+         ARGUMENT14    => NULL,
+         ARGUMENT15    => NULL,
+         ARGUMENT16    => NULL,
+         ARGUMENT17    => NULL,
+         ARGUMENT18    => NULL,
+         ARGUMENT19    => NULL,
+         ARGUMENT20    => NULL,
+         ARGUMENT21    => NULL,
+         ARGUMENT22    => NULL,
+         ARGUMENT23    => NULL,
+         ARGUMENT24    => NULL,
+         ARGUMENT25    => NULL,
+         ARGUMENT26    => 'Y',
+         ARGUMENT27    => NULL);
+   COMMIT;
+   V_PID :=
+      FND_CONCURRENT.WAIT_FOR_REQUEST (V_REQID,
+                                       3,
+                                       0,
+                                       V_PHASE,
+                                       V_STATUS,
+                                       V_DEV_PHASE,
+                                       V_DEV_STATUS,
+                                       V_MESSAGE);
+END;
+/
+DECLARE
+   V_PHASE        VARCHAR2 (100);
+   V_DEV_PHASE    VARCHAR2 (100);
+   V_STATUS       VARCHAR2 (100);
+   V_DEV_STATUS   VARCHAR2 (100);
+   V_MESSAGE      VARCHAR2 (100);
+   V_REQID        NUMBER (15);
+   V_PID          BOOLEAN;
+BEGIN
+
+   FND_GLOBAL.APPS_INITIALIZE (2887, 50757, 222);
+
+   V_REQID :=
+      FND_REQUEST.SUBMIT_REQUEST (
+         APPLICATION   => 'AR',
+         PROGRAM       => 'RAXTRX',
+         DESCRIPTION   => NULL,
+         START_TIME    => NULL,   -- To start immediately
+         SUB_REQUEST   => FALSE,
+         ARGUMENT1     => 'MAIN',
+         ARGUMENT2     => 'T',
+         ARGUMENT3     => '3001',
+         ARGUMENT4     => 'Opening Balance',
+         ARGUMENT5     => TO_CHAR (SYSDATE, 'RR-MON-DD'),
+         ARGUMENT6     => NULL,
+         ARGUMENT7     => NULL,
+         ARGUMENT8     => NULL,
+         ARGUMENT9     => NULL,
+         ARGUMENT10    => NULL,
+         ARGUMENT11    => NULL,
+         ARGUMENT12    => NULL,
+         ARGUMENT13    => NULL,
+         ARGUMENT14    => NULL,
+         ARGUMENT15    => NULL,
+         ARGUMENT16    => NULL,
+         ARGUMENT17    => NULL,
+         ARGUMENT18    => NULL,
+         ARGUMENT19    => NULL,
+         ARGUMENT20    => NULL,
+         ARGUMENT21    => NULL,
+         ARGUMENT22    => NULL,
+         ARGUMENT23    => NULL,
+         ARGUMENT24    => NULL,
+         ARGUMENT25    => NULL,
+         ARGUMENT26    => 'N',
+         ARGUMENT27    => 'Y',
+         ARGUMENT28    => NULL,
+         ARGUMENT29    => '81',
+         ARGUMENT30    => CHR (0));
+         COMMIT;
+    V_PID :=
+      FND_CONCURRENT.WAIT_FOR_REQUEST (V_REQID,
+                                       3,
+                                       0,
+                                       V_PHASE,
+                                       V_STATUS,
+                                       V_DEV_PHASE,
+                                       V_DEV_STATUS,
+                                       V_MESSAGE);
+END;

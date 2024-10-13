@@ -1,0 +1,54 @@
+DECLARE
+   P_CCID          NUMBER;
+   X_DESCRIPTION   VARCHAR2 (100);
+   V_VALID_CCID    BOOLEAN;
+   V_BU_DESC       VARCHAR2 (100);
+   V_BR_DESC       VARCHAR2 (100);
+   V_CC_DESC       VARCHAR2 (100);
+   V_CA_DESC       VARCHAR2 (100);
+   V_TYPE          VARCHAR2 (100) := 'ALL';
+BEGIN
+   P_CCID := 11;
+
+   IF V_TYPE = 'ALL'
+   THEN
+      X_DESCRIPTION :=
+         GL_FLEXFIELDS_PKG.GET_CONCAT_DESCRIPTION (
+            X_COA_ID                   => 50429,
+            X_CCID                     => P_CCID,
+            X_ENFORCE_VALUE_SECURITY   => 'N');
+   ELSE
+      V_VALID_CCID :=
+         FND_FLEX_KEYVAL.VALIDATE_CCID (APPL_SHORT_NAME    => 'SQLGL',
+                                        KEY_FLEX_CODE      => 'GL#',
+                                        STRUCTURE_NUMBER   => 50429,
+                                        COMBINATION_ID     => P_CCID,
+                                        SECURITY           => 'IGNORE');
+
+      IF V_VALID_CCID
+      THEN
+         V_BU_DESC := FND_FLEX_KEYVAL.SEGMENT_DESCRIPTION (2);
+         V_BR_DESC := FND_FLEX_KEYVAL.SEGMENT_DESCRIPTION (3);
+         V_CC_DESC := FND_FLEX_KEYVAL.SEGMENT_DESCRIPTION (5);
+         V_CA_DESC := FND_FLEX_KEYVAL.SEGMENT_DESCRIPTION (7);
+         X_DESCRIPTION :=
+               V_BU_DESC
+            || '-'
+            || V_BR_DESC
+            || '-'
+            || V_CC_DESC
+            || '-'
+            || V_CA_DESC;
+      ELSE
+         X_DESCRIPTION := 'Not found!';
+      END IF;
+   END IF;
+
+   X_DESCRIPTION := REPLACE (X_DESCRIPTION, 'None', 'عام');
+   X_DESCRIPTION := REPLACE (X_DESCRIPTION, 'General', 'عام');
+   DBMS_OUTPUT.PUT_LINE (X_DESCRIPTION);
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;

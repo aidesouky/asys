@@ -1,0 +1,96 @@
+DECLARE
+   V_PARTY_SITE_REC              HZ_PARTY_SITE_V2PUB.PARTY_SITE_REC_TYPE;
+   V_LOCATION_REC                HZ_LOCATION_V2PUB.LOCATION_REC_TYPE;
+   V_ERROR_MSG                   VARCHAR2 (1000);
+   X_PARTY_SITE_ID               NUMBER;
+   X_SITE_NUMBER                 VARCHAR2 (30);
+   X_LOCATION_ID                 NUMBER;
+   X_RETURN_STATUS               VARCHAR2 (30);
+   X_MSG_COUNT                   NUMBER;
+   X_MSG_DATA                    VARCHAR2 (2000);
+   V_MODULE_NAME                 VARCHAR (30) := 'HZ_CPUI';
+   V_USER_ID                     NUMBER := 1170;--FND_GLOBAL.USER_ID;          --1170
+   V_RESP_ID                     NUMBER := 51432;--FND_GLOBAL.RESP_ID;         --51432
+   V_APPL_ID                     NUMBER := 222;--FND_GLOBAL.RESP_APPL_ID;      --222
+   V_ORG_ID                      NUMBER := 81;
+BEGIN
+   MO_GLOBAL.INIT ('AR');
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+   FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,             --1170
+                               RESP_ID        => V_RESP_ID,            --51432
+                               RESP_APPL_ID   => V_APPL_ID);             --222
+
+   FOR Z IN (SELECT * FROM FRT_TEMP_INTERFACE)
+   LOOP
+      BEGIN
+         V_LOCATION_REC.COUNTRY := Z.C14;
+         V_LOCATION_REC.CITY := Z.C15;
+         V_LOCATION_REC.ADDRESS1 := Z.C16;
+         V_LOCATION_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+         HZ_LOCATION_V2PUB.CREATE_LOCATION (
+            P_INIT_MSG_LIST   => 'T',
+            P_LOCATION_REC    => V_LOCATION_REC,
+            X_LOCATION_ID     => X_LOCATION_ID,
+            X_RETURN_STATUS   => X_RETURN_STATUS,
+            X_MSG_COUNT       => X_MSG_COUNT,
+            X_MSG_DATA        => X_MSG_DATA);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE (Z.C12 || ' => ' || X_RETURN_STATUS);
+         ELSE
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+            DBMS_OUTPUT.PUT_LINE (Z.C12 || ' => ' || V_ERROR_MSG);
+         END IF;
+
+         --================= CREATE PARTY SITE ==================[00]
+
+         V_PARTY_SITE_REC.PARTY_ID := Z.C20;
+         V_PARTY_SITE_REC.LOCATION_ID := X_LOCATION_ID;
+         V_PARTY_SITE_REC.PARTY_SITE_NAME := Z.C13;
+         V_PARTY_SITE_REC.IDENTIFYING_ADDRESS_FLAG := 'Y';
+         V_PARTY_SITE_REC.STATUS := 'A';
+         V_PARTY_SITE_REC.ATTRIBUTE5 := Z.C10;
+         V_PARTY_SITE_REC.ATTRIBUTE6 := Z.C11;
+         V_PARTY_SITE_REC.ATTRIBUTE6 := Z.C12;
+         V_PARTY_SITE_REC.ATTRIBUTE12 := 'A';
+         V_PARTY_SITE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+         HZ_PARTY_SITE_V2PUB.CREATE_PARTY_SITE (
+            P_INIT_MSG_LIST       => FND_API.G_FALSE,
+            P_PARTY_SITE_REC      => V_PARTY_SITE_REC,
+            X_PARTY_SITE_ID       => X_PARTY_SITE_ID,
+            X_PARTY_SITE_NUMBER   => X_SITE_NUMBER,
+            X_RETURN_STATUS       => X_RETURN_STATUS,
+            X_MSG_COUNT           => X_MSG_COUNT,
+            X_MSG_DATA            => X_MSG_DATA);
+
+
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE (Z.C12 || ' => ' || X_RETURN_STATUS);
+         ELSE
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+            DBMS_OUTPUT.PUT_LINE (Z.C12 || ' => ' || V_ERROR_MSG);
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            V_ERROR_MSG := SQLERRM;
+            DBMS_OUTPUT.PUT_LINE (Z.C12 || ' => ' || V_ERROR_MSG);
+      END;
+   END LOOP;
+END;

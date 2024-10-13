@@ -1,0 +1,45 @@
+DECLARE
+   X_RETURN_STATUS   VARCHAR (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR (4000);
+   X_ROWID           VARCHAR (50);
+   X_DEPARTMENT_ID   NUMBER;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   BOM_DEPARTMENTS_PKG.INSERT_ROW (
+      X_ROWID                    => X_ROWID,
+      X_DEPARTMENT_ID            => X_DEPARTMENT_ID,
+      X_DEPARTMENT_CODE          => 'Test2',
+      X_ORGANIZATION_ID          => 292,
+      X_LAST_UPDATE_DATE         => SYSDATE,
+      X_LAST_UPDATED_BY          => 2887,
+      X_CREATION_DATE            => SYSDATE,
+      X_CREATED_BY               => 2887,
+      X_LAST_UPDATE_LOGIN        => NULL,
+      X_DESCRIPTION              => '2ادارة عامة',
+      X_DISABLE_DATE             => NULL,
+      X_DEPARTMENT_CLASS_CODE    => NULL,
+      X_PA_EXPENDITURE_ORG_ID    => NULL,
+      X_ATTRIBUTE_CATEGORY       => NULL,
+      X_ATTRIBUTE1               => NULL,
+      X_LOCATION_ID              => 100371,
+      X_SCRAP_ACCOUNT            => NULL,
+      X_EST_ABSORPTION_ACCOUNT   => NULL,
+      X_MAINT_COST_CATEGORY      => 1);
+   COMMIT;
+
+
+   IF X_DEPARTMENT_ID IS NOT NULL
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE (
+            'Error: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+END;

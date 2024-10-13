@@ -1,0 +1,77 @@
+Step-by-Step JNI Example with C++
+=================================
+1. Create a Java Class with a Native Method
+-------------------------------------------
+// HelloWorld.java
+
+public class HelloWorld {
+    // Declare a native method
+    public native void sayHello();
+
+    // Load the library containing the implementation of the native method
+    static {
+	File lib = new File(System.getProperty("user.dir")+"/"+System.mapLibraryName("Test"));
+        System.load(lib.getAbsolutePath()); // load from work path
+        //System.load(System.getProperty("user.dir")+"/Test.dll"); // load from work path
+        //System.load("Test"); // load from path variable or system library path
+    }
+
+    public static void main(String[] args) {
+        // Create an instance of HelloWorld and call the native method
+        new HelloWorld().sayHello();
+    }
+}
+
+2. Generate C/C++ Header File
+-----------------------------
+javac -h . HelloWorld.java
+
+// as you can see the name of function starts with "Java" 
+// and the full class name [include package name if presents] and function name separated by "_"
+// HelloWorld.h
+#include <jni.h>
+#ifndef _Included_HelloWorld
+#define _Included_HelloWorld
+#ifdef __cplusplus
+extern "C" {
+#endif
+JNIEXPORT jdouble JNICALL Java_HelloWorld_sayHello(JNIEnv *, jobject);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+3. Implement the Native Method in C++
+-------------------------------------
+// as you can see the name of function starts with "Java" 
+// and the full class name [include package name if presents] and function name separated by "_"
+// HelloWorld.cpp
+#include <jni.h>
+#include <iostream>
+#include "HelloWorld.h"
+
+// Implement the native method
+JNIEXPORT void JNICALL Java_HelloWorld_sayHello(JNIEnv *env, jobject obj) {
+    std::cout << "Hello from C++!" << std::endl;
+}
+
+4. Compile the C++ Code into a Shared Library
+---------------------------------------------
+make sure you use g++ x86 to combile 32-bit lib and g++ x64 to combile 64-bit lib
+g++ -shared -o libHelloWorld.so -fPIC HelloWorld.cpp -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
+g++ -shared -o HelloWorld.dll -I"%JAVA_HOME%\include" -I"%JAVA_HOME%\include\win32" HelloWorld.cpp
+
+5. reference to libraries location
+----------------------------------
+copy shared library to jar file path
+or
+add shared library's path to system path variable
+or
+copy the Shared Library to system libraries
+/usr/local/lib
+C:\Windows\System32
+
+6. Run the Java Program
+-----------------------
+java -jar HelloWorld.jar //use when library in the current path
+java -jar -Djava.library.path=. HelloWorld.jar

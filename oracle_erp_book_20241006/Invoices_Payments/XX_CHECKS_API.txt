@@ -1,0 +1,295 @@
+CREATE TABLE APPS.XX_CHECKS_API
+(
+  P_CHECK_ID             NUMBER,
+  P_INV                  NUMBER,
+  LINE_AMOUNT            NUMBER,
+  P_USER                 NUMBER,
+  P_SET_OF_BOOKS_ID      NUMBER,
+  P_LEGAL_ENTITY_ID      NUMBER,
+  P_PARTY_SITE_ID        NUMBER,
+  P_PAYMENT_METHOD_CODE  VARCHAR2(100 BYTE),
+  P_PAYMENT_PROFILE_ID   NUMBER,
+  P_STATUS_LOOKUP_CODE   VARCHAR2(100 BYTE),
+  P_CE_BANK_ACCT_USE_ID  NUMBER,
+  P_BANK_ACCOUNT_NUM     VARCHAR2(100 BYTE),
+  P_VENDOR_NO            NUMBER,
+  P_VENDOR_ID            NUMBER,
+  P_VENDOR_SITE_ID       NUMBER,
+  P_PARTY_ID             NUMBER,
+  P_VENDOR_SITE_CODE     VARCHAR2(100 BYTE),
+  P_CURRENCY_CODE        VARCHAR2(100 BYTE),
+  P_BANK_ACCOUNT_NAME    VARCHAR2(240 BYTE),
+  P_ORG_ID               NUMBER,
+  P_CHECK_FURAT          VARCHAR2(50 BYTE),
+  P_ACCTS_PAY_CCID       NUMBER
+);
+
+--------------------------------------------------------------------------------
+
+DECLARE
+   PMT                     NUMBER;
+   EV_ID                   NUMBER;
+   L_SEQVAL                NUMBER;
+   LINE_AMOUNT             NUMBER;
+   XX_AP_SEQ               NUMBER;
+   XX_DIST                 NUMBER;
+   LV_SET_OF_BOOKS_ID      NUMBER;
+   L_ACCOUNTING_EVENT_ID   NUMBER;
+   L_DUMMY_ROWID           VARCHAR2 (18);
+   PCHECK_ID               AP_CHECKS_ALL.CHECK_ID%TYPE;
+   L_PERIOD_NAME           VARCHAR2 (15);
+   L_INVOICE_PAYMENT_ID    NUMBER;
+   P_CE_BANK_ACCT_USE_ID   NUMBER;
+   P_BANK_ACCOUNT_NUM      AP_CHECKS_ALL.BANK_ACCOUNT_NUM%TYPE;
+   P_INV                   AP_INVOICES_ALL.INVOICE_ID%TYPE;
+   P_BANK_ACCOUNT_NAME     AP_CHECKS_ALL.BANK_ACCOUNT_NAME%TYPE;
+   P_CURRENCY_CODE         AP_CHECKS_ALL.CURRENCY_CODE%TYPE;
+   P_VENDOR_NAME           AP_CHECKS_ALL.VENDOR_NAME%TYPE;
+   P_VENDOR_SITE_CODE      AP_CHECKS_ALL.VENDOR_SITE_CODE%TYPE;
+   P_ORG_ID                AP_CHECKS_ALL.ORG_ID%TYPE;
+   P_STATUS_LOOKUP_CODE    AP_CHECKS_ALL.STATUS_LOOKUP_CODE%TYPE;
+   P_VENDOR_ID             AP_CHECKS_ALL.VENDOR_ID%TYPE;
+   P_VENDOR_SITE_ID        AP_CHECKS_ALL.VENDOR_SITE_ID%TYPE;
+   P_PAYMENT_PROFILE_ID    AP_CHECKS_ALL.PAYMENT_PROFILE_ID%TYPE;
+   P_PARTY_ID              AP_CHECKS_ALL.PARTY_ID%TYPE;
+   P_PARTY_SITE_ID         AP_CHECKS_ALL.PARTY_SITE_ID%TYPE;
+   P_LEGAL_ENTITY_ID       AP_CHECKS_ALL.LEGAL_ENTITY_ID%TYPE;
+   P_PAYMENT_METHOD_CODE   AP_CHECKS_ALL.PAYMENT_METHOD_CODE%TYPE;
+   P_SET_OF_BOOKS_ID       NUMBER;
+   P_USER                  AP_CHECKS_ALL.LAST_UPDATED_BY%TYPE;
+   P_ACCTS_PAY_CCID        AP_INVOICE_PAYMENTS_ALL.ACCTS_PAY_CODE_COMBINATION_ID%TYPE;
+   P_ATTRIBUTE1            AP_CHECKS_ALL.ATTRIBUTE1%TYPE;
+
+   CURSOR INV
+   IS
+      SELECT * FROM XX_CHECKS_API;
+BEGIN
+   FOR I IN INV
+   LOOP
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 1155,
+                                  RESP_ID        => 50718,
+                                  RESP_APPL_ID   => 200);
+
+      BEGIN
+         LINE_AMOUNT := I.LINE_AMOUNT;
+         P_USER := 1155;
+         P_ACCTS_PAY_CCID := I.P_ACCTS_PAY_CCID;
+         P_SET_OF_BOOKS_ID := 2021;
+         P_LEGAL_ENTITY_ID := 23273;
+         P_PARTY_SITE_ID := I.P_PARTY_SITE_ID;
+         P_PAYMENT_METHOD_CODE := 'BILLS_PAYABLE';
+         P_PAYMENT_PROFILE_ID := 182;
+         P_STATUS_LOOKUP_CODE := 'ISSUED';
+         P_CE_BANK_ACCT_USE_ID := I.P_CE_BANK_ACCT_USE_ID;
+         --      P_BANK_ACCOUNT_NUM := I.P_BANK_ACCOUNT_NUM;
+         --      P_VENDOR_NAME := I.P_VENDOR_NAME;
+         P_VENDOR_ID := I.P_VENDOR_ID;
+         P_VENDOR_SITE_ID := I.P_VENDOR_SITE_ID;
+         P_PARTY_ID := I.P_PARTY_ID;
+         --      P_VENDOR_SITE_CODE := I.P_VENDOR_SITE_CODE;
+         P_CURRENCY_CODE := 'EGP';
+         P_BANK_ACCOUNT_NAME := I.P_BANK_ACCOUNT_NAME;
+         P_INV := I.P_INV;
+         P_ORG_ID := 81;
+         P_ATTRIBUTE1 := I.P_ATTRIBUTE1;
+         L_PERIOD_NAME := 'SEP-17';
+
+         SELECT AP_CHECKS_S.NEXTVAL INTO PCHECK_ID FROM SYS.DUAL;
+
+         LINE_AMOUNT := I.LINE_AMOUNT;
+         AP_CHECKS_PKG.INSERT_ROW (
+            X_ROWID                          => L_DUMMY_ROWID,
+            X_AMOUNT                         => LINE_AMOUNT,
+            X_CE_BANK_ACCT_USE_ID            => P_CE_BANK_ACCT_USE_ID,
+            X_BANK_ACCOUNT_NAME              => P_BANK_ACCOUNT_NAME,
+            X_CHECK_DATE                     => TRUNC (SYSDATE - 45),
+            X_CHECK_ID                       => PCHECK_ID,
+            X_CHECK_NUMBER                   => P_ATTRIBUTE1,
+            X_CURRENCY_CODE                  => P_CURRENCY_CODE,
+            X_LAST_UPDATED_BY                => P_USER,
+            X_LAST_UPDATE_DATE               => SYSDATE - 45,
+            X_PAYMENT_TYPE_FLAG              => 'Q',
+            X_ADDRESS_LINE1                  => 'None',
+            X_ADDRESS_LINE2                  => NULL,
+            X_ADDRESS_LINE3                  => NULL,
+            X_CHECKRUN_NAME                  => 'Quick Payment: ID=' || PCHECK_ID,
+            X_CHECK_FORMAT_ID                => NULL,
+            X_CHECK_STOCK_ID                 => NULL,
+            X_CITY                           => 'None',
+            X_COUNTRY                        => 'EG',
+            X_CREATED_BY                     => P_USER,
+            X_CREATION_DATE                  => SYSDATE - 45,
+            X_LAST_UPDATE_LOGIN              => P_USER,
+            X_STATUS_LOOKUP_CODE             => P_STATUS_LOOKUP_CODE,
+            X_EXTERNAL_BANK_ACCOUNT_ID       => NULL,
+            X_ZIP                            => NULL,
+            --         X_BANK_ACCOUNT_NUM               => P_BANK_ACCOUNT_NUM,
+            X_BANK_ACCOUNT_TYPE              => NULL,
+            X_BANK_NUM                       => NULL,
+            X_CHECK_VOUCHER_NUM              => NULL,
+            X_CLEARED_AMOUNT                 => NULL,
+            X_CLEARED_DATE                   => NULL,
+            X_DOC_CATEGORY_CODE              => NULL,
+            X_DOC_SEQUENCE_ID                => NULL,
+            X_DOC_SEQUENCE_VALUE             => NULL,
+            X_PROVINCE                       => NULL,
+            X_RELEASED_DATE                  => NULL,
+            X_RELEASED_BY                    => NULL,
+            X_STATE                          => NULL,
+            X_STOPPED_DATE                   => NULL,
+            X_STOPPED_BY                     => NULL,
+            X_VOID_DATE                      => NULL,
+            X_ATTRIBUTE1                     => P_ATTRIBUTE1,
+            X_FUTURE_PAY_DUE_DATE            => TRUNC (I.DUE_DATE),
+            X_TREASURY_PAY_DATE              => NULL,
+            X_TREASURY_PAY_NUMBER            => NULL,
+            X_WITHHOLDING_STATUS_LKUP_CODE   => NULL,
+            X_RECONCILIATION_BATCH_ID        => NULL,
+            X_CLEARED_BASE_AMOUNT            => NULL,
+            X_CLEARED_EXCHANGE_RATE          => NULL,
+            X_CLEARED_EXCHANGE_DATE          => NULL,
+            X_CLEARED_EXCHANGE_RATE_TYPE     => NULL,
+            X_ADDRESS_LINE4                  => NULL,
+            X_COUNTY                         => NULL,
+            X_ADDRESS_STYLE                  => NULL,
+            X_ORG_ID                         => P_ORG_ID,
+            X_VENDOR_ID                      => P_VENDOR_ID,
+            X_VENDOR_SITE_ID                 => P_VENDOR_SITE_ID,
+            X_EXCHANGE_RATE                  => NULL,
+            X_EXCHANGE_DATE                  => NULL,
+            X_EXCHANGE_RATE_TYPE             => NULL,
+            X_BASE_AMOUNT                    => NULL,
+            X_CHECKRUN_ID                    => NULL,
+            X_CALLING_SEQUENCE               => NULL,
+            X_TRANSFER_PRIORITY              => NULL,
+            X_MATURITY_EXCHANGE_RATE_TYPE    => NULL,
+            X_MATURITY_EXCHANGE_DATE         => NULL,
+            X_MATURITY_EXCHANGE_RATE         => NULL,
+            X_DESCRIPTION                    => NULL,
+            X_ANTICIPATED_VALUE_DATE         => NULL,
+            X_ACTUAL_VALUE_DATE              => NULL,
+            X_PAYMENT_PROFILE_ID             => P_PAYMENT_PROFILE_ID,
+            X_BANK_CHARGE_BEARER             => NULL,
+            X_SETTLEMENT_PRIORITY            => NULL,
+            X_PAYMENT_METHOD_CODE            => P_PAYMENT_METHOD_CODE,
+            X_PAYMENT_DOCUMENT_ID            => NULL,
+            X_PARTY_ID                       => P_PARTY_ID,
+            X_PARTY_SITE_ID                  => P_PARTY_SITE_ID,
+            X_LEGAL_ENTITY_ID                => P_LEGAL_ENTITY_ID,
+            X_PAYMENT_ID                     => NULL);
+         COMMIT;
+         AP_RECONCILIATION_PKG.INSERT_PAYMENT_HISTORY (
+            X_CHECK_ID                  => PCHECK_ID,
+            X_TRANSACTION_TYPE          => 'PAYMENT CREATED',
+            X_ACCOUNTING_DATE           => TRUNC (SYSDATE - 45),
+            X_TRX_BANK_AMOUNT           => NULL,
+            X_ERRORS_BANK_AMOUNT        => NULL,
+            X_CHARGES_BANK_AMOUNT       => NULL,
+            X_BANK_CURRENCY_CODE        => NULL,
+            X_BANK_TO_BASE_XRATE_TYPE   => NULL,
+            X_BANK_TO_BASE_XRATE_DATE   => NULL,
+            X_BANK_TO_BASE_XRATE        => NULL,
+            X_TRX_PMT_AMOUNT            => LINE_AMOUNT,
+            X_ERRORS_PMT_AMOUNT         => NULL,
+            X_CHARGES_PMT_AMOUNT        => NULL,
+            X_PMT_CURRENCY_CODE         => P_CURRENCY_CODE,
+            X_PMT_TO_BASE_XRATE_TYPE    => NULL,
+            X_PMT_TO_BASE_XRATE_DATE    => NULL,
+            X_PMT_TO_BASE_XRATE         => NULL,
+            X_TRX_BASE_AMOUNT           => NULL,
+            X_ERRORS_BASE_AMOUNT        => NULL,
+            X_CHARGES_BASE_AMOUNT       => NULL,
+            X_MATCHED_FLAG              => NULL,
+            X_REV_PMT_HIST_ID           => NULL,
+            X_ORG_ID                    => P_ORG_ID,
+            X_CREATION_DATE             => SYSDATE - 45,
+            X_CREATED_BY                => P_USER,
+            X_LAST_UPDATE_DATE          => SYSDATE - 45,
+            X_LAST_UPDATED_BY           => P_USER,
+            X_LAST_UPDATE_LOGIN         => P_USER,
+            X_PROGRAM_UPDATE_DATE       => NULL,
+            X_PROGRAM_APPLICATION_ID    => NULL,
+            X_PROGRAM_ID                => NULL,
+            X_REQUEST_ID                => NULL,
+            X_CALLING_SEQUENCE          => NULL,
+            X_ACCOUNTING_EVENT_ID       => L_ACCOUNTING_EVENT_ID);
+         COMMIT;
+
+         SELECT ACCOUNTING_EVENT_ID
+           INTO EV_ID
+           FROM AP_PAYMENT_HISTORY_ALL
+          WHERE CHECK_ID = PCHECK_ID;
+
+         SELECT PAYMENT_HISTORY_ID
+           INTO PMT
+           FROM AP_PAYMENT_HISTORY_ALL
+          WHERE CHECK_ID = PCHECK_ID;
+
+         COMMIT;
+
+         SELECT AP_INVOICE_PAYMENTS_S.NEXTVAL
+           INTO L_INVOICE_PAYMENT_ID
+           FROM SYS.DUAL;
+
+         AP_PAY_INVOICE_PKG.AP_PAY_INVOICE (
+            P_INVOICE_ID                  => P_INV,
+            P_CHECK_ID                    => PCHECK_ID,
+            P_PAYMENT_NUM                 => 1,
+            P_INVOICE_PAYMENT_ID          => L_INVOICE_PAYMENT_ID,
+            P_OLD_INVOICE_PAYMENT_ID      => NULL,
+            P_PERIOD_NAME                 => L_PERIOD_NAME,
+            P_INVOICE_TYPE                => '',
+            P_ACCOUNTING_DATE             => SYSDATE - 45,
+            P_AMOUNT                      => LINE_AMOUNT,
+            P_DISCOUNT_TAKEN              => NULL,
+            P_DISCOUNT_LOST               => NULL,
+            P_INVOICE_BASE_AMOUNT         => NULL,              --LINE_AMOUNT,
+            P_PAYMENT_BASE_AMOUNT         => NULL,              --LINE_AMOUNT,
+            P_ACCRUAL_POSTED_FLAG         => 'N',
+            P_CASH_POSTED_FLAG            => 'N',
+            P_POSTED_FLAG                 => 'N',
+            P_SET_OF_BOOKS_ID             => P_SET_OF_BOOKS_ID,
+            P_LAST_UPDATED_BY             => P_USER,
+            P_LAST_UPDATE_LOGIN           => NULL,
+            P_CURRENCY_CODE               => P_CURRENCY_CODE,
+            P_BASE_CURRENCY_CODE          => P_CURRENCY_CODE,
+            P_EXCHANGE_RATE               => NULL,
+            P_EXCHANGE_RATE_TYPE          => NULL,
+            P_EXCHANGE_DATE               => NULL,
+            P_CE_BANK_ACCT_USE_ID         => P_CE_BANK_ACCT_USE_ID,
+            P_BANK_ACCOUNT_NUM            => P_BANK_ACCOUNT_NUM,
+            P_BANK_ACCOUNT_TYPE           => NULL,
+            P_BANK_NUM                    => NULL,
+            P_FUTURE_PAY_POSTED_FLAG      => NULL,
+            P_EXCLUSIVE_PAYMENT_FLAG      => NULL,
+            P_ACCTS_PAY_CCID              => P_ACCTS_PAY_CCID,
+            P_GAIN_CCID                   => NULL,
+            P_LOSS_CCID                   => NULL,
+            P_FUTURE_PAY_CCID             => NULL,
+            P_ASSET_CCID                  => NULL,
+            P_PAYMENT_DISTS_FLAG          => 'N',
+            P_PAYMENT_MODE                => 'PAY',
+            P_REPLACE_FLAG                => 'N',
+            P_GLOBAL_ATTRIBUTE_CATEGORY   => NULL,
+            P_CALLING_SEQUENCE            => '1',
+            P_ACCOUNTING_EVENT_ID         => EV_ID,
+            P_ORG_ID                      => P_ORG_ID);
+         COMMIT;
+
+         DBMS_OUTPUT.PUT_LINE (
+            'Done.. Check_id :' || PCHECK_ID || ' event_id :' || EV_ID);
+
+         UPDATE XX_CHECKS_API
+            SET P_CHECK_ID = PCHECK_ID
+          WHERE P_ATTRIBUTE1 = I.P_ATTRIBUTE1;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE (
+               'CHECKID==' || PCHECK_ID || 'Error in procedure ' || SQLERRM);
+      END;
+   END LOOP;
+END;

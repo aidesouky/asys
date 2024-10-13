@@ -1,0 +1,39 @@
+DECLARE
+   X_RETURN_STATUS   VARCHAR2 (20);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (2000);
+BEGIN
+ MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+                               
+   INV_LOC_WMS_PUB.CREATE_LOC_ITEM_TIE (
+      P_INVENTORY_ITEM_ID       => 1476,
+      P_ITEM                    => NULL,
+      P_ORGANIZATION_ID         => 112,
+      P_ORGANIZATION_CODE       => NULL,
+      P_SUBINVENTORY_CODE       => 'S_PARTS',
+      P_INVENTORY_LOCATION_ID   => 26,
+      P_LOCATOR                 => NULL,
+      P_STATUS_ID               => NULL,
+      P_PAR_LEVEL               => NULL,
+      X_RETURN_STATUS           => X_RETURN_STATUS,
+      X_MSG_COUNT               => X_MSG_COUNT,
+      X_MSG_DATA                => X_MSG_DATA);
+
+   DBMS_OUTPUT.PUT_LINE ('RESULT: ' || X_RETURN_STATUS || ' ' || X_MSG_DATA);
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA ' || X_MSG_DATA);
+   END IF;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+END;

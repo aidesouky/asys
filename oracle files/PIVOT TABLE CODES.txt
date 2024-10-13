@@ -1,0 +1,32 @@
+PIVOT TABLE
+EMPLOYEE:	ROW FIELD NAME
+MONTH:		COLUMN FIELD NAME
+SALARY:		DATA FIELD NAME
+VAR:		VARIABLE NAME
+C1,C2:		CONDITION COLUMNS
+
+ROW VALUE:			<?for-each-group:G_1;./EMPLOYEE?><?variable@incontext:VAR;EMPLOYEE?><?EMPLOYEE?>
+
+COLUMN VALUE:			<?for-each-group@column:G_1;./MONTH?><?MONTH?><?end for-each?>
+
+CELL VALUE:			<?for-each-group@cell://G_1;./MONTH?><?if:count(current-group()[EMPLOYEE=$VAR])?>
+				<?current-group()[EMPLOYEE=$VAR]/SALARY?><?end if?><?end for-each?><?end for-each?>
+
+COLUMN SUMMARY EXAMPLES:	<?if:count(current-group()[EMPLOYEE=$VAR])?><?sum(current-group()[EMPLOYEE=$VAR]/SALARY)?><?end if?>
+
+				<?sum(current-group()[EMPLOYEE=$VAR]/SALARY) div count(current-group()[EMPLOYEE=$VAR]/SALARY)?>
+
+ROW SUMMARY EXAMPLES:		<?for-each-group@column:G_1;./MONTH?><?sum(current-group()/SALARY)?><?end for-each?>
+
+				<?for-each-group@column:G_1;./MONTH?><?sum(current-group()[SALARY>15000]/SALARY)?><?end for-each?>
+
+				<?for-each-group@column:G_1;./MONTH?><?sum(current-group()[C1='A']/SALARY)?><?end for-each?>
+
+				<?for-each-group@column:G_1;./MONTH?><?sum(current-group()[C2='A']/SALARY)+sum(current-group()[C2='C']/SALARY)?><?end for-each?>
+			
+				<?for-each-group@column:G_1;./MONTH?><?if:count(current-group()[C1='A'])?>
+				<?sum(current-group()[C2='B']/SALARY)?><?end for-each?><?end if?>
+
+				<?for-each-group@column:G_1;./MONTH?><?sum(current-group()[(C1='A')or(C2='D')]/SALARY[(.>11000)and(.<13000)])?><?end for-each?>
+
+FORMAT NUMBER:			<?format-number:AMOUNT;'999G999D99'?>

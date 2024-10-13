@@ -1,0 +1,10 @@
+Send message from bot to telegram group over http request
+1. create telegram bot by telegram bot father
+2. get telegram bot token serial by telegram bot father
+3. create telegram group
+4. get group_chat_id of the group by @ScanIDBot or other ID Bots
+5. make your bot is admin in the group
+6. send message by request below link
+https://api.telegram.org/bot<token>/sendMessage?chat_id=<group_chat_id>&text=<message>
+7. get chat update by request below link
+https://api.telegram.org/bot<token>/getUpdates

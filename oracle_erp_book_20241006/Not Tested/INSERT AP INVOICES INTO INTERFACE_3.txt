@@ -1,0 +1,1932 @@
+CREATE OR REPLACE PACKAGE BODY APPS.CREATE_AP_INVOICE_PKG
+AS
+   PROCEDURE XX_AP_INVOICE_INSERT
+   AS
+      ERROR_FLAG               VARCHAR2 (1);
+      ERROR_MSG                VARCHAR2 (2000);
+      LV_ORG_ID                HR_OPERATING_UNITS.ORGANIZATION_ID%TYPE;
+      LV_LINE_TYPE             AP_INVOICE_LINES_ALL.LINE_TYPE_LOOKUP_CODE%TYPE;
+      XX_AP_SEQ                AP_INVOICES_ALL.INVOICE_ID%TYPE;
+      LV_VENDOR_ID             AP_INVOICES_ALL.VENDOR_ID%TYPE;
+      LV_VENDOR_SITE_ID        AP_INVOICES_ALL.VENDOR_SITE_ID%TYPE;
+      LV_PAYMENT_METHOD_CODE   AP_INVOICES_ALL.PAYMENT_METHOD_CODE%TYPE;
+      LV_TERM_ID               AP_INVOICES_ALL.TERMS_ID%TYPE;
+      LV_INVENTORY_ITEM_ID     AP_INVOICE_LINES_ALL.INVENTORY_ITEM_ID%TYPE;
+      LV_UOM_CODE              AP_INVOICE_LINES_ALL.UNIT_MEAS_LOOKUP_CODE%TYPE;
+      LV_AP_INVOICE_DIS_ID     AP_INVOICE_DISTRIBUTIONS_ALL.INVOICE_DISTRIBUTION_ID%TYPE;
+      LV_CODE_COMBINATION_ID   GL_CODE_COMBINATIONS_KFV.CODE_COMBINATION_ID%TYPE;
+      LV_PERIOD_NAME           GL_PERIODS.PERIOD_NAME%TYPE;
+      LV_SET_OF_BOOKS_ID       GL_SETS_OF_BOOKS.SET_OF_BOOKS_ID%TYPE;
+      LV_SOURCE                AP_LOOKUP_CODES.LOOKUP_CODE%TYPE;
+      LV_INVOICE_TYPE          AP_LOOKUP_CODES.LOOKUP_CODE%TYPE;
+      L_USER_ID                FND_USER.USER_ID%TYPE;
+      L_RESP_ID                FND_RESPONSIBILITY_TL.RESPONSIBILITY_ID%TYPE;
+      L_RESP_APPL_ID           FND_RESPONSIBILITY_TL.APPLICATION_ID%TYPE;
+      LV_PARTY_ID              PO_VENDORS.PARTY_ID%TYPE;
+      LV_PARTY_SITE_ID         PO_VENDOR_SITES_ALL.PARTY_SITE_ID%TYPE;
+      LV_LINE_NUMBER           AP_INVOICE_LINES_ALL.LINE_NUMBER%TYPE;
+      LV_DIS_NUMBER            PO_HEADERS_ALL.PO_HEADER_ID%TYPE;
+      LV_PO_HEADER_ID          PO_HEADERS_ALL.PO_HEADER_ID%TYPE;
+      LV_PO_LINE_ID            PO_LINES_ALL.PO_LINE_ID%TYPE;
+      LV_PO_DISTRIBUTION_ID    PO_DISTRIBUTIONS_ALL.PO_DISTRIBUTION_ID%TYPE;
+      LV_DIS_LINE_NUMBER       AP_INVOICE_DISTRIBUTIONS_ALL.DISTRIBUTION_LINE_NUMBER%TYPE;
+      LV_LINE_LOCATION_ID      PO_LINE_LOCATIONS_ALL.LINE_LOCATION_ID%TYPE;
+
+
+      CURSOR HEADERS
+      IS
+         SELECT ROWID ROW_ID, XXAPIH.*
+           FROM XX_AP_INVOICE_HEADERS XXAPIH
+          WHERE PROCESS_FLAG = 'N';
+
+
+      CURSOR LINES (L_INVOICE_ID NUMBER)
+      IS
+         SELECT ROWID ROW_ID, XXAPIL.*
+           FROM XX_AP_INVOICE_LINES XXAPIL
+          WHERE PROCESS_FLAG = 'N' AND INVOICE_ID = L_INVOICE_ID;
+
+
+      CURSOR DISTRIBUTIONS (
+         D_INVOICE_ID     NUMBER,
+         L_LINE_NUMBER    NUMBER)
+      IS
+         SELECT ROWID ROW_ID, XXAPID.*
+           FROM XX_AP_INVOICE_DISTRIBUTIONS XXAPID
+          WHERE     PROCESS_FLAG = 'N'
+                AND INVOICE_ID = D_INVOICE_ID
+                AND LINE_NUMBER = L_LINE_NUMBER;
+   BEGIN
+      BEGIN
+         MO_GLOBAL.SET_POLICY_CONTEXT ('S', 204);
+      END;
+
+
+      SELECT FND.USER_ID, FRESP.RESPONSIBILITY_ID, FRESP.APPLICATION_ID
+        INTO L_USER_ID, L_RESP_ID, L_RESP_APPL_ID
+        FROM FND_USER FND, FND_RESPONSIBILITY_TL FRESP
+       WHERE     FND.USER_NAME = 'VENKAT'
+             AND FRESP.RESPONSIBILITY_NAME =
+                    'Payables, Vision Operations (USA)';
+
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => L_USER_ID,
+                                  RESP_ID        => L_RESP_ID,
+                                  RESP_APPL_ID   => L_RESP_APPL_ID);
+
+      DBMS_OUTPUT.PUT_LINE ('USER ID: ' || L_USER_ID);
+      DBMS_OUTPUT.PUT_LINE ('RESPONSIBILITY ID : ' || L_RESP_ID);
+      DBMS_OUTPUT.PUT_LINE ('APPLICATION ID : ' || L_RESP_APPL_ID);
+
+
+
+      ERROR_MSG := NULL;
+
+
+
+      FOR H IN HEADERS
+      LOOP
+         ERROR_FLAG := 'A';
+
+
+
+         BEGIN
+            --------------*****ORGANIZATION NAME VALIDATION*****----------
+
+            SELECT ORGANIZATION_ID
+              INTO LV_ORG_ID
+              FROM ORG_ORGANIZATION_DEFINITIONS
+             WHERE ORGANIZATION_NAME = H.OPERATING_UNIT;
+
+            DBMS_OUTPUT.PUT_LINE ('organization_name IS VALID' || LV_ORG_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'organization_name IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'organization_name IS INVALID' || LV_ORG_ID);
+         END;
+
+
+         --------------*****INVOICE TYPE VALIDATION******---------
+
+         BEGIN
+            SELECT LOOKUP_CODE
+              INTO LV_INVOICE_TYPE
+              FROM AP_LOOKUP_CODES
+             WHERE     LOOKUP_TYPE = 'INVOICE TYPE'
+                   AND LOOKUP_CODE = H.INVOICE_TYPE;
+
+            DBMS_OUTPUT.PUT_LINE ('INVOICE_TYPE IS VALID' || LV_INVOICE_TYPE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'INVOICE_TYPE  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'INVOICE_TYPE  IS INVALID' || LV_INVOICE_TYPE);
+         END;
+
+         --------------******SUPPLIER VALIDATION******--------------
+
+         BEGIN
+            SELECT VENDOR_ID, PARTY_ID
+              INTO LV_VENDOR_ID, LV_PARTY_ID
+              FROM PO_VENDORS
+             WHERE VENDOR_NAME = H.SUPPLIER;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'VENDOR_ID IS VALID' || LV_VENDOR_ID || '  ' || LV_PARTY_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'VENDOR_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                     'VENDOR_ID  IS INVALID'
+                  || LV_VENDOR_ID
+                  || '  '
+                  || LV_PARTY_ID);
+         END;
+
+
+
+         BEGIN
+            SELECT VENDOR_SITE_ID, PARTY_SITE_ID
+              INTO LV_VENDOR_SITE_ID, LV_PARTY_SITE_ID
+              FROM PO_VENDOR_SITES_ALL
+             WHERE     VENDOR_SITE_CODE = H.SUPPLIER_SITE
+                   AND VENDOR_ID = LV_VENDOR_ID
+                   AND ORG_ID = LV_ORG_ID;
+
+            DBMS_OUTPUT.PUT_LINE (
+                  'SUPPLIER SITE  IS VALID'
+               || LV_VENDOR_SITE_ID
+               || 'party site id '
+               || LV_PARTY_SITE_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'SUPPLIER SITE  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                     'SUPPLIER SITE  IS INVALID'
+                  || LV_VENDOR_SITE_ID
+                  || 'party site id '
+                  || LV_PARTY_SITE_ID);
+         END;
+
+         ----------------*******PAYMENT CURRENCY CODE VALIDATION*********-------
+
+
+         BEGIN
+            SELECT IEPPM.PAYMENT_METHOD_CODE
+              INTO LV_PAYMENT_METHOD_CODE
+              FROM AP_SUPPLIER_SITES_ALL ASSA,
+                   AP_SUPPLIERS SUP,
+                   IBY_EXTERNAL_PAYEES_ALL IEPA,
+                   IBY_EXT_PARTY_PMT_MTHDS IEPPM
+             WHERE     SUP.VENDOR_ID = ASSA.VENDOR_ID
+                   AND ASSA.VENDOR_SITE_ID = IEPA.SUPPLIER_SITE_ID
+                   AND IEPA.EXT_PAYEE_ID = IEPPM.EXT_PMT_PARTY_ID
+                   AND NVL (IEPPM.INACTIVE_DATE, SYSDATE + 1) > SYSDATE
+                   AND ASSA.VENDOR_SITE_ID = LV_VENDOR_SITE_ID
+                   AND IEPPM.PRIMARY_FLAG = 'Y'
+                   AND ASSA.PAY_SITE_FLAG = 'Y';
+
+            DBMS_OUTPUT.PUT_LINE (
+               'PAYMENT METHOD IS VALID' || LV_PAYMENT_METHOD_CODE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'PAYMENT METHOD  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('PAYMENT METHOD  IS INVALID');
+         END;
+
+
+         ------------------------------****TERMS VALIDATION******------------
+
+         BEGIN
+            SELECT TERM_ID
+              INTO LV_TERM_ID
+              FROM AP_TERMS
+             WHERE NAME = H.TERMS;
+
+            DBMS_OUTPUT.PUT_LINE ('TERM ID IS VALID' || LV_TERM_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'TERM ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('TERM ID  IS INVALID');
+         END;
+
+
+         ------------------------*****VALIDATION OF SET OF BOOKS******----------------
+
+
+         BEGIN
+            SELECT SET_OF_BOOKS_ID
+              INTO LV_SET_OF_BOOKS_ID
+              FROM GL_SETS_OF_BOOKS
+             WHERE SHORT_NAME = H.OPERATING_UNIT;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'SET_OF_BOOKS_ID IS VALID' || LV_SET_OF_BOOKS_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'SET_OF_BOOKS_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'SET_OF_BOOKS_ID  IS INVALID' || LV_SET_OF_BOOKS_ID);
+         END;
+
+         --------------**********VALIDATION OF CHARGE ACCOUNT*****-----------
+
+         BEGIN
+            SELECT CODE_COMBINATION_ID
+              INTO LV_CODE_COMBINATION_ID
+              FROM GL_CODE_COMBINATIONS_KFV GCC, GL_SETS_OF_BOOKS GSB
+             WHERE     CONCATENATED_SEGMENTS = H.CHARGE_ACCOUNT
+                   AND GCC.CHART_OF_ACCOUNTS_ID = GSB.CHART_OF_ACCOUNTS_ID
+                   AND SET_OF_BOOKS_ID = LV_SET_OF_BOOKS_ID;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'CODE_COMBINATION_ID IS VALID' || LV_CODE_COMBINATION_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'CODE_COMBINATION_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'CODE_COMBINATION_ID  IS INVALID' || LV_CODE_COMBINATION_ID);
+         END;
+
+
+
+         ------------------*********VALIDATION OF SOURCE********------------
+
+         BEGIN
+            SELECT LOOKUP_CODE
+              INTO LV_SOURCE
+              FROM AP_LOOKUP_CODES
+             WHERE     LOOKUP_TYPE = 'SOURCE'
+                   AND DISPLAYED_FIELD = 'Manual Invoice Entry';
+
+            DBMS_OUTPUT.PUT_LINE ('source IS VALID' || LV_SOURCE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'source  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('source IS VALID' || LV_SOURCE);
+         END;
+
+
+         BEGIN
+            SELECT PO_HEADER_ID
+              INTO LV_PO_HEADER_ID
+              FROM PO_HEADERS_ALL
+             WHERE SEGMENT1 = H.PO_NUMBER;
+
+            DBMS_OUTPUT.PUT_LINE ('po number IS VALID' || LV_PO_HEADER_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'po_number  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'po number IS INVALID' || LV_PO_HEADER_ID);
+         END;
+
+
+         IF ERROR_FLAG != 'E'
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('error flag : ' || ERROR_FLAG);
+
+            DBMS_OUTPUT.PUT_LINE (
+               'row ID for headers insert IS  : ' || H.ROW_ID);
+
+
+            SELECT AP_INVOICES_S.NEXTVAL INTO XX_AP_SEQ FROM DUAL;
+
+            BEGIN
+               AP_AI_TABLE_HANDLER_PKG.INSERT_ROW (
+                  P_ROWID                         => H.ROW_ID,
+                  P_INVOICE_ID                    => XX_AP_SEQ,
+                  P_LAST_UPDATE_DATE              => SYSDATE,
+                  P_LAST_UPDATED_BY               => L_USER_ID,
+                  P_VENDOR_ID                     => LV_VENDOR_ID,
+                  P_INVOICE_NUM                   => H.INVOICE_NUM,
+                  P_INVOICE_AMOUNT                => H.INVOICE_AMOUNT,
+                  P_VENDOR_SITE_ID                => LV_VENDOR_SITE_ID,
+                  P_AMOUNT_PAID                   => 0.00,
+                  P_DISCOUNT_AMOUNT_TAKEN         => 0,
+                  P_INVOICE_DATE                  => SYSDATE,
+                  P_SOURCE                        => LV_SOURCE,
+                  P_INVOICE_TYPE_LOOKUP_CODE      => LV_INVOICE_TYPE,
+                  P_DESCRIPTION                   => NULL,
+                  P_BATCH_ID                      => NULL,
+                  P_AMT_APPLICABLE_TO_DISCOUNT    => H.INVOICE_AMOUNT,
+                  P_TERMS_ID                      => LV_TERM_ID,
+                  P_TERMS_DATE                    => SYSDATE,
+                  P_GOODS_RECEIVED_DATE           => NULL,
+                  P_INVOICE_RECEIVED_DATE         => NULL,
+                  P_VOUCHER_NUM                   => NULL,
+                  P_APPROVED_AMOUNT               => H.INVOICE_AMOUNT,
+                  P_APPROVAL_STATUS               => NULL,
+                  P_APPROVAL_DESCRIPTION          => NULL,
+                  P_PAY_GROUP_LOOKUP_CODE         => 'Standard',
+                  P_SET_OF_BOOKS_ID               => LV_SET_OF_BOOKS_ID,
+                  P_ACCTS_PAY_CCID                => NULL --LV_CODE_COMBINATION_ID
+                                                         ,
+                  P_RECURRING_PAYMENT_ID          => NULL,
+                  P_INVOICE_CURRENCY_CODE         => H.INVOICE_CURRENCY_CODE,
+                  P_PAYMENT_CURRENCY_CODE         => H.INVOICE_CURRENCY_CODE,
+                  P_EXCHANGE_RATE                 => NULL,
+                  P_PAYMENT_AMOUNT_TOTAL          => NULL,
+                  P_PAYMENT_STATUS_FLAG           => 'N',
+                  P_POSTING_STATUS                => NULL,
+                  P_AUTHORIZED_BY                 => NULL,
+                  P_ATTRIBUTE_CATEGORY            => NULL,
+                  P_ATTRIBUTE1                    => NULL,
+                  P_ATTRIBUTE2                    => NULL,
+                  P_ATTRIBUTE3                    => NULL,
+                  P_ATTRIBUTE4                    => NULL,
+                  P_ATTRIBUTE5                    => NULL,
+                  P_CREATION_DATE                 => SYSDATE,
+                  P_CREATED_BY                    => L_USER_ID,
+                  P_VENDOR_PREPAY_AMOUNT          => NULL,
+                  P_BASE_AMOUNT                   => NULL,
+                  P_EXCHANGE_RATE_TYPE            => NULL,
+                  P_EXCHANGE_DATE                 => NULL,
+                  P_PAYMENT_CROSS_RATE            => 1,
+                  P_PAYMENT_CROSS_RATE_TYPE       => NULL,
+                  P_PAYMENT_CROSS_RATE_DATE       => SYSDATE,
+                  P_PAY_CURR_INVOICE_AMOUNT       => H.INVOICE_AMOUNT,
+                  P_LAST_UPDATE_LOGIN             => NULL,
+                  P_ORIGINAL_PREPAYMENT_AMOUNT    => NULL,
+                  P_EARLIEST_SETTLEMENT_DATE      => NULL,
+                  P_ATTRIBUTE11                   => NULL,
+                  P_ATTRIBUTE12                   => NULL,
+                  P_ATTRIBUTE13                   => NULL,
+                  P_ATTRIBUTE14                   => NULL,
+                  P_ATTRIBUTE6                    => NULL,
+                  P_ATTRIBUTE7                    => NULL,
+                  P_ATTRIBUTE8                    => NULL,
+                  P_ATTRIBUTE9                    => NULL,
+                  P_ATTRIBUTE10                   => NULL,
+                  P_ATTRIBUTE15                   => NULL,
+                  P_CANCELLED_DATE                => NULL,
+                  P_CANCELLED_BY                  => NULL,
+                  P_CANCELLED_AMOUNT              => NULL,
+                  P_TEMP_CANCELLED_AMOUNT         => NULL,
+                  P_EXCLUSIVE_PAYMENT_FLAG        => NULL,
+                  P_PO_HEADER_ID                  => NULL,
+                  P_DOC_SEQUENCE_ID               => NULL,
+                  P_DOC_SEQUENCE_VALUE            => NULL,
+                  P_DOC_CATEGORY_CODE             => NULL,
+                  P_EXPENDITURE_ITEM_DATE         => NULL,
+                  P_EXPENDITURE_ORGANIZATION_ID   => NULL,
+                  P_EXPENDITURE_TYPE              => NULL,
+                  P_PA_DEFAULT_DIST_CCID          => NULL,
+                  P_PA_QUANTITY                   => NULL,
+                  P_PROJECT_ID                    => NULL,
+                  P_TASK_ID                       => NULL,
+                  P_AWT_FLAG                      => NULL,
+                  P_AWT_GROUP_ID                  => NULL,
+                  P_PAY_AWT_GROUP_ID              => NULL,
+                  P_REFERENCE_1                   => NULL,
+                  P_REFERENCE_2                   => NULL,
+                  P_ORG_ID                        => LV_ORG_ID,
+                  P_CALLING_SEQUENCE              => '1',
+                  P_GL_DATE                       => SYSDATE,
+                  P_AWARD_ID                      => NULL,
+                  P_APPROVAL_ITERATION            => NULL,
+                  P_APPROVAL_READY_FLAG           => 'Y',
+                  P_WFAPPROVAL_STATUS             => 'NOT REQUIRED',
+                  P_PAYMENT_METHOD_CODE           => LV_PAYMENT_METHOD_CODE,
+                  P_PARTY_ID                      => LV_PARTY_ID,
+                  P_PARTY_SITE_ID                 => LV_PARTY_SITE_ID,
+                  P_TAXATION_COUNTRY              => NULL,
+                  P_LEGAL_ENTITY_ID               => LV_ORG_ID,
+                  P_QUICK_PO_HEADER_ID            => LV_PO_HEADER_ID);
+
+               DBMS_OUTPUT.PUT_LINE ('headers end ');
+               COMMIT;
+            EXCEPTION
+               WHEN TOO_MANY_ROWS
+               THEN
+                  DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                  DBMS_OUTPUT.PUT_LINE (SQLCODE);
+               WHEN NO_DATA_FOUND
+               THEN
+                  DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                  DBMS_OUTPUT.PUT_LINE (SQLCODE);
+               WHEN OTHERS
+               THEN
+                  DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                  DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                  COMMIT;
+            END;
+         ELSE
+            UPDATE XX_AP_INVOICE_HEADERS
+               SET ERROR_MSG = ERROR_MSG, ERR_FLAG = ERROR_FLAG
+             WHERE INVOICE_ID = H.INVOICE_ID;
+         END IF;
+
+         -------------------------------------------LINES--------------------------------
+
+
+
+         LV_LINE_NUMBER := 0;
+         LV_DIS_LINE_NUMBER := 0;
+
+
+         FOR L IN LINES (H.INVOICE_ID)
+         LOOP
+            DBMS_OUTPUT.PUT_LINE ('FOR CHECKING PURPOSE');
+
+            LV_LINE_NUMBER := LV_LINE_NUMBER + 1;
+
+            DBMS_OUTPUT.PUT_LINE (
+                  'AT HEADERS INVOICE ID : '
+               || H.INVOICE_ID
+               || ' LINE NUMBER '
+               || LV_LINE_NUMBER);
+
+            ------------------*****LINES VALIDATION*****------------
+
+            --------------*****ORGANIZATION NAME VALIDATION*****----------
+
+
+            BEGIN
+               SELECT ORGANIZATION_ID
+                 INTO LV_ORG_ID
+                 FROM ORG_ORGANIZATION_DEFINITIONS
+                WHERE ORGANIZATION_NAME = H.OPERATING_UNIT;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'organization_name IS VALID' || LV_ORG_ID);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'organization_name IS INVALID';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'organization_name IS INVALID' || LV_ORG_ID);
+            END;
+
+
+            -------------******VALIDATION OF ITEM******----------
+
+            BEGIN
+               SELECT INVENTORY_ITEM_ID
+                 INTO LV_INVENTORY_ITEM_ID
+                 FROM MTL_SYSTEM_ITEMS_B
+                WHERE SEGMENT1 = L.ITEM AND ORGANIZATION_ID = LV_ORG_ID;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'INVENTORY_ITEM_ID IS VALID' || LV_INVENTORY_ITEM_ID);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'INVENTORY_ITEM_ID  IS INVALID';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'INVENTORY_ITEM_ID  IS INVALID' || LV_INVENTORY_ITEM_ID);
+            END;
+
+
+
+            BEGIN
+               SELECT PO_LINE_ID
+                 INTO LV_PO_LINE_ID
+                 FROM PO_LINES_ALL
+                WHERE     PO_HEADER_ID = (SELECT PO_HEADER_ID
+                                            FROM PO_HEADERS_ALL
+                                           WHERE SEGMENT1 = H.PO_NUMBER)
+                      AND LINE_NUM = L.LINE_NUMBER;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'PO NUMBER DOES IS VALID' || H.PO_NUMBER);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO NUMBER DOES NOT EXITST' || H.PO_NUMBER);
+            END;
+
+
+            BEGIN
+               SELECT LINE_LOCATION_ID
+                 INTO LV_LINE_LOCATION_ID
+                 FROM PO_LINE_LOCATIONS_ALL
+                WHERE PO_LINE_ID =
+                         (SELECT PO_LINE_ID
+                            FROM PO_LINES_ALL
+                           WHERE     PO_HEADER_ID =
+                                        (SELECT PO_HEADER_ID
+                                           FROM PO_HEADERS_ALL
+                                          WHERE SEGMENT1 = H.PO_NUMBER)
+                                 AND LINE_NUM = L.LINE_NUMBER);
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'LINE LOCATIONS IS VALID' || LV_LINE_LOCATION_ID);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'LINE LOCATIONS IS NOT VALID' || LV_LINE_LOCATION_ID);
+            END;
+
+
+
+            IF (ERROR_FLAG != 'E')
+            THEN
+               BEGIN
+                  DBMS_OUTPUT.PUT_LINE (
+                     'row ID for lines insert IS  : ' || L.ROW_ID);
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'invoice id at lines :   : ' || XX_AP_SEQ);
+
+                  AP_AIL_TABLE_HANDLER_PKG.INSERT_ROW (
+                     P_ROWID                          => L.ROW_ID,
+                     P_INVOICE_ID                     => XX_AP_SEQ,
+                     P_LINE_NUMBER                    => L.LINE_NUMBER,
+                     P_LINE_TYPE_LOOKUP_CODE          => L.LINE_TYPE,
+                     P_LINE_GROUP_NUMBER              => NULL,
+                     P_REQUESTER_ID                   => NULL,
+                     P_DESCRIPTION                    => NULL,
+                     P_LINE_SOURCE                    => 'Manual Invoice Line Entry',
+                     P_ORG_ID                         => LV_ORG_ID,
+                     P_INVENTORY_ITEM_ID              => LV_INVENTORY_ITEM_ID,
+                     P_ITEM_DESCRIPTION               => L.DESCRIPTION,
+                     P_SERIAL_NUMBER                  => NULL,
+                     P_MANUFACTURER                   => NULL,
+                     P_MODEL_NUMBER                   => NULL,
+                     P_WARRANTY_NUMBER                => NULL,
+                     P_GENERATE_DISTS                 => 'D',
+                     P_MATCH_TYPE                     => NULL,
+                     P_DISTRIBUTION_SET_ID            => NULL,
+                     P_ACCOUNT_SEGMENT                => NULL,
+                     P_BALANCING_SEGMENT              => NULL,
+                     P_COST_CENTER_SEGMENT            => NULL,
+                     P_OVERLAY_DIST_CODE_CONCAT       => NULL,
+                     P_DEFAULT_DIST_CCID              => NULL,
+                     P_PRORATE_ACROSS_ALL_ITEMS       => NULL,
+                     P_ACCOUNTING_DATE                => SYSDATE,
+                     P_PERIOD_NAME                    => NULL,
+                     P_DEFERRED_ACCTG_FLAG            => 'N',
+                     P_DEF_ACCTG_START_DATE           => NULL,
+                     P_DEF_ACCTG_END_DATE             => NULL,
+                     P_DEF_ACCTG_NUMBER_OF_PERIODS    => NULL,
+                     P_DEF_ACCTG_PERIOD_TYPE          => NULL,
+                     P_SET_OF_BOOKS_ID                => LV_SET_OF_BOOKS_ID,
+                     P_AMOUNT                         => L.LINE_AMOUNT,
+                     P_BASE_AMOUNT                    => NULL,
+                     P_ROUNDING_AMT                   => NULL,
+                     P_QUANTITY_INVOICED              => L.QUANTITY_INVOICED,
+                     P_UNIT_MEAS_LOOKUP_CODE          => L.UNIT_MEASURE,
+                     P_UNIT_PRICE                     => L.UNIT_PRICE,
+                     P_WFAPPROVAL_STATUS              => 'NOT REQUIRED',
+                     P_DISCARDED_FLAG                 => NULL,
+                     P_ORIGINAL_AMOUNT                => NULL,
+                     P_ORIGINAL_BASE_AMOUNT           => NULL,
+                     P_ORIGINAL_ROUNDING_AMT          => NULL,
+                     P_CANCELLED_FLAG                 => NULL,
+                     P_INCOME_TAX_REGION              => NULL,
+                     P_TYPE_1099                      => NULL,
+                     P_STAT_AMOUNT                    => NULL,
+                     P_PREPAY_INVOICE_ID              => NULL,
+                     P_PREPAY_LINE_NUMBER             => NULL,
+                     P_INVOICE_INCLUDES_PREPAY_FLAG   => NULL,
+                     P_CORRECTED_INV_ID               => NULL,
+                     P_CORRECTED_LINE_NUMBER          => NULL,
+                     P_PO_HEADER_ID                   => LV_PO_HEADER_ID,
+                     P_PO_RELEASE_ID                  => NULL,
+                     P_PO_LINE_LOCATION_ID            => LV_LINE_LOCATION_ID,
+                     P_PO_DISTRIBUTION_ID             => NULL,
+                     P_PO_LINE_ID                     => LV_PO_LINE_ID,
+                     P_RCV_TRANSACTION_ID             => NULL,
+                     P_FINAL_MATCH_FLAG               => NULL,
+                     P_ASSETS_TRACKING_FLAG           => 'Y',
+                     P_ASSET_BOOK_TYPE_CODE           => NULL,
+                     P_ASSET_CATEGORY_ID              => NULL,
+                     P_PROJECT_ID                     => NULL,
+                     P_TASK_ID                        => NULL,
+                     P_EXPENDITURE_TYPE               => NULL,
+                     P_EXPENDITURE_ITEM_DATE          => NULL,
+                     P_EXPENDITURE_ORGANIZATION_ID    => NULL,
+                     P_PA_QUANTITY                    => 1,
+                     P_PA_CC_AR_INVOICE_ID            => NULL,
+                     P_PA_CC_AR_INVOICE_LINE_NUM      => NULL,
+                     P_PA_CC_PROCESSED_CODE           => NULL,
+                     P_AWARD_ID                       => NULL,
+                     P_AWT_GROUP_ID                   => NULL,
+                     P_PAY_AWT_GROUP_ID               => NULL,
+                     P_REFERENCE_1                    => NULL,
+                     P_REFERENCE_2                    => NULL,
+                     P_RECEIPT_VERIFIED_FLAG          => NULL,
+                     P_RECEIPT_REQUIRED_FLAG          => NULL,
+                     P_RECEIPT_MISSING_FLAG           => NULL,
+                     P_JUSTIFICATION                  => NULL,
+                     P_EXPENSE_GROUP                  => NULL,
+                     P_START_EXPENSE_DATE             => NULL,
+                     P_END_EXPENSE_DATE               => NULL,
+                     P_RECEIPT_CURRENCY_CODE          => NULL,
+                     P_RECEIPT_CONVERSION_RATE        => NULL,
+                     P_RECEIPT_CURRENCY_AMOUNT        => NULL,
+                     P_DAILY_AMOUNT                   => NULL,
+                     P_WEB_PARAMETER_ID               => NULL,
+                     P_ADJUSTMENT_REASON              => NULL,
+                     P_MERCHANT_DOCUMENT_NUMBER       => NULL,
+                     P_MERCHANT_NAME                  => NULL,
+                     P_MERCHANT_REFERENCE             => NULL,
+                     P_MERCHANT_TAX_REG_NUMBER        => NULL,
+                     P_MERCHANT_TAXPAYER_ID           => NULL,
+                     P_COUNTRY_OF_SUPPLY              => NULL,
+                     P_CREDIT_CARD_TRX_ID             => NULL,
+                     P_COMPANY_PREPAID_INVOICE_ID     => NULL,
+                     P_CC_REVERSAL_FLAG               => NULL,
+                     P_CREATION_DATE                  => SYSDATE,
+                     P_CREATED_BY                     => NULL,
+                     P_LAST_UPDATED_BY                => L_USER_ID,
+                     P_LAST_UPDATE_DATE               => SYSDATE,
+                     P_LAST_UPDATE_LOGIN              => NULL,
+                     P_PROGRAM_APPLICATION_ID         => NULL,
+                     P_PROGRAM_ID                     => NULL,
+                     P_PROGRAM_UPDATE_DATE            => NULL,
+                     P_REQUEST_ID                     => NULL,
+                     P_ATTRIBUTE_CATEGORY             => NULL,
+                     P_ATTRIBUTE1                     => NULL,
+                     P_ATTRIBUTE2                     => NULL,
+                     P_ATTRIBUTE3                     => NULL,
+                     P_ATTRIBUTE4                     => NULL,
+                     P_ATTRIBUTE5                     => NULL,
+                     P_CALLING_SEQUENCE               => '1',
+                     P_PRODUCT_TYPE                   => L.PRODUCT_TYPE,
+                     P_SHIP_TO_LOCATION_ID            => NULL);
+
+
+                  DBMS_OUTPUT.PUT_LINE ('AMOUNT :  ' || L.LINE_AMOUNT);
+                  DBMS_OUTPUT.PUT_LINE ('INVOICE ID  :  ' || XX_AP_SEQ);
+                  DBMS_OUTPUT.PUT_LINE (
+                     'H.LINE_NUMBER  :  ' || L.LINE_NUMBER);
+
+
+                  DBMS_OUTPUT.PUT_LINE ('lines end ');
+               EXCEPTION
+                  WHEN TOO_MANY_ROWS
+                  THEN
+                     DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                     DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                  WHEN NO_DATA_FOUND
+                  THEN
+                     DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                     DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                  WHEN OTHERS
+                  THEN
+                     DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                     DBMS_OUTPUT.PUT_LINE (SQLCODE);
+               END;
+            ELSE
+               UPDATE XX_AP_INVOICE_LINES
+                  SET ERROR_MSG = ERROR_MSG, ERR_FLAG = ERROR_FLAG
+                WHERE     INVOICE_ID = H.INVOICE_ID
+                      AND LINE_NUMBER = L.LINE_NUMBER;
+
+               COMMIT;
+            END IF;
+
+            ---------------------------------------DISTRIBUTIONS----------------------------
+
+            DBMS_OUTPUT.PUT_LINE ('distributions  start ');
+
+
+
+            FOR D IN DISTRIBUTIONS (L.INVOICE_ID, L.LINE_NUMBER)
+            LOOP
+               LV_DIS_LINE_NUMBER := LV_DIS_LINE_NUMBER + 1;
+
+
+               DBMS_OUTPUT.PUT_LINE (
+                     'AT LINES INVOICE ID : '
+                  || L.INVOICE_ID
+                  || ' LINE NUMBER '
+                  || L.LINE_NUMBER
+                  || '  DISTRIBUTION NUMBER : '
+                  || LV_DIS_LINE_NUMBER);
+
+
+               BEGIN
+                  SELECT CODE_COMBINATION_ID
+                    INTO LV_CODE_COMBINATION_ID
+                    FROM GL_CODE_COMBINATIONS_KFV GCC, GL_SETS_OF_BOOKS GSB
+                   WHERE     CONCATENATED_SEGMENTS = D.ACCOUNT
+                         AND GCC.CHART_OF_ACCOUNTS_ID =
+                                GSB.CHART_OF_ACCOUNTS_ID
+                         AND SET_OF_BOOKS_ID = LV_SET_OF_BOOKS_ID;
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'CODE_COMBINATION_ID IS VALID' || LV_CODE_COMBINATION_ID);
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     ERROR_FLAG := 'E';
+                     ERROR_MSG := 'CODE_COMBINATION_ID  IS INVALID';
+                     DBMS_OUTPUT.PUT_LINE (
+                           'CODE_COMBINATION_ID  IS INVALID'
+                        || LV_CODE_COMBINATION_ID);
+               END;
+
+               ------------------*********VALIDATION OF GL PERIODS *********------------------
+
+               BEGIN
+                  SELECT PERIOD_NAME
+                    INTO LV_PERIOD_NAME
+                    FROM GL_PERIODS
+                   WHERE PERIOD_NAME = D.PERIOD_NAME;
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PERIOD_NAME IS VALID' || LV_PERIOD_NAME);
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     ERROR_FLAG := 'E';
+                     ERROR_MSG := 'PERIOD_NAME  IS INVALID';
+                     DBMS_OUTPUT.PUT_LINE (
+                        'PERIOD_NAME  IS INVALID' || LV_PERIOD_NAME);
+               END;
+
+
+
+               BEGIN
+                  SELECT PO_DISTRIBUTION_ID
+                    INTO LV_PO_DISTRIBUTION_ID
+                    FROM PO_DISTRIBUTIONS_ALL
+                   WHERE     PO_LINE_ID =
+                                (SELECT PO_LINE_ID
+                                   FROM PO_LINES_ALL
+                                  WHERE     PO_HEADER_ID =
+                                               (SELECT PO_HEADER_ID
+                                                  FROM PO_HEADERS_ALL
+                                                 WHERE SEGMENT1 = H.PO_NUMBER)
+                                        AND LINE_NUM = L.LINE_NUMBER)
+                         AND DISTRIBUTION_NUM = D.DIS_LINE_NUM;
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO DISTRIBUTION ID IS VALID ' || LV_PO_DISTRIBUTION_ID);
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO LINE ID IS  VALID  ' || LV_PO_LINE_ID);
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     ERROR_FLAG := 'E';
+                     ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                     DBMS_OUTPUT.PUT_LINE (
+                           'PO DISTRIBUTION ID IS NOT VALID  '
+                        || LV_PO_DISTRIBUTION_ID);
+                     DBMS_OUTPUT.PUT_LINE (
+                        'PO LINE ID IS NOT VALID  ' || LV_PO_LINE_ID);
+               END;
+
+
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'row ID for distributions insert IS  : ' || D.ROW_ID);
+
+               IF (ERROR_FLAG != 'E')
+               THEN
+                  BEGIN
+                     SELECT AP_INVOICE_DISTRIBUTIONS_S.NEXTVAL
+                       INTO LV_AP_INVOICE_DIS_ID
+                       FROM DUAL;
+
+
+                     DBMS_OUTPUT.PUT_LINE (
+                        'invoice id distributions :   : ' || XX_AP_SEQ);
+
+                     AP_AID_TABLE_HANDLER_PKG.INSERT_ROW (
+                        P_ROWID                         => D.ROW_ID,
+                        P_INVOICE_ID                    => XX_AP_SEQ,
+                        P_INVOICE_LINE_NUMBER           => D.LINE_NUMBER,
+                        P_DISTRIBUTION_CLASS            => 'PERMANENT',
+                        P_INVOICE_DISTRIBUTION_ID       => LV_AP_INVOICE_DIS_ID,
+                        P_DIST_CODE_COMBINATION_ID      => LV_CODE_COMBINATION_ID,
+                        P_LAST_UPDATE_DATE              => SYSDATE,
+                        P_LAST_UPDATED_BY               => L_USER_ID,
+                        P_ACCOUNTING_DATE               => SYSDATE,
+                        P_PERIOD_NAME                   => LV_PERIOD_NAME,
+                        P_SET_OF_BOOKS_ID               => LV_SET_OF_BOOKS_ID,
+                        P_AMOUNT                        => D.AMOUNT,
+                        P_DESCRIPTION                   => NULL,
+                        P_TYPE_1099                     => NULL,
+                        P_POSTED_FLAG                   => 'N',
+                        P_BATCH_ID                      => NULL,
+                        P_QUANTITY_INVOICED             => NULL,
+                        P_UNIT_PRICE                    => NULL,
+                        P_MATCH_STATUS_FLAG             => NULL,
+                        P_ATTRIBUTE_CATEGORY            => NULL,
+                        P_ATTRIBUTE1                    => NULL,
+                        P_ATTRIBUTE2                    => NULL,
+                        P_ATTRIBUTE3                    => NULL,
+                        P_ATTRIBUTE4                    => NULL,
+                        P_ATTRIBUTE5                    => NULL,
+                        P_PREPAY_AMOUNT_REMAINING       => NULL,
+                        P_ASSETS_ADDITION_FLAG          => 'N',
+                        P_ASSETS_TRACKING_FLAG          => 'Y',
+                        P_DISTRIBUTION_LINE_NUMBER      => D.DIS_LINE_NUM,
+                        P_LINE_TYPE_LOOKUP_CODE         => D.DIS_TYPE,
+                        P_PO_DISTRIBUTION_ID            => LV_PO_DISTRIBUTION_ID,
+                        P_BASE_AMOUNT                   => NULL,
+                        P_PA_ADDITION_FLAG              => NULL,
+                        P_POSTED_AMOUNT                 => NULL,
+                        P_POSTED_BASE_AMOUNT            => NULL,
+                        P_ENCUMBERED_FLAG               => NULL,
+                        P_ACCRUAL_POSTED_FLAG           => NULL,
+                        P_CASH_POSTED_FLAG              => NULL,
+                        P_LAST_UPDATE_LOGIN             => NULL,
+                        P_CREATION_DATE                 => NULL,
+                        P_CREATED_BY                    => NULL,
+                        P_STAT_AMOUNT                   => NULL,
+                        P_ATTRIBUTE11                   => NULL,
+                        P_ATTRIBUTE12                   => NULL,
+                        P_ATTRIBUTE13                   => NULL,
+                        P_ATTRIBUTE14                   => NULL,
+                        P_ATTRIBUTE6                    => NULL,
+                        P_ATTRIBUTE7                    => NULL,
+                        P_ATTRIBUTE8                    => NULL,
+                        P_ATTRIBUTE9                    => NULL,
+                        P_ATTRIBUTE10                   => NULL,
+                        P_ATTRIBUTE15                   => NULL,
+                        P_ACCTS_PAY_CODE_COMB_ID        => NULL,
+                        P_REVERSAL_FLAG                 => NULL,
+                        P_PARENT_INVOICE_ID             => NULL,
+                        P_INCOME_TAX_REGION             => NULL,
+                        P_FINAL_MATCH_FLAG              => NULL,
+                        P_EXPENDITURE_ITEM_DATE         => NULL,
+                        P_EXPENDITURE_ORGANIZATION_ID   => NULL,
+                        P_EXPENDITURE_TYPE              => NULL,
+                        P_PA_QUANTITY                   => NULL,
+                        P_PROJECT_ID                    => NULL,
+                        P_TASK_ID                       => NULL,
+                        P_QUANTITY_VARIANCE             => NULL,
+                        P_BASE_QUANTITY_VARIANCE        => NULL,
+                        P_PACKET_ID                     => NULL,
+                        P_AWT_FLAG                      => NULL,
+                        P_AWT_GROUP_ID                  => NULL,
+                        P_PAY_AWT_GROUP_ID              => NULL,
+                        P_AWT_TAX_RATE_ID               => NULL,
+                        P_AWT_GROSS_AMOUNT              => NULL,
+                        P_REFERENCE_1                   => NULL,
+                        P_REFERENCE_2                   => NULL,
+                        P_ORG_ID                        => LV_ORG_ID,
+                        P_OTHER_INVOICE_ID              => NULL,
+                        P_AWT_INVOICE_ID                => NULL,
+                        P_AWT_ORIGIN_GROUP_ID           => NULL,
+                        P_PROGRAM_APPLICATION_ID        => NULL,
+                        P_PROGRAM_ID                    => NULL,
+                        P_PROGRAM_UPDATE_DATE           => NULL,
+                        P_REQUEST_ID                    => NULL,
+                        P_TAX_RECOVERABLE_FLAG          => NULL,
+                        P_AWARD_ID                      => NULL,
+                        P_START_EXPENSE_DATE            => NULL,
+                        P_MERCHANT_DOCUMENT_NUMBER      => NULL,
+                        P_MERCHANT_NAME                 => NULL,
+                        P_MERCHANT_TAX_REG_NUMBER       => NULL,
+                        P_MERCHANT_TAXPAYER_ID          => NULL,
+                        P_COUNTRY_OF_SUPPLY             => NULL,
+                        P_MERCHANT_REFERENCE            => NULL,
+                        P_PARENT_REVERSAL_ID            => NULL,
+                        P_RCV_TRANSACTION_ID            => NULL,
+                        P_MATCHED_UOM_LOOKUP_CODE       => NULL,
+                        P_CALLING_SEQUENCE              => '1',
+                        P_RCV_CHARGE_ADDITION_FLAG      => NULL);
+
+                     DBMS_OUTPUT.PUT_LINE ('distributions  end ');
+
+                     DBMS_OUTPUT.PUT_LINE ('values successfully inserted ');
+                  EXCEPTION
+                     WHEN TOO_MANY_ROWS
+                     THEN
+                        DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                        DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                     WHEN NO_DATA_FOUND
+                     THEN
+                        DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                        DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                     WHEN OTHERS
+                     THEN
+                        DBMS_OUTPUT.PUT_LINE (SQLERRM);
+                        DBMS_OUTPUT.PUT_LINE (SQLCODE);
+                  END;
+               ELSE
+                  UPDATE XX_AP_INVOICE_DISTRIBUTIONS
+                     SET ERR_FLAG = ERROR_FLAG, ERR_MSG = ERROR_MSG
+                   WHERE     INVOICE_ID = H.INVOICE_ID
+                         AND LINE_NUMBER = L.LINE_NUMBER;
+
+                  COMMIT;
+               END IF;
+            END LOOP;                                  --<END DISTRIBUTIONS>--
+         END LOOP;                                             --<END LINES>--
+      END LOOP;                                              --<END HEADERS>--
+
+      --        UPDATE XX_AP_INVOICE_HEADERS SET PROCESS_FLAG='Y';
+      --        UPDATE XX_AP_INVOICE_LINES SET PROCESS_FLAG='Y';
+      --        UPDATE XX_AP_INVOICE_DISTRIBUTIONS SET PROCESS_FLAG='Y';
+
+      COMMIT;
+   END XX_AP_INVOICE_INSERT;                        --<END INSERT PROCEDURE>--
+
+   ---------------------------------------UPDATE PROCEDURE-----------------
+
+
+
+   PROCEDURE XX_AP_INVOICE_UPDATE
+   IS
+      ERROR_FLAG                    VARCHAR2 (1);
+      ERROR_MSG                     VARCHAR2 (2000);
+      LV_ORG_ID                     HR_OPERATING_UNITS.ORGANIZATION_ID%TYPE;
+      LV_LINE_TYPE                  AP_INVOICE_LINES_ALL.LINE_TYPE_LOOKUP_CODE%TYPE;
+      XX_AP_SEQ                     AP_INVOICES_ALL.INVOICE_ID%TYPE;
+      LV_VENDOR_ID                  AP_INVOICES_ALL.VENDOR_ID%TYPE;
+      LV_VENDOR_SITE_ID             AP_INVOICES_ALL.VENDOR_SITE_ID%TYPE;
+      LV_PAYMENT_METHOD_CODE        AP_INVOICES_ALL.PAYMENT_METHOD_CODE%TYPE;
+      LV_TERM_ID                    AP_INVOICES_ALL.TERMS_ID%TYPE;
+      LV_INVENTORY_ITEM_ID          AP_INVOICE_LINES_ALL.INVENTORY_ITEM_ID%TYPE;
+      LV_UOM_CODE                   AP_INVOICE_LINES_ALL.UNIT_MEAS_LOOKUP_CODE%TYPE;
+      LV_AP_INVOICE_DIS_ID          AP_INVOICE_DISTRIBUTIONS_ALL.INVOICE_DISTRIBUTION_ID%TYPE;
+      LV_CODE_COMBINATION_ID        GL_CODE_COMBINATIONS_KFV.CODE_COMBINATION_ID%TYPE;
+      LV_PERIOD_NAME                GL_PERIODS.PERIOD_NAME%TYPE;
+      LV_SET_OF_BOOKS_ID            GL_SETS_OF_BOOKS.SET_OF_BOOKS_ID%TYPE;
+      LV_SOURCE                     AP_LOOKUP_CODES.LOOKUP_CODE%TYPE;
+      LV_INVOICE_TYPE               AP_LOOKUP_CODES.LOOKUP_CODE%TYPE;
+      L_USER_ID                     FND_USER.USER_ID%TYPE;
+      L_RESP_ID                     FND_RESPONSIBILITY_TL.RESPONSIBILITY_ID%TYPE;
+      L_RESP_APPL_ID                FND_RESPONSIBILITY_TL.APPLICATION_ID%TYPE;
+      LV_PARTY_ID                   PO_VENDORS.PARTY_ID%TYPE;
+      LV_PARTY_SITE_ID              PO_VENDOR_SITES_ALL.PARTY_SITE_ID%TYPE;
+      LV_LINE_NUMBER                AP_INVOICE_LINES_ALL.LINE_NUMBER%TYPE;
+      LV_DIS_NUMBER                 AP_INVOICE_DISTRIBUTIONS_ALL.DISTRIBUTION_LINE_NUMBER%TYPE;
+      LV_ROW_ID                     VARCHAR2 (100);
+      LV_INVOICE_ID                 AP_INVOICES_ALL.INVOICE_ID%TYPE;
+      LV_DIST_CODE_COMBINATION_ID   GL_CODE_COMBINATIONS_KFV.CODE_COMBINATION_ID%TYPE;
+      LV_PO_LINE_ID                 PO_LINES_ALL.PO_LINE_ID%TYPE;
+      LV_LINE_LOCATION_ID           PO_LINE_LOCATIONS_ALL.LINE_LOCATION_ID%TYPE;
+      LV_PO_DISTRIBUTION_ID         PO_DISTRIBUTIONS_ALL.PO_DISTRIBUTION_ID%TYPE;
+      LV_PO_HEADER_ID               PO_HEADERS_ALL.PO_HEADER_ID%TYPE;
+
+      CURSOR HEADERS
+      IS
+         SELECT ROWID ROW_ID, XXAPIH.*
+           FROM XX_AP_INVOICE_HEADERS XXAPIH
+          WHERE PROCESS_FLAG = 'Y';
+
+
+      CURSOR LINES (L_INVOICE_ID NUMBER)
+      IS
+         SELECT ROWID ROW_ID, XXAPIL.*
+           FROM XX_AP_INVOICE_LINES XXAPIL
+          WHERE PROCESS_FLAG = 'Y' AND INVOICE_ID = L_INVOICE_ID;
+
+
+      CURSOR DISTRIBUTIONS (
+         D_INVOICE_ID     NUMBER,
+         D_LINE_NUMBER    NUMBER)
+      IS
+         SELECT ROWID ROW_ID, XXAPID.*
+           FROM XX_AP_INVOICE_DISTRIBUTIONS XXAPID
+          WHERE     PROCESS_FLAG = 'Y'
+                AND INVOICE_ID = D_INVOICE_ID
+                AND LINE_NUMBER = D_LINE_NUMBER;
+   BEGIN
+      BEGIN
+         MO_GLOBAL.SET_POLICY_CONTEXT ('S', 204);
+      END;
+
+
+      SELECT FND.USER_ID, FRESP.RESPONSIBILITY_ID, FRESP.APPLICATION_ID
+        INTO L_USER_ID, L_RESP_ID, L_RESP_APPL_ID
+        FROM FND_USER FND, FND_RESPONSIBILITY_TL FRESP
+       WHERE     FND.USER_NAME = 'VENKAT'
+             AND FRESP.RESPONSIBILITY_NAME =
+                    'Payables, Vision Operations (USA)';
+
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => L_USER_ID,
+                                  RESP_ID        => L_RESP_ID,
+                                  RESP_APPL_ID   => L_RESP_APPL_ID);
+
+      DBMS_OUTPUT.PUT_LINE ('USER ID: ' || L_USER_ID);
+      DBMS_OUTPUT.PUT_LINE ('RESPONSIBILITY ID : ' || L_RESP_ID);
+      DBMS_OUTPUT.PUT_LINE ('APPLICATION ID : ' || L_RESP_APPL_ID);
+
+
+
+      ERROR_MSG := NULL;
+
+
+
+      SELECT AP_INVOICE_DISTRIBUTIONS_S.NEXTVAL
+        INTO LV_AP_INVOICE_DIS_ID
+        FROM DUAL;
+
+
+      FOR H IN HEADERS
+      LOOP
+         ERROR_FLAG := 'A';
+
+         BEGIN
+            SELECT AP_INVOICES_S.NEXTVAL INTO XX_AP_SEQ FROM DUAL;
+
+            --------------*****ORGANIZATION NAME VALIDATION*****----------
+
+            SELECT ORGANIZATION_ID
+              INTO LV_ORG_ID
+              FROM ORG_ORGANIZATION_DEFINITIONS
+             WHERE ORGANIZATION_NAME = H.OPERATING_UNIT;
+
+            DBMS_OUTPUT.PUT_LINE ('organization_name IS VALID' || LV_ORG_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'organization_name IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'organization_name IS INVALID' || LV_ORG_ID);
+         END;
+
+
+         --------------*****INVOICE TYPE VALIDATION******---------
+
+         BEGIN
+            SELECT LOOKUP_CODE
+              INTO LV_INVOICE_TYPE
+              FROM AP_LOOKUP_CODES
+             WHERE     LOOKUP_TYPE = 'INVOICE TYPE'
+                   AND LOOKUP_CODE = H.INVOICE_TYPE;
+
+            DBMS_OUTPUT.PUT_LINE ('INVOICE_TYPE IS VALID' || LV_INVOICE_TYPE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'INVOICE_TYPE  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'INVOICE_TYPE  IS INVALID' || LV_INVOICE_TYPE);
+         END;
+
+         --------------******SUPPLIER VALIDATION******--------------
+
+         BEGIN
+            SELECT VENDOR_ID, PARTY_ID
+              INTO LV_VENDOR_ID, LV_PARTY_ID
+              FROM PO_VENDORS
+             WHERE VENDOR_NAME = H.SUPPLIER;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'VENDOR_ID IS VALID' || LV_VENDOR_ID || '  ' || LV_PARTY_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'VENDOR_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                     'VENDOR_ID  IS INVALID'
+                  || LV_VENDOR_ID
+                  || '  '
+                  || LV_PARTY_ID);
+         END;
+
+
+
+         BEGIN
+            SELECT VENDOR_SITE_ID, PARTY_SITE_ID
+              INTO LV_VENDOR_SITE_ID, LV_PARTY_SITE_ID
+              FROM PO_VENDOR_SITES_ALL
+             WHERE     VENDOR_SITE_CODE = H.SUPPLIER_SITE
+                   AND VENDOR_ID = LV_VENDOR_ID
+                   AND ORG_ID = LV_ORG_ID;
+
+            DBMS_OUTPUT.PUT_LINE (
+                  'SUPPLIER SITE  IS VALID'
+               || LV_VENDOR_SITE_ID
+               || 'party site id '
+               || LV_PARTY_SITE_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'SUPPLIER SITE  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                     'SUPPLIER SITE  IS INVALID'
+                  || LV_VENDOR_SITE_ID
+                  || 'party site id '
+                  || LV_PARTY_SITE_ID);
+         END;
+
+         ----------------*******PAYMENT CURRENCY CODE VALIDATION*********-------
+
+
+         BEGIN
+            SELECT IEPPM.PAYMENT_METHOD_CODE
+              INTO LV_PAYMENT_METHOD_CODE
+              FROM AP_SUPPLIER_SITES_ALL ASSA,
+                   AP_SUPPLIERS SUP,
+                   IBY_EXTERNAL_PAYEES_ALL IEPA,
+                   IBY_EXT_PARTY_PMT_MTHDS IEPPM
+             WHERE     SUP.VENDOR_ID = ASSA.VENDOR_ID
+                   AND ASSA.VENDOR_SITE_ID = IEPA.SUPPLIER_SITE_ID
+                   AND IEPA.EXT_PAYEE_ID = IEPPM.EXT_PMT_PARTY_ID
+                   AND NVL (IEPPM.INACTIVE_DATE, SYSDATE + 1) > SYSDATE
+                   AND ASSA.VENDOR_SITE_ID = LV_VENDOR_SITE_ID
+                   AND IEPPM.PRIMARY_FLAG = 'Y'
+                   AND ASSA.PAY_SITE_FLAG = 'Y';
+
+            DBMS_OUTPUT.PUT_LINE (
+               'PAYMENT METHOD IS VALID' || LV_PAYMENT_METHOD_CODE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'PAYMENT METHOD  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('PAYMENT METHOD  IS INVALID');
+         END;
+
+
+         ------------------------------****TERMS VALIDATION******------------
+
+         BEGIN
+            SELECT TERM_ID
+              INTO LV_TERM_ID
+              FROM AP_TERMS
+             WHERE NAME = H.TERMS;
+
+            DBMS_OUTPUT.PUT_LINE ('TERM ID IS VALID' || LV_TERM_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'TERM ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('TERM ID  IS INVALID');
+         END;
+
+
+         ------------------------------------LINES ------------------------
+
+
+         ------------------------*****VALIDATION OF SET OF BOOKS******----------------
+
+
+         BEGIN
+            SELECT SET_OF_BOOKS_ID
+              INTO LV_SET_OF_BOOKS_ID
+              FROM GL_SETS_OF_BOOKS
+             WHERE SHORT_NAME = H.OPERATING_UNIT;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'SET_OF_BOOKS_ID IS VALID' || LV_SET_OF_BOOKS_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'SET_OF_BOOKS_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'SET_OF_BOOKS_ID  IS INVALID' || LV_SET_OF_BOOKS_ID);
+         END;
+
+         --------------**********VALIDATION OF CHARGE ACCOUNT*****-----------
+
+         BEGIN
+            SELECT CODE_COMBINATION_ID
+              INTO LV_CODE_COMBINATION_ID
+              FROM GL_CODE_COMBINATIONS_KFV GCC, GL_SETS_OF_BOOKS GSB
+             WHERE     CONCATENATED_SEGMENTS = H.CHARGE_ACCOUNT
+                   AND GCC.CHART_OF_ACCOUNTS_ID = GSB.CHART_OF_ACCOUNTS_ID
+                   AND SET_OF_BOOKS_ID = LV_SET_OF_BOOKS_ID;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'CODE_COMBINATION_ID IS VALID' || LV_CODE_COMBINATION_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'CODE_COMBINATION_ID  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'CODE_COMBINATION_ID  IS INVALID' || LV_CODE_COMBINATION_ID);
+         END;
+
+
+
+         ------------------*********VALIDATION OF SOURCE********------------
+
+         BEGIN
+            SELECT LOOKUP_CODE
+              INTO LV_SOURCE
+              FROM AP_LOOKUP_CODES
+             WHERE     LOOKUP_TYPE = 'SOURCE'
+                   AND DISPLAYED_FIELD = 'Manual Invoice Entry';
+
+            DBMS_OUTPUT.PUT_LINE ('source IS VALID' || LV_SOURCE);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'source  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE ('source IS VALID' || LV_SOURCE);
+         END;
+
+
+         BEGIN
+            SELECT PO_HEADER_ID
+              INTO LV_PO_HEADER_ID
+              FROM PO_HEADERS_ALL
+             WHERE SEGMENT1 = H.PO_NUMBER;
+
+            DBMS_OUTPUT.PUT_LINE ('po number IS VALID' || LV_PO_HEADER_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ERROR_FLAG := 'E';
+               ERROR_MSG := 'po_number  IS INVALID';
+               DBMS_OUTPUT.PUT_LINE (
+                  'po number IS INVALID' || LV_PO_HEADER_ID);
+         END;
+
+
+
+         SELECT ROWID ROW_ID, INVOICE_ID
+           INTO LV_ROW_ID, LV_INVOICE_ID
+           FROM AP_INVOICES_ALL
+          WHERE INVOICE_NUM = H.INVOICE_NUM;
+
+
+         ---------------------HEADERS UPDATE ------------
+
+         IF ERROR_FLAG != 'E'
+         THEN
+            ----------HEADERS UPDATE--------------
+
+
+            DBMS_OUTPUT.PUT_LINE ('UPDATE HEADERS ..');
+
+
+            DBMS_OUTPUT.PUT_LINE (
+               'invoice id AT HEADERS : ' || LV_INVOICE_ID);
+
+            BEGIN
+               AP_AI_TABLE_HANDLER_PKG.UPDATE_ROW (
+                  P_ROWID                         => LV_ROW_ID,
+                  P_INVOICE_ID                    => LV_INVOICE_ID,
+                  P_LAST_UPDATE_DATE              => SYSDATE,
+                  P_LAST_UPDATED_BY               => L_USER_ID,
+                  P_VENDOR_ID                     => LV_VENDOR_ID,
+                  P_INVOICE_NUM                   => H.INVOICE_NUM,
+                  P_INVOICE_AMOUNT                => H.INVOICE_AMOUNT,
+                  P_VENDOR_SITE_ID                => LV_VENDOR_SITE_ID,
+                  P_AMOUNT_PAID                   => NULL,
+                  P_DISCOUNT_AMOUNT_TAKEN         => NULL,
+                  P_INVOICE_DATE                  => SYSDATE,
+                  P_SOURCE                        => H.SOURCE,
+                  P_INVOICE_TYPE_LOOKUP_CODE      => H.INVOICE_TYPE,
+                  P_DESCRIPTION                   => NULL,
+                  P_BATCH_ID                      => NULL,
+                  P_AMT_APPLICABLE_TO_DISCOUNT    => NULL,
+                  P_TERMS_ID                      => LV_TERM_ID,
+                  P_TERMS_DATE                    => SYSDATE,
+                  P_GOODS_RECEIVED_DATE           => SYSDATE,
+                  P_INVOICE_RECEIVED_DATE         => SYSDATE,
+                  P_VOUCHER_NUM                   => NULL,
+                  P_APPROVED_AMOUNT               => NULL,
+                  P_APPROVAL_STATUS               => NULL,
+                  P_APPROVAL_DESCRIPTION          => NULL,
+                  P_PAY_GROUP_LOOKUP_CODE         => NULL,
+                  P_SET_OF_BOOKS_ID               => LV_SET_OF_BOOKS_ID,
+                  P_ACCTS_PAY_CCID                => LV_CODE_COMBINATION_ID,
+                  P_RECURRING_PAYMENT_ID          => NULL,
+                  P_INVOICE_CURRENCY_CODE         => H.INVOICE_CURRENCY_CODE,
+                  P_PAYMENT_CURRENCY_CODE         => H.INVOICE_CURRENCY_CODE,
+                  P_EXCHANGE_RATE                 => NULL,
+                  P_PAYMENT_AMOUNT_TOTAL          => NULL,
+                  P_PAYMENT_STATUS_FLAG           => 'N',
+                  P_POSTING_STATUS                => NULL,
+                  P_AUTHORIZED_BY                 => NULL,
+                  P_ATTRIBUTE_CATEGORY            => NULL,
+                  P_ATTRIBUTE1                    => NULL,
+                  P_ATTRIBUTE2                    => NULL,
+                  P_ATTRIBUTE3                    => NULL,
+                  P_ATTRIBUTE4                    => NULL,
+                  P_ATTRIBUTE5                    => NULL,
+                  P_VENDOR_PREPAY_AMOUNT          => NULL,
+                  P_BASE_AMOUNT                   => NULL,
+                  P_EXCHANGE_RATE_TYPE            => NULL,
+                  P_EXCHANGE_DATE                 => NULL,
+                  P_PAYMENT_CROSS_RATE            => 1,
+                  P_PAYMENT_CROSS_RATE_TYPE       => NULL,
+                  P_PAYMENT_CROSS_RATE_DATE       => NULL,
+                  P_PAY_CURR_INVOICE_AMOUNT       => NULL,
+                  P_LAST_UPDATE_LOGIN             => NULL,
+                  P_ORIGINAL_PREPAYMENT_AMOUNT    => NULL,
+                  P_EARLIEST_SETTLEMENT_DATE      => NULL,
+                  P_ATTRIBUTE11                   => NULL,
+                  P_ATTRIBUTE12                   => NULL,
+                  P_ATTRIBUTE13                   => NULL,
+                  P_ATTRIBUTE14                   => NULL,
+                  P_ATTRIBUTE6                    => NULL,
+                  P_ATTRIBUTE7                    => NULL,
+                  P_ATTRIBUTE8                    => NULL,
+                  P_ATTRIBUTE9                    => NULL,
+                  P_ATTRIBUTE10                   => NULL,
+                  P_ATTRIBUTE15                   => NULL,
+                  P_CANCELLED_DATE                => NULL,
+                  P_CANCELLED_BY                  => NULL,
+                  P_CANCELLED_AMOUNT              => NULL,
+                  P_TEMP_CANCELLED_AMOUNT         => NULL,
+                  P_EXCLUSIVE_PAYMENT_FLAG        => NULL,
+                  P_PO_HEADER_ID                  => NULL,
+                  P_DOC_SEQUENCE_ID               => NULL,
+                  P_DOC_SEQUENCE_VALUE            => NULL,
+                  P_DOC_CATEGORY_CODE             => NULL,
+                  P_EXPENDITURE_ITEM_DATE         => NULL,
+                  P_EXPENDITURE_ORGANIZATION_ID   => NULL,
+                  P_EXPENDITURE_TYPE              => NULL,
+                  P_PA_DEFAULT_DIST_CCID          => NULL,
+                  P_PA_QUANTITY                   => NULL,
+                  P_PROJECT_ID                    => NULL,
+                  P_TASK_ID                       => NULL,
+                  P_AWT_FLAG                      => NULL,
+                  P_AWT_GROUP_ID                  => NULL,
+                  P_PAY_AWT_GROUP_ID              => NULL,
+                  P_REFERENCE_1                   => NULL,
+                  P_REFERENCE_2                   => NULL,
+                  P_ORG_ID                        => LV_ORG_ID,
+                  P_CALLING_SEQUENCE              => '1',
+                  P_GL_DATE                       => SYSDATE,
+                  P_AWARD_ID                      => NULL,
+                  P_APPROVAL_ITERATION            => NULL,
+                  P_APPROVAL_READY_FLAG           => 'Y',
+                  P_WFAPPROVAL_STATUS             => 'NOT REQUIRED',
+                  P_PAYMENT_METHOD_CODE           => LV_PAYMENT_METHOD_CODE,
+                  P_PARTY_ID                      => LV_PARTY_ID,
+                  P_PARTY_SITE_ID                 => LV_PARTY_SITE_ID,
+                  P_QUICK_PO_HEADER_ID            => LV_PO_HEADER_ID);
+
+
+               DBMS_OUTPUT.PUT_LINE (' HEADERS UPDATED..END');
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  DBMS_OUTPUT.PUT_LINE ('sql error is :' || SQLERRM);
+                  DBMS_OUTPUT.PUT_LINE ('sql code error is :' || SQLCODE);
+            END;
+         ELSE
+            UPDATE XX_AP_INVOICE_HEADERS
+               SET ERR_FLAG = ERROR_FLAG, ERROR_MSG = ERROR_MSG;
+         END IF;
+
+         ---------------LINES UPDATE-------------
+
+         LV_LINE_NUMBER := 0;
+         LV_DIS_NUMBER := 0;
+
+
+         FOR L IN LINES (H.INVOICE_ID)
+         LOOP
+            LV_LINE_NUMBER := LV_LINE_NUMBER + 1;
+
+            ------------------*****LINES VALIDATION*****------------
+
+            --------------*****ORGANIZATION NAME VALIDATION*****----------
+
+            BEGIN
+               SELECT ORGANIZATION_ID
+                 INTO LV_ORG_ID
+                 FROM ORG_ORGANIZATION_DEFINITIONS
+                WHERE ORGANIZATION_NAME = H.OPERATING_UNIT;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'organization_name IS VALID' || LV_ORG_ID);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'organization_name IS INVALID';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'organization_name IS INVALID' || LV_ORG_ID);
+            END;
+
+
+            -------------******VALIDATION OF ITEM******----------
+
+            BEGIN
+               SELECT INVENTORY_ITEM_ID
+                 INTO LV_INVENTORY_ITEM_ID
+                 FROM MTL_SYSTEM_ITEMS_B
+                WHERE SEGMENT1 = L.ITEM AND ORGANIZATION_ID = LV_ORG_ID;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'INVENTORY_ITEM_ID IS VALID' || LV_INVENTORY_ITEM_ID);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'INVENTORY_ITEM_ID  IS INVALID';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'INVENTORY_ITEM_ID  IS INVALID' || LV_INVENTORY_ITEM_ID);
+            END;
+
+
+
+            SELECT ROWID ROW_ID
+              INTO LV_ROW_ID
+              FROM AP_INVOICE_LINES_ALL
+             WHERE     INVOICE_ID = (SELECT INVOICE_ID
+                                       FROM AP_INVOICES_ALL
+                                      WHERE INVOICE_NUM = H.INVOICE_NUM)
+                   AND LINE_NUMBER = LV_LINE_NUMBER;
+
+
+            --------------------------------------------------
+
+
+            BEGIN
+               SELECT PO_LINE_ID
+                 INTO LV_PO_LINE_ID
+                 FROM PO_LINES_ALL
+                WHERE     PO_HEADER_ID = (SELECT PO_HEADER_ID
+                                            FROM PO_HEADERS_ALL
+                                           WHERE SEGMENT1 = H.PO_NUMBER)
+                      AND LINE_NUM = LV_LINE_NUMBER;
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'PO NUMBER DOES IS VALID' || H.PO_NUMBER);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO NUMBER DOES NOT EXITST' || H.PO_NUMBER);
+            END;
+
+
+
+            BEGIN
+               SELECT LINE_LOCATION_ID
+                 INTO LV_LINE_LOCATION_ID
+                 FROM PO_LINE_LOCATIONS_ALL
+                WHERE PO_LINE_ID =
+                         (SELECT PO_LINE_ID
+                            FROM PO_LINES_ALL
+                           WHERE     PO_HEADER_ID =
+                                        (SELECT PO_HEADER_ID
+                                           FROM PO_HEADERS_ALL
+                                          WHERE SEGMENT1 = H.PO_NUMBER)
+                                 AND LINE_NUM = LV_LINE_NUMBER);
+
+               DBMS_OUTPUT.PUT_LINE ('PO NUMBER IS VALID' || H.PO_NUMBER);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO NUMBER DOES NOT EXITST' || H.PO_NUMBER);
+            END;
+
+
+
+            BEGIN
+               SELECT PO_DISTRIBUTION_ID
+                 INTO LV_PO_DISTRIBUTION_ID
+                 FROM PO_DISTRIBUTIONS_ALL
+                WHERE PO_LINE_ID =
+                         (SELECT PO_LINE_ID
+                            FROM PO_LINES_ALL
+                           WHERE     PO_HEADER_ID =
+                                        (SELECT PO_HEADER_ID
+                                           FROM PO_HEADERS_ALL
+                                          WHERE SEGMENT1 = H.PO_NUMBER)
+                                 AND LINE_NUM = LV_LINE_NUMBER);
+
+               DBMS_OUTPUT.PUT_LINE ('PO NUMBER IS VALID' || H.PO_NUMBER);
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ERROR_FLAG := 'E';
+                  ERROR_MSG := 'PO NUMBER DOES NOT EXITST';
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PO NUMBER DOES NOT EXITST' || H.PO_NUMBER);
+            END;
+
+            DBMS_OUTPUT.PUT_LINE ('INVOICE ID AT LINES : ' || LV_INVOICE_ID);
+
+            IF ERROR_FLAG != 'E'
+            THEN
+               BEGIN
+                  AP_AIL_TABLE_HANDLER_PKG.UPDATE_ROW (
+                     P_ROWID                          => LV_ROW_ID,
+                     P_INVOICE_ID                     => LV_INVOICE_ID,
+                     P_LINE_NUMBER                    => L.LINE_NUMBER,
+                     P_LINE_TYPE_LOOKUP_CODE          => L.LINE_TYPE,
+                     P_LINE_GROUP_NUMBER              => NULL,
+                     P_REQUESTER_ID                   => NULL,
+                     P_DESCRIPTION                    => L.DESCRIPTION,
+                     P_LINE_SOURCE                    => 'IMPORTED',
+                     P_ORG_ID                         => LV_ORG_ID,
+                     P_INVENTORY_ITEM_ID              => LV_INVENTORY_ITEM_ID,
+                     P_ITEM_DESCRIPTION               => L.DESCRIPTION,
+                     P_SERIAL_NUMBER                  => NULL,
+                     P_MANUFACTURER                   => NULL,
+                     P_MODEL_NUMBER                   => NULL,
+                     P_WARRANTY_NUMBER                => NULL,
+                     P_GENERATE_DISTS                 => 'D',
+                     P_MATCH_TYPE                     => 'ITEM_TO_PO',
+                     P_DISTRIBUTION_SET_ID            => NULL,
+                     P_ACCOUNT_SEGMENT                => NULL,
+                     P_BALANCING_SEGMENT              => NULL,
+                     P_COST_CENTER_SEGMENT            => NULL,
+                     P_OVERLAY_DIST_CODE_CONCAT       => NULL,
+                     P_DEFAULT_DIST_CCID              => NULL,
+                     P_PRORATE_ACROSS_ALL_ITEMS       => NULL,
+                     P_ACCOUNTING_DATE                => SYSDATE,
+                     P_PERIOD_NAME                    => LV_PERIOD_NAME,
+                     P_DEFERRED_ACCTG_FLAG            => 'N',
+                     P_DEF_ACCTG_START_DATE           => NULL,
+                     P_DEF_ACCTG_END_DATE             => NULL,
+                     P_DEF_ACCTG_NUMBER_OF_PERIODS    => NULL,
+                     P_DEF_ACCTG_PERIOD_TYPE          => NULL,
+                     P_SET_OF_BOOKS_ID                => LV_SET_OF_BOOKS_ID,
+                     P_AMOUNT                         => L.LINE_AMOUNT,
+                     P_BASE_AMOUNT                    => NULL,
+                     P_ROUNDING_AMT                   => NULL,
+                     P_QUANTITY_INVOICED              => L.QUANTITY_INVOICED,
+                     P_UNIT_MEAS_LOOKUP_CODE          => L.UNIT_MEASURE,
+                     P_UNIT_PRICE                     => L.UNIT_PRICE,
+                     P_WFAPPROVAL_STATUS              => 'NOT REQUIRED',
+                     P_DISCARDED_FLAG                 => NULL,
+                     P_ORIGINAL_AMOUNT                => NULL,
+                     P_ORIGINAL_BASE_AMOUNT           => NULL,
+                     P_ORIGINAL_ROUNDING_AMT          => NULL,
+                     P_CANCELLED_FLAG                 => NULL,
+                     P_INCOME_TAX_REGION              => NULL,
+                     P_TYPE_1099                      => NULL,
+                     P_STAT_AMOUNT                    => NULL,
+                     P_PREPAY_INVOICE_ID              => NULL,
+                     P_PREPAY_LINE_NUMBER             => NULL,
+                     P_INVOICE_INCLUDES_PREPAY_FLAG   => NULL,
+                     P_CORRECTED_INV_ID               => NULL,
+                     P_CORRECTED_LINE_NUMBER          => NULL,
+                     P_PO_HEADER_ID                   => LV_PO_HEADER_ID,
+                     P_PO_RELEASE_ID                  => NULL,
+                     P_PO_LINE_LOCATION_ID            => LV_LINE_LOCATION_ID,
+                     P_PO_DISTRIBUTION_ID             => LV_PO_DISTRIBUTION_ID,
+                     P_PO_LINE_ID                     => LV_PO_LINE_ID,
+                     P_RCV_TRANSACTION_ID             => NULL,
+                     P_FINAL_MATCH_FLAG               => NULL,
+                     P_ASSETS_TRACKING_FLAG           => 'Y',
+                     P_ASSET_BOOK_TYPE_CODE           => NULL,
+                     P_ASSET_CATEGORY_ID              => NULL,
+                     P_PROJECT_ID                     => NULL,
+                     P_TASK_ID                        => NULL,
+                     P_EXPENDITURE_TYPE               => NULL,
+                     P_EXPENDITURE_ITEM_DATE          => NULL,
+                     P_EXPENDITURE_ORGANIZATION_ID    => NULL,
+                     P_PA_QUANTITY                    => 1,
+                     P_PA_CC_AR_INVOICE_ID            => NULL,
+                     P_PA_CC_AR_INVOICE_LINE_NUM      => NULL,
+                     P_PA_CC_PROCESSED_CODE           => NULL,
+                     P_AWARD_ID                       => NULL,
+                     P_AWT_GROUP_ID                   => NULL,
+                     P_PAY_AWT_GROUP_ID               => NULL,
+                     P_REFERENCE_1                    => NULL,
+                     P_REFERENCE_2                    => NULL,
+                     P_RECEIPT_VERIFIED_FLAG          => NULL,
+                     P_RECEIPT_REQUIRED_FLAG          => NULL,
+                     P_RECEIPT_MISSING_FLAG           => NULL,
+                     P_JUSTIFICATION                  => NULL,
+                     P_EXPENSE_GROUP                  => NULL,
+                     P_START_EXPENSE_DATE             => NULL,
+                     P_END_EXPENSE_DATE               => NULL,
+                     P_RECEIPT_CURRENCY_CODE          => NULL,
+                     P_RECEIPT_CONVERSION_RATE        => NULL,
+                     P_RECEIPT_CURRENCY_AMOUNT        => NULL,
+                     P_DAILY_AMOUNT                   => NULL,
+                     P_WEB_PARAMETER_ID               => NULL,
+                     P_ADJUSTMENT_REASON              => NULL,
+                     P_MERCHANT_DOCUMENT_NUMBER       => NULL,
+                     P_MERCHANT_NAME                  => NULL,
+                     P_MERCHANT_REFERENCE             => NULL,
+                     P_MERCHANT_TAX_REG_NUMBER        => NULL,
+                     P_MERCHANT_TAXPAYER_ID           => NULL,
+                     P_COUNTRY_OF_SUPPLY              => NULL,
+                     P_CREDIT_CARD_TRX_ID             => NULL,
+                     P_COMPANY_PREPAID_INVOICE_ID     => NULL,
+                     P_CC_REVERSAL_FLAG               => NULL,
+                     P_CREATION_DATE                  => NULL,
+                     P_CREATED_BY                     => L_USER_ID,
+                     P_LAST_UPDATED_BY                => L_USER_ID,
+                     P_LAST_UPDATE_DATE               => SYSDATE,
+                     P_LAST_UPDATE_LOGIN              => NULL,
+                     P_PROGRAM_APPLICATION_ID         => NULL,
+                     P_PROGRAM_ID                     => NULL,
+                     P_PROGRAM_UPDATE_DATE            => NULL,
+                     P_REQUEST_ID                     => NULL,
+                     P_ATTRIBUTE_CATEGORY             => NULL,
+                     P_ATTRIBUTE1                     => NULL,
+                     P_ATTRIBUTE2                     => NULL,
+                     P_ATTRIBUTE3                     => NULL,
+                     P_ATTRIBUTE4                     => NULL,
+                     P_ATTRIBUTE5                     => NULL,
+                     P_CALLING_SEQUENCE               => '1');
+
+
+                  DBMS_OUTPUT.PUT_LINE (' LINES  updated..: ');
+                  COMMIT;
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     DBMS_OUTPUT.PUT_LINE ('sql error is :' || SQLERRM);
+                     DBMS_OUTPUT.PUT_LINE ('sql code error is :' || SQLCODE);
+               END;
+            ELSE
+               UPDATE XX_AP_INVOICE_LINES
+                  SET ERR_FLAG = ERROR_FLAG, ERROR_MSG = ERROR_MSG;
+            END IF;
+
+            ----------------------------DISTRIBUTIONS UPDATE----------
+
+
+
+            FOR D IN DISTRIBUTIONS (L.INVOICE_ID, L.LINE_NUMBER)
+            LOOP
+               LV_DIS_NUMBER := LV_DIS_NUMBER + 1;
+
+               ------------------*********VALIDATION OF GL PERIODS *********------------------
+
+               BEGIN
+                  SELECT PERIOD_NAME
+                    INTO LV_PERIOD_NAME
+                    FROM GL_PERIODS
+                   WHERE PERIOD_NAME = D.PERIOD_NAME;
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'PERIOD_NAME IS VALID' || LV_PERIOD_NAME);
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     ERROR_FLAG := 'E';
+                     ERROR_MSG := 'PERIOD_NAME  IS INVALID';
+                     DBMS_OUTPUT.PUT_LINE (
+                        'PERIOD_NAME  IS INVALID' || LV_PERIOD_NAME);
+               END;
+
+
+               ----------------ACCOUNT VALIDATION---------------
+
+               BEGIN
+                  SELECT CODE_COMBINATION_ID
+                    INTO LV_DIST_CODE_COMBINATION_ID
+                    FROM GL_CODE_COMBINATIONS_KFV
+                   WHERE     CONCATENATED_SEGMENTS = D.ACCOUNT
+                         AND CHART_OF_ACCOUNTS_ID = 101;
+
+                  DBMS_OUTPUT.PUT_LINE (
+                     'ACCOUNT IS VALID' || LV_DIST_CODE_COMBINATION_ID);
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     ERROR_FLAG := 'E';
+                     ERROR_MSG := 'ACCOUNT  IS INVALID';
+                     DBMS_OUTPUT.PUT_LINE (
+                        'ACCOUNT  IS INVALID' || LV_DIST_CODE_COMBINATION_ID);
+               END;
+
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'row ID for distributions insert IS  : ' || D.ROW_ID);
+
+
+
+               DBMS_OUTPUT.PUT_LINE (
+                  'invoice id distributions :   : ' || XX_AP_SEQ);
+
+               SELECT ROWID ROW_ID
+                 INTO LV_ROW_ID
+                 FROM AP_INVOICE_DISTRIBUTIONS_ALL
+                WHERE     INVOICE_ID =
+                             (SELECT INVOICE_ID
+                                FROM AP_INVOICE_LINES_ALL
+                               WHERE     INVOICE_ID =
+                                            (SELECT INVOICE_ID
+                                               FROM AP_INVOICES_ALL
+                                              WHERE INVOICE_NUM =
+                                                       H.INVOICE_NUM)
+                                     AND LINE_NUMBER = LV_LINE_NUMBER)
+                      AND DISTRIBUTION_LINE_NUMBER = LV_DIS_NUMBER;
+
+               DBMS_OUTPUT.PUT_LINE ('INVOICE ID AT DIS : ' || LV_INVOICE_ID);
+
+
+
+               DBMS_OUTPUT.PUT_LINE ('UPDATE DISTRIBUTIONS ..: ');
+
+
+               IF ERROR_FLAG != 'E'
+               THEN
+                  BEGIN
+                     AP_AID_TABLE_HANDLER_PKG.UPDATE_ROW (
+                        P_ROWID                         => LV_ROW_ID,
+                        P_INVOICE_ID                    => LV_INVOICE_ID,
+                        P_INVOICE_LINE_NUMBER           => D.LINE_NUMBER,
+                        P_DISTRIBUTION_CLASS            => 'PERMANENT',
+                        P_DIST_CODE_COMBINATION_ID      => LV_DIST_CODE_COMBINATION_ID,
+                        P_LAST_UPDATE_DATE              => SYSDATE,
+                        P_LAST_UPDATED_BY               => L_USER_ID,
+                        P_ACCOUNTING_DATE               => SYSDATE,
+                        P_PERIOD_NAME                   => LV_PERIOD_NAME,
+                        P_SET_OF_BOOKS_ID               => LV_SET_OF_BOOKS_ID,
+                        P_AMOUNT                        => D.AMOUNT,
+                        P_DESCRIPTION                   => NULL,
+                        P_TYPE_1099                     => 1,
+                        P_POSTED_FLAG                   => 'Y',
+                        P_BATCH_ID                      => NULL,
+                        P_QUANTITY_INVOICED             => NULL,
+                        P_UNIT_PRICE                    => NULL,
+                        P_MATCH_STATUS_FLAG             => 'Y',
+                        P_ATTRIBUTE_CATEGORY            => NULL,
+                        P_ATTRIBUTE1                    => NULL,
+                        P_ATTRIBUTE2                    => NULL,
+                        P_ATTRIBUTE3                    => NULL,
+                        P_ATTRIBUTE4                    => NULL,
+                        P_ATTRIBUTE5                    => NULL,
+                        P_PREPAY_AMOUNT_REMAINING       => NULL,
+                        P_ASSETS_ADDITION_FLAG          => 'N',
+                        P_ASSETS_TRACKING_FLAG          => 'Y',
+                        P_DISTRIBUTION_LINE_NUMBER      => D.DIS_LINE_NUM,
+                        P_LINE_TYPE_LOOKUP_CODE         => D.DIS_TYPE,
+                        P_PO_DISTRIBUTION_ID            => LV_PO_DISTRIBUTION_ID,
+                        P_BASE_AMOUNT                   => NULL,
+                        P_PA_ADDITION_FLAG              => NULL,
+                        P_POSTED_AMOUNT                 => NULL,
+                        P_POSTED_BASE_AMOUNT            => NULL,
+                        P_ENCUMBERED_FLAG               => NULL,
+                        P_ACCRUAL_POSTED_FLAG           => NULL,
+                        P_CASH_POSTED_FLAG              => NULL,
+                        P_LAST_UPDATE_LOGIN             => NULL,
+                        P_STAT_AMOUNT                   => NULL,
+                        P_ATTRIBUTE11                   => NULL,
+                        P_ATTRIBUTE12                   => NULL,
+                        P_ATTRIBUTE13                   => NULL,
+                        P_ATTRIBUTE14                   => NULL,
+                        P_ATTRIBUTE6                    => NULL,
+                        P_ATTRIBUTE7                    => NULL,
+                        P_ATTRIBUTE8                    => NULL,
+                        P_ATTRIBUTE9                    => NULL,
+                        P_ATTRIBUTE10                   => NULL,
+                        P_ATTRIBUTE15                   => NULL,
+                        P_ACCTS_PAY_CODE_COMB_ID        => NULL,
+                        P_REVERSAL_FLAG                 => 'N',
+                        P_PARENT_INVOICE_ID             => NULL,
+                        P_INCOME_TAX_REGION             => NULL,
+                        P_FINAL_MATCH_FLAG              => NULL,
+                        P_EXPENDITURE_ITEM_DATE         => NULL,
+                        P_EXPENDITURE_ORGANIZATION_ID   => NULL,
+                        P_EXPENDITURE_TYPE              => NULL,
+                        P_PA_QUANTITY                   => NULL,
+                        P_PROJECT_ID                    => NULL,
+                        P_TASK_ID                       => NULL,
+                        P_QUANTITY_VARIANCE             => NULL,
+                        P_BASE_QUANTITY_VARIANCE        => NULL,
+                        P_PACKET_ID                     => NULL,
+                        P_AWT_FLAG                      => NULL,
+                        P_AWT_GROUP_ID                  => NULL,
+                        P_PAY_AWT_GROUP_ID              => NULL,
+                        P_AWT_TAX_RATE_ID               => NULL,
+                        P_AWT_GROSS_AMOUNT              => NULL,
+                        P_REFERENCE_1                   => NULL,
+                        P_REFERENCE_2                   => NULL,
+                        P_ORG_ID                        => LV_ORG_ID,
+                        P_OTHER_INVOICE_ID              => NULL,
+                        P_AWT_INVOICE_ID                => NULL,
+                        P_AWT_ORIGIN_GROUP_ID           => NULL,
+                        P_PROGRAM_APPLICATION_ID        => NULL,
+                        P_PROGRAM_ID                    => NULL,
+                        P_PROGRAM_UPDATE_DATE           => NULL,
+                        P_REQUEST_ID                    => NULL,
+                        P_TAX_RECOVERABLE_FLAG          => NULL,
+                        P_AWARD_ID                      => NULL,
+                        P_START_EXPENSE_DATE            => NULL,
+                        P_MERCHANT_DOCUMENT_NUMBER      => NULL,
+                        P_MERCHANT_NAME                 => NULL,
+                        P_MERCHANT_TAX_REG_NUMBER       => NULL,
+                        P_MERCHANT_TAXPAYER_ID          => NULL,
+                        P_COUNTRY_OF_SUPPLY             => NULL,
+                        P_MERCHANT_REFERENCE            => NULL,
+                        P_CALLING_SEQUENCE              => '1');
+                     DBMS_OUTPUT.PUT_LINE ('DISTRIBUTIONS .updated. ');
+                     COMMIT;
+                  EXCEPTION
+                     WHEN OTHERS
+                     THEN
+                        DBMS_OUTPUT.PUT_LINE (
+                           'ERROR MESSEGE IS : ' || SQLERRM);
+                        DBMS_OUTPUT.PUT_LINE ('ERROR CODE IS : ' || SQLCODE);
+                        ROLLBACK;
+                  END;
+               ELSE
+                  UPDATE XX_AP_INVOICE_DISTRIBUTIONS
+                     SET ERR_FLAG = ERROR_FLAG, ERR_MSG = ERROR_MSG;
+               END IF;
+            END LOOP;                                  --<END DISTRIBUTIONS>--
+         END LOOP;                                             --<END LINES>--
+
+         DBMS_OUTPUT.PUT_LINE ('values updated successfully ');
+      END LOOP;                                              --<END HEADERS>--
+   END XX_AP_INVOICE_UPDATE;                        --<END UPDATE PROCEDURE>--
+
+
+
+   PROCEDURE XX_AP_INVOICE_DELETE
+   IS
+      ERROR_FLAG       VARCHAR2 (1);
+      ERROR_MSG        VARCHAR2 (2000);
+      LV_INVOICE_ID    NUMBER;
+      LV_ROW_ID        VARCHAR2 (100);
+      L_USER_ID        NUMBER;
+      L_RESP_ID        NUMBER;
+      L_RESP_APPL_ID   NUMBER;
+      L_INVOICE_NUM    VARCHAR2 (100);
+
+      CURSOR HEADERS
+      IS
+         SELECT INVOICE_NUM
+           FROM XX_AP_INVOICE_HEADERS XXAPIH
+          WHERE PROCESS_FLAG = 'Y';
+   BEGIN
+      BEGIN
+         MO_GLOBAL.SET_POLICY_CONTEXT ('S', 204);
+      END;
+
+
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => L_USER_ID,
+                                  RESP_ID        => L_RESP_ID,
+                                  RESP_APPL_ID   => L_RESP_APPL_ID);
+
+      SELECT FND.USER_ID, FRESP.RESPONSIBILITY_ID, FRESP.APPLICATION_ID
+        INTO L_USER_ID, L_RESP_ID, L_RESP_APPL_ID
+        FROM FND_USER FND, FND_RESPONSIBILITY_TL FRESP
+       WHERE     FND.USER_NAME = 'VENKAT'
+             AND FRESP.RESPONSIBILITY_NAME =
+                    'Payables, Vision Operations (USA)';
+
+      ERROR_MSG := NULL;
+
+
+
+      DBMS_OUTPUT.PUT_LINE ('user id : ' || L_USER_ID);
+      DBMS_OUTPUT.PUT_LINE ('RESP id : ' || L_RESP_ID);
+      DBMS_OUTPUT.PUT_LINE ('APP id : ' || L_RESP_APPL_ID);
+
+
+
+      FOR H IN HEADERS
+      LOOP
+         SELECT ROWID, INVOICE_ID
+           INTO LV_ROW_ID, LV_INVOICE_ID
+           FROM AP_INVOICES_ALL
+          WHERE INVOICE_ID = (SELECT INVOICE_ID
+                                FROM AP_INVOICES_ALL
+                               WHERE INVOICE_NUM = H.INVOICE_NUM);
+
+
+         DBMS_OUTPUT.PUT_LINE (' BEGIN INVOICE DELETE...');
+
+
+
+         BEGIN
+            AP_AI_TABLE_HANDLER_PKG.DELETE_ROW (P_ROWID              => LV_ROW_ID,
+                                                P_CALLING_SEQUENCE   => '1');
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE ('DELETED INVOICE IS :  ' || LV_INVOICE_ID);
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               DBMS_OUTPUT.PUT_LINE (SQLERRM);
+               DBMS_OUTPUT.PUT_LINE (SQLCODE);
+         END;
+      END LOOP;
+
+      DBMS_OUTPUT.PUT_LINE ('invoice deleted successfully');
+
+      COMMIT;
+   END XX_AP_INVOICE_DELETE;
+END XX_AP_INVOICE_PKG;

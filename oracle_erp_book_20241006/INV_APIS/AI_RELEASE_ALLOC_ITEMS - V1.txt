@@ -1,0 +1,101 @@
+CREATE OR REPLACE PROCEDURE APPS.AI_RELEASE_ALLOC_ITEMS (
+   ERRBUF    OUT VARCHAR2,
+   RETCODE   OUT VARCHAR2,
+   P_WONUM       VARCHAR2,
+   P_ITEM        VARCHAR2)
+AS
+   V_LINE_ID         NUMBER;
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (2000);
+   X_RETURN_STATUS   VARCHAR2 (10);
+   X_MESSAGE_LIST    ERROR_HANDLER.ERROR_TBL_TYPE;
+   V_USER_ID         NUMBER := FND_GLOBAL.USER_ID;
+   V_RESP_ID         NUMBER := FND_GLOBAL.RESP_ID;
+   V_APPL_ID         NUMBER := FND_GLOBAL.RESP_APPL_ID;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,            --2887,
+                               RESP_ID        => V_RESP_ID,           --23118,
+                               RESP_APPL_ID   => V_APPL_ID);           --426);
+
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                      'Start AI_RELEASE_ALLOC_ITEMS at ' || SYSDATE);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                      '============= PARAMETERS ===============');
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'Parameters:');
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_WONUM: ' || P_WONUM);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_ITEM: ' || P_ITEM);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                      '=============   RESULTS   ==============');
+
+   FOR Z
+      IN (SELECT TRL.LINE_ID LINE_ID, TRL.HEADER_ID HEADER_ID
+            FROM MTL_TXN_REQUEST_HEADERS TRH,
+                 MTL_TXN_REQUEST_LINES TRL,
+                 WIP_ENTITIES WES,
+                 MTL_SYSTEM_ITEMS MSI
+           WHERE     TRH.HEADER_ID = TRL.HEADER_ID
+                 AND TRL.TXN_SOURCE_ID = WES.WIP_ENTITY_ID
+                 AND TRL.ORGANIZATION_ID = WES.ORGANIZATION_ID
+                 AND TRL.INVENTORY_ITEM_ID = MSI.INVENTORY_ITEM_ID
+                 AND TRL.ORGANIZATION_ID = MSI.ORGANIZATION_ID
+                 AND INSTR (UPPER (P_WONUM), UPPER (WES.WIP_ENTITY_NAME)) > 0
+                 AND MSI.SEGMENT1 = P_ITEM)
+   LOOP
+      BEGIN
+         V_LINE_ID := Z.LINE_ID;
+
+         ERROR_HANDLER.INITIALIZE;
+         INV_MO_ADMIN_PUB.CLOSE_LINE (P_API_VERSION        => 1.0,
+                                      P_INIT_MSG_LIST      => 'T',
+                                      P_COMMIT             => 'F',
+                                      P_VALIDATION_LEVEL   => 'F',
+                                      P_LINE_ID            => V_LINE_ID,
+                                      X_MSG_COUNT          => X_MSG_COUNT,
+                                      X_MSG_DATA           => X_MSG_DATA,
+                                      X_RETURN_STATUS      => X_RETURN_STATUS);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            FND_FILE.PUT_LINE (
+               FND_FILE.OUTPUT,
+                  P_WONUM
+               || ' - '
+               || P_ITEM
+               || ' - '
+               || Z.HEADER_ID
+               || ' Done '
+               || X_RETURN_STATUS);
+         ELSE
+            FND_FILE.PUT_LINE (
+               FND_FILE.OUTPUT,
+                  P_WONUM
+               || ' - '
+               || P_ITEM
+               || ' - '
+               || Z.HEADER_ID
+               || 'Error '
+               || X_MSG_DATA);
+
+            ERROR_HANDLER.GET_MESSAGE_LIST (X_MESSAGE_LIST => X_MESSAGE_LIST);
+
+            FOR I IN 1 .. X_MESSAGE_LIST.COUNT
+            LOOP
+               FND_FILE.PUT_LINE (
+                  FND_FILE.OUTPUT,
+                  'Error' || I || ': ' || X_MESSAGE_LIST (I).MESSAGE_TEXT);
+            END LOOP;
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'SQL Error: ' || SQLERRM);
+            COMMIT;
+      END;
+   END LOOP;
+
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                      '===============   END   ================');
+END;

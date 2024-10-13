@@ -1,0 +1,45 @@
+#using wildfly standalone configuration path: <wildfly>\standalone\configuration
+
+1. generate a private key
+# keytool -genkey -keyalg RSA -alias myprivatekey -keysize 2048 -validity 365 -keystore keystore.jks -dname "CN=twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+2. generate a certificate request
+# keytool -certreq -alias myprivatekey -keyalg RSA -keystore keystore.jks -storepass changeit -file "request.csr" -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+3. create server certificate from certificate request
+# openssl x509 -req -days 3650 -CA rootca.crt -CAkey rootkey.key -CAcreateserial -in request.csr -out certificate.crt -extfile san.txt
+
+---------san.txt-----------
+authorityKeyIdentifier=keyid,issuer 
+basicConstraints=CA:FALSE 
+subjectAltName = @alt_names 
+[alt_names] 
+DNS.1 = twin.local
+DNS.2 = *.twin.local
+DNS.3 = ai.twin.local
+DNS.4 = localhost
+----------------------------
+4. import a root certificate to keystore
+# keytool -import -v -trustcacerts -alias root -file rootca.crt -keystore keystore.jks
+
+5. import a server certificate to keystore 
+#(THE ALIAS OF CERTIFICATE SHOULD BE SAME AS THAT OF THE PRIVATE KEY IN THE KEYSTORE)
+# keytool -import -alias myprivatekey -trustcacerts -file certificate.crt -keystore keystore.jks
+
+6. edit configuration file "standalone.xml","standalone-full.xml"
+---management > security-realms
+<security-realm name="ssl-realm">
+  <server-identities>
+    <ssl>
+     <keystore path="keystore.jks" relative-to="jboss.server.config.dir" keystore-password="<pass>" alias="myprivatekey" key-password="<pass>" />
+    </ssl>
+  </server-identities>
+</security-realm>
+
+---profile > subsystem > buffer-cache > server
+<!--<http-listener name="default" socket-binding="http" />-->
+<https-listener name="default" socket-binding="https" security-realm="ssl-realm"/>
+
+---socket-binding-group----
+<!--<socket-binding name="https" port="${jboss.https.port:8443}"/>-->
+<socket-binding name="https" port="${jboss.https.port:443}"/>

@@ -1,0 +1,143 @@
+====================================================
+1. Install dependencies, database and configure DB
+====================================================
+[root@localhost /]# yum -y install oracle-database-preinstall-21c
+[root@localhost /]# yum -y localinstall oracle-database-xe-21c-1.0-1.ol8.x86_64.rpm
+[root@localhost /]# vi /etc/sysconfig/oracle-xe-21c.conf (you can update configuration data)
+[root@localhost /]# /etc/init.d/oracle-xe-21c configure
+[root@localhost /]# yum -y install firewall-config
+
+====================================================
+2. Add tcp 1521 port in firewall
+====================================================
+[root@localhost /]# firewall-cmd --permanent --add-port 1521/tcp
+[root@localhost /]# systemctl start firewalld
+[root@localhost /]# systemctl stop firewalld
+[root@localhost /]# systemctl start firewalld
+[root@localhost /]# firewall-cmd --list-ports
+------------------------------
+or Use firewall configuration GUI in Linux
+
+====================================================
+3. Add environment variables
+====================================================
+[root@localhost /]# vi ~/.bash_profile
+
+add below lines at the end of .bash_profile
+
+export ORACLE_SID=XE
+export ORACLE_BASE=/opt/oracle/oradata
+export ORACLE_HOME=/opt/oracle/product/21c/dbhomeXE
+export PATH=$PATH:/opt/oracle/product/21c/dbhomeXE/bin
+
+source ~/.bash_profile
+
+====================================================
+4. Set flag to start an Oracle Database automatically
+====================================================
+
+[root@localhost /]# vi /etc/oratab
+XE:/opt/oracle/product/21c/dbhomeXE:Y
+
+====================================================
+5. Create new Environment File
+====================================================
+
+[root@localhost /]# vi /etc/sysconfig/XE.xe
+
+copy these lines into the file
+
+export ORACLE_SID=XE
+export ORACLE_BASE=/opt/oracle/oradata
+export ORACLE_HOME=/opt/oracle/product/21c/dbhomeXE
+
+====================================================
+6. Configure Linux to automatically start Oracle Database when the system starts
+====================================================
+
+[root@localhost /]# vi /lib/systemd/system/dbora.service
+Copy paste below part (between START and END) to dbora.service file
+
+===START===
+[Unit]
+Description=The Oracle Database Service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+RemainAfterExit=yes
+KillMode=none
+User=oracle
+EnvironmentFile=/etc/sysconfig/XE.xe
+ExecStart=/opt/oracle/product/21c/dbhomeXE/bin/dbstart /opt/oracle/product/21c/dbhomeXE
+ExecStop=/opt/oracle/product/21c/dbhomeXE/bin/dbshut /opt/oracle/product/21c/dbhomeXE
+
+[Install]
+WantedBy=multi-user.target
+===END===
+
+
+Enable service
+[root@localhost /]# systemctl enable dbora.service
+[root@localhost /]# systemctl daemon-reload
+[root@localhost /]# systemctl start dbora.service
+
+====================================================
+7. Reboot Linux
+====================================================
+
+====================================================
+8. Connect Database with sqlplus and reset SYS user
+====================================================
+
+[root@localhost /]# su oracle
+[root@localhost /]# source ~/.bash_profile
+[root@localhost /]# sqlplus / as sysdba
+
+SQL> alter user sys identified by system;
+
+====================================================
+Commands ran in SQL Developer to add a user
+====================================================
+alter session set "_ORACLE_SCRIPT"=true;
+
+
+CREATE USER testuser1 IDENTIFIED BY test123;
+
+grant connect to testuser1;
+grant create session, grant any privilege to testuser1;
+grant unlimited tablespace to testuser1;
+
+GRANT SELECT ANY TABLE TO testuser1;
+GRANT INSERT ANY TABLE TO testuser1;
+GRANT CREATE ANY TABLE TO testuser1;
+
+
+drop USER testuser1;
+====================================================
+
+====================================================
+Other useful commands
+====================================================
+- Start Listener
+[root@localhost /]# lsnrctl start
+
+- Stop Listener
+[root@localhost /]# lsnrctl stop
+
+- Restart Listener
+[root@localhost /]# lsnrctl reload
+
+- To connect to the Container Database (CDB) use:
+[root@localhost /]# sqlplus sys/system//localhost:1521/XE as sysdba
+ 
+- To connect to the first Pluggable Database (PDB) use:
+[root@localhost /]# sqlplus sys/system//localhost:1521/XEPDB1 as sysdba
+
+- Manually start db
+[root@localhost /]# /opt/oracle/product/21c/dbhomeXE/bin/dbstart /opt/oracle/product/21c/dbhomeXE
+
+- Manually shut db
+[root@localhost /]# /opt/oracle/product/21c/dbhomeXE/bin/dbshut /opt/oracle/product/21c/dbhomeXE
+
+====================================================

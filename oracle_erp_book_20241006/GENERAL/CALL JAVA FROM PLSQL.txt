@@ -1,0 +1,32 @@
+CREATE OR REPLACE AND COMPILE JAVA SOURCE NAMED "sourcename" AS
+public class classname
+{
+  public static String getstring()
+  {
+    return "test string";
+  }
+   public static Double getnumber(Double n1,Double n2)
+  {
+    return n1+n2;
+  }
+};
+/
+CREATE OR REPLACE
+FUNCTION getsqlstring RETURN VARCHAR2 AS
+LANGUAGE JAVA NAME 'classname.getstring() return java.lang.String';
+/
+CREATE OR REPLACE
+FUNCTION getsqlnumber(n1 number,n2 number) RETURN NUMBER AS
+LANGUAGE JAVA NAME 'classname.getnumber(java.lang.Double,java.lang.Double) return java.lang.Double';
+/
+set serveroutput on size 30000;
+/
+DECLARE
+   mystring VARCHAR2(100);
+   mynumber number;
+BEGIN
+   mystring := getsqlstring();
+   mynumber := getsqlnumber(100,200.5);
+   dbms_output.put_line('The value is ' || mystring || ' '|| mynumber);
+END;
+/

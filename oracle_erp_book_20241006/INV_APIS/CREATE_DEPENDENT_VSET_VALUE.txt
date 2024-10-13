@@ -1,0 +1,36 @@
+DECLARE
+   X_STORAGE_VALUE   VARCHAR2 (100);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+   FND_MSG_PUB.INITIALIZE;
+
+   FND_FLEX_VAL_API.CREATE_DEPENDENT_VSET_VALUE (
+      P_FLEX_VALUE_SET_NAME   => 'eAM_Subclass',
+      P_PARENT_FLEX_VALUE     => 'UTILS',
+      P_FLEX_VALUE            => 'DEF',
+      P_DESCRIPTION           => 'General Utilities',
+      P_ENABLED_FLAG          => 'Y',
+      P_START_DATE_ACTIVE     => NULL,
+      P_END_DATE_ACTIVE       => NULL,
+      P_HIERARCHY_LEVEL       => NULL,
+      X_STORAGE_VALUE         => X_STORAGE_VALUE);
+
+   IF X_STORAGE_VALUE IS NOT NULL
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done ' || X_STORAGE_VALUE);
+   ELSE
+      DBMS_OUTPUT.PUT_LINE (
+            'RESULT: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+END;

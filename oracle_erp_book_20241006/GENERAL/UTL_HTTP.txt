@@ -1,0 +1,163 @@
+--===================================
+--SEND HTTP GET REQUEST
+
+DECLARE
+   REQ          UTL_HTTP.REQ;
+   RESP         UTL_HTTP.RESP;
+   RECDATA      VARCHAR2 (4000);
+   DATALENGTH   NUMBER;
+   URI          VARCHAR2 (100);
+BEGIN
+   URI := 'http://localhost';
+   REQ := UTL_HTTP.BEGIN_REQUEST (URL => URI, METHOD => 'GET');
+   UTL_HTTP.SET_HEADER (REQ, 'User-agent', 'mozilla/4.0');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept', 'application/json');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept-Charset', 'utf-8');
+   RESP := UTL_HTTP.GET_RESPONSE (REQ);
+   UTL_HTTP.GET_HEADER_BY_NAME (RESP, 'Content-Length', DATALENGTH);
+   UTL_HTTP.READ_TEXT (RESP, RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('DATALENGTH=' || DATALENGTH);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA=' || RECDATA);
+   UTL_HTTP.END_RESPONSE (RESP);
+EXCEPTION
+   WHEN UTL_HTTP.END_OF_BODY
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR END_OF_BODY');
+      UTL_HTTP.END_RESPONSE (RESP);
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+      DBMS_OUTPUT.PUT_LINE (DBMS_UTILITY.FORMAT_ERROR_STACK);
+END;
+--===================================
+--SEND HTTP POST REQUEST
+
+DECLARE
+   REQ          UTL_HTTP.REQ;
+   RESP         UTL_HTTP.RESP;
+   RECDATA      VARCHAR2 (4000);
+   SENTDATA     VARCHAR2 (4000);
+   DATALENGTH   NUMBER;
+   URI          VARCHAR2 (100);
+BEGIN
+   URI := 'http://localhost';
+   SENTDATA := '{"id":1, "name":"احمد ابراهيم"}';
+   DATALENGTH := LENGTHB (SENTDATA);
+   REQ := UTL_HTTP.BEGIN_REQUEST (URL => URI, METHOD => 'POST');
+   UTL_HTTP.SET_HEADER (REQ, 'User-agent', 'mozilla/4.0');
+   UTL_HTTP.SET_HEADER (REQ,
+                        'Content-type',
+                        'application/json;charset=utf-8');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept-Charset', 'utf-8');
+   UTL_HTTP.SET_HEADER (REQ, 'Content-Length', DATALENGTH);
+   UTL_HTTP.SET_BODY_CHARSET (REQ, 'utf-8');
+   UTL_HTTP.WRITE_TEXT (REQ, SENTDATA);
+   RESP := UTL_HTTP.GET_RESPONSE (REQ);
+   UTL_HTTP.GET_HEADER_BY_NAME (RESP, 'Content-Length', DATALENGTH);
+   UTL_HTTP.READ_TEXT (RESP, RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('DATALENGTH=' || DATALENGTH);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA=' || RECDATA);
+   UTL_HTTP.END_RESPONSE (RESP);
+EXCEPTION
+   WHEN UTL_HTTP.END_OF_BODY
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR');
+      UTL_HTTP.END_RESPONSE (RESP);
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+      DBMS_OUTPUT.PUT_LINE (DBMS_UTILITY.FORMAT_ERROR_STACK);
+END;
+--===================================
+--SEND HTTPS GET REQUEST
+
+DECLARE
+   REQ           UTL_HTTP.REQ;
+   RESP          UTL_HTTP.RESP;
+   REQ_CONTEXT   UTL_HTTP.REQUEST_CONTEXT_KEY;
+   RECDATA       VARCHAR2 (4000);
+   DATALENGTH    NUMBER;
+   URI           VARCHAR2 (100);
+BEGIN
+   --UTL_HTTP.SET_WALLET('file:/oracle/wallets/test/wallet', '123456');
+   URI := 'https://localhost';
+   REQ_CONTEXT :=
+      UTL_HTTP.CREATE_REQUEST_CONTEXT (
+         WALLET_PATH       => 'file:/oracle/wallets/test/wallet',
+         WALLET_PASSWORD   => '123456',
+         ENABLE_COOKIES    => FALSE);
+
+   REQ :=
+      UTL_HTTP.BEGIN_REQUEST (URL               => URI,
+                              METHOD            => 'GET',
+                              REQUEST_CONTEXT   => REQ_CONTEXT);
+
+   UTL_HTTP.SET_HEADER (REQ, 'User-agent', 'mozilla/4.0');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept', 'application/json');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept-Charset', 'utf-8');
+   RESP := UTL_HTTP.GET_RESPONSE (REQ);
+   UTL_HTTP.GET_HEADER_BY_NAME (RESP, 'Content-Length', DATALENGTH);
+   UTL_HTTP.READ_TEXT (RESP, RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('DATALENGTH=' || DATALENGTH);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA=' || RECDATA);
+   UTL_HTTP.END_RESPONSE (RESP);
+   UTL_HTTP.DESTROY_REQUEST_CONTEXT (REQ_CONTEXT);
+EXCEPTION
+   WHEN UTL_HTTP.END_OF_BODY
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR END_OF_BODY');
+      UTL_HTTP.END_RESPONSE (RESP);
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+      DBMS_OUTPUT.PUT_LINE (DBMS_UTILITY.FORMAT_ERROR_STACK);
+END;
+--===================================
+--SEND HTTPS POST REQUEST
+
+DECLARE
+   REQ           UTL_HTTP.REQ;
+   RESP          UTL_HTTP.RESP;
+   REQ_CONTEXT   UTL_HTTP.REQUEST_CONTEXT_KEY;
+   RECDATA       VARCHAR2 (4000);
+   SENTDATA      VARCHAR2 (4000);
+   DATALENGTH    NUMBER;
+   URI           VARCHAR2 (100);
+BEGIN
+   URI := 'https://localhost';
+   SENTDATA := '{"id":1, "name":"asys"}';
+   DATALENGTH := LENGTHB (SENTDATA);
+   --UTL_HTTP.SET_WALLET('file:/oracle/wallets/test/wallet', '123456');
+   REQ_CONTEXT :=
+      UTL_HTTP.CREATE_REQUEST_CONTEXT (
+         WALLET_PATH       => 'file:/oracle/wallets/test/wallet',
+         WALLET_PASSWORD   => '123456',
+         ENABLE_COOKIES    => FALSE);
+   REQ :=
+      UTL_HTTP.BEGIN_REQUEST (URL               => URI,
+                              METHOD            => 'POST',
+                              REQUEST_CONTEXT   => REQ_CONTEXT);
+   UTL_HTTP.SET_HEADER (REQ, 'User-agent', 'mozilla/4.0');
+   UTL_HTTP.SET_HEADER (REQ,
+                        'Content-type',
+                        'application/json;charset=utf-8');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept-Charset', 'utf-8');
+   UTL_HTTP.SET_HEADER (REQ, 'Content-Length', DATALENGTH);
+   UTL_HTTP.SET_BODY_CHARSET (REQ, 'utf-8');
+   UTL_HTTP.WRITE_TEXT (REQ, SENTDATA);
+   RESP := UTL_HTTP.GET_RESPONSE (REQ);
+   UTL_HTTP.GET_HEADER_BY_NAME (RESP, 'Content-Length', DATALENGTH);
+   UTL_HTTP.READ_TEXT (RESP, RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('DATALENGTH=' || DATALENGTH);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA=' || RECDATA);
+   UTL_HTTP.END_RESPONSE (RESP);
+EXCEPTION
+   WHEN UTL_HTTP.END_OF_BODY
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR');
+      UTL_HTTP.END_RESPONSE (RESP);
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+      DBMS_OUTPUT.PUT_LINE (DBMS_UTILITY.FORMAT_ERROR_STACK);
+END;

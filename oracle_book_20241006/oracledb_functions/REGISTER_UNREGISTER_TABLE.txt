@@ -1,0 +1,127 @@
+DECLARE
+   V_APPL_SHORT_NAME   VARCHAR2 (40) := 'AR';
+   V_TAB_NAME          VARCHAR2 (32) := 'FRT_CUSTOMER_INTERFACE_ALL';
+   V_TAB_TYPE          VARCHAR2 (50) := 'T';
+   V_NEXT_EXTENT       NUMBER := 512;
+   V_PCT_FREE          NUMBER := 10;
+   V_PCT_USED          NUMBER := 70;
+   V_OPERATION         VARCHAR2 (10):='REG';
+BEGIN
+   IF V_OPERATION = 'REG'
+   THEN
+      -- START REGISTER CUSTOM TABLE
+      -- GET THE TABLE DETAILS IN CURSOR
+      FOR TAB IN (SELECT TABLE_NAME,
+                         TABLESPACE_NAME,
+                         PCT_FREE,
+                         PCT_USED,
+                         INI_TRANS,
+                         MAX_TRANS,
+                         INITIAL_EXTENT,
+                         NEXT_EXTENT
+                    FROM DBA_TABLES
+                   WHERE TABLE_NAME = V_TAB_NAME)
+      LOOP
+         -- CALL THE API TO REGISTER TABLE
+         AD_DD.REGISTER_TABLE (
+            P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+            P_TAB_NAME          => TAB.TABLE_NAME,
+            P_TAB_TYPE          => V_TAB_TYPE,
+            P_NEXT_EXTENT       => NVL (TAB.NEXT_EXTENT, V_NEXT_EXTENT),
+            P_PCT_FREE          => NVL (TAB.PCT_FREE, V_PCT_FREE),
+            P_PCT_USED          => NVL (TAB.PCT_USED, V_PCT_USED));
+      END LOOP;
+
+      -- START REGISTER COLUMNS
+      -- GET THE COLUMN DETAILS OF THE TABLE IN CURSOR
+      FOR COL IN (SELECT COLUMN_NAME,
+                         COLUMN_ID,
+                         DATA_TYPE,
+                         DATA_LENGTH,
+                         NULLABLE
+                    FROM ALL_TAB_COLUMNS
+                   WHERE TABLE_NAME = V_TAB_NAME)
+      LOOP
+         -- Call the API to register column
+         AD_DD.REGISTER_COLUMN (P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+                                P_TAB_NAME          => V_TAB_NAME,
+                                P_COL_NAME          => COL.COLUMN_NAME,
+                                P_COL_SEQ           => COL.COLUMN_ID,
+                                P_COL_TYPE          => COL.DATA_TYPE,
+                                P_COL_WIDTH         => COL.DATA_LENGTH,
+                                P_NULLABLE          => COL.NULLABLE,
+                                P_TRANSLATE         => 'N',
+                                P_PRECISION         => NULL,
+                                P_SCALE             => NULL);
+      END LOOP;
+
+      -- START REGISTER PRIMARY KEY
+      -- GET THE PRIMARY KEY DETAIL OF THE TABLE IN CURSOR
+      FOR PKEY IN (SELECT CONSTRAINT_NAME, TABLE_NAME, CONSTRAINT_TYPE
+                     FROM ALL_CONSTRAINTS
+                    WHERE CONSTRAINT_TYPE = 'P' AND TABLE_NAME = V_TAB_NAME)
+      LOOP
+         -- Call the API to register primary_key
+         AD_DD.REGISTER_PRIMARY_KEY (
+            P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+            P_KEY_NAME          => PKEY.CONSTRAINT_NAME,
+            P_TAB_NAME          => PKEY.TABLE_NAME,
+            P_DESCRIPTION       => 'Register primary key',
+            P_KEY_TYPE          => 'S',
+            P_AUDIT_FLAG        => 'N',
+            P_ENABLED_FLAG      => 'Y');
+
+         -- START REGISTER PRIMARY KEY COLUMN
+         -- GET THE PRIMARY KEY COLUMN DETIAL IN CURSOR
+         FOR PCOL
+            IN (SELECT COLUMN_NAME, POSITION
+                  FROM DBA_CONS_COLUMNS
+                 WHERE     TABLE_NAME = PKEY.TABLE_NAME
+                       AND CONSTRAINT_NAME = PKEY.CONSTRAINT_NAME)
+         LOOP
+            -- CALL THE API TO REGISTER PRIMARY_KEY_COLUMN
+            AD_DD.REGISTER_PRIMARY_KEY_COLUMN (
+               P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+               P_KEY_NAME          => PKEY.CONSTRAINT_NAME,
+               P_TAB_NAME          => PKEY.TABLE_NAME,
+               P_COL_NAME          => PCOL.COLUMN_NAME,
+               P_COL_SEQUENCE      => PCOL.POSITION);
+         END LOOP;                          -- END REGISTER PRIMARY KEY COLUMN
+      END LOOP;                                    -- END REGISTER PRIMARY KEY
+
+      COMMIT;
+   END IF;
+
+   IF V_OPERATION = 'UNREG'
+   THEN
+      FOR PKEY IN (SELECT CONSTRAINT_NAME
+                     FROM ALL_CONSTRAINTS
+                    WHERE CONSTRAINT_TYPE = 'P' AND TABLE_NAME = V_TAB_NAME)
+      LOOP
+         AD_DD.DELETE_PRIMARY_KEY_COLUMN (
+            P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+            P_KEY_NAME          => PKEY.CONSTRAINT_NAME,
+            P_TAB_NAME          => V_TAB_NAME,
+            p_col_name          => NULL);
+      END LOOP;
+
+      FOR COL IN (SELECT COLUMN_NAME
+                    FROM ALL_TAB_COLUMNS
+                   WHERE TABLE_NAME = V_TAB_NAME)
+      LOOP
+         AD_DD.DELETE_COLUMN (P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+                              P_TAB_NAME          => V_TAB_NAME,
+                              P_COL_NAME          => COL.COLUMN_NAME);
+      END LOOP;
+
+      AD_DD.DELETE_TABLE (P_APPL_SHORT_NAME   => V_APPL_SHORT_NAME,
+                          P_TAB_NAME          => V_TAB_NAME);
+      COMMIT;
+   END IF;
+
+   DBMS_OUTPUT.PUT_LINE ('SUCCESS');
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;

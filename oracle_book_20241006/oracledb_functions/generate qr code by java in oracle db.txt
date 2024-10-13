@@ -1,0 +1,61 @@
+#1.load jar files
+
+# qrgen-1.4.jar
+# javase-3.4.1.jar
+# core-3.4.1.jar
+#run command in terminal
+ loadjava -thin -user <ai/ai@localhost:1521:xe> -resolve -verbose <file.jar>
+#run command in sql
+ exec dbms_java.grant_permission( '<ai>', 'SYS:java.io.FilePermission','<pathofJARfile>', 'read' );
+ exec dbms_java.loadjava('<pathofJARfile>');
+
+#2.create java class by plsql
+
+create or replace and compile java source named QrGenerator as
+import net.glxn.qrgen.QRCode;
+public class QrGenerator
+{
+  public static byte[] getQR(String data)
+  {
+  try{
+     QRCode qr = QRCode.from(data);
+     qr.withCharset("UTF8");
+     qr.withSize(225, 225);
+     byte[] bytes= qr.stream().toByteArray();
+     return bytes;
+     }catch(Exception e){
+     return null;
+     }
+  }
+}
+
+#3.create plsql function to call java function
+
+create or replace function getQR(
+text varchar2
+)return raw as 
+language java 
+name 'QrGenerator.getQR(java.lang.String) return byte[]';
+
+#4.create table to get and set data into
+
+CREATE TABLE "AI"."QRCODE" 
+   (	
+	"ID" NUMBER, 
+	"TEXT" VARCHAR2(200), 
+	"QR" BLOB
+   ); 
+
+#5.call plsql function to finally excute java function
+
+declare
+v_text varchar2(200);
+v_qr raw(4000);
+begin
+ Select text into v_text from qrcode  where id =1;
+ v_qr:=getqr(text); 
+update qrcode set qr= v_qr where id =1;
+commit;
+end;
+
+#6.check result in the table above

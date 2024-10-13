@@ -1,0 +1,352 @@
+CREATE TABLE FRT_CUST_ACCOUNTS
+(
+  CUST_ACCOUNT_ID      NUMBER,
+  ACCOUNT_NUMBER       VARCHAR2(30),
+  ACCOUNT_NAME         VARCHAR2(240),
+  STATUS               VARCHAR2(1),
+  CUSTOMER_CLASS_CODE  VARCHAR2(30),
+  SALES_CHANNEL_CODE   VARCHAR2(30),
+  USER_ID              NUMBER,
+  FLAG                 VARCHAR2(5),
+  CREATION_DATE        DATE,
+RESULT VARCHAR2(1000)
+)
+/
+CREATE TABLE FRT_CUST_SITE_USES
+(
+  SITE_USE_ID          NUMBER,
+  SITE_USE_CODE        VARCHAR2(30),
+  PRIMARY_FLAG         VARCHAR2(1),
+  STATUS               VARCHAR2(1),
+  BILL_TO_SITE_USE_ID  NUMBER,
+  PAYMENT_TERM_ID      NUMBER,
+  ORDER_TYPE_ID        NUMBER,
+  PRICE_LIST_ID        NUMBER,
+  TERRITORY_ID         NUMBER,
+  PRIMARY_SALESREP_ID  NUMBER,
+  USER_ID              NUMBER,
+  FLAG                 VARCHAR2(5),
+  CREATION_DATE        DATE,
+RESULT VARCHAR2(1000)
+)
+/
+CREATE OR REPLACE PACKAGE APPS.FRT_AI_ACCOUNT_PKG AS
+    PROCEDURE AI_IMPORT_CUST_ACCOUNTS (
+        P_CUST_ACCOUNT_ID       NUMBER,
+        P_ACCOUNT_NUMBER        VARCHAR2,
+        P_ACCOUNT_NAME          VARCHAR2,
+        P_STATUS                VARCHAR2,
+        P_CUSTOMER_CLASS_CODE   VARCHAR2,
+        P_SALES_CHANNEL_CODE    VARCHAR2
+    );
+
+    PROCEDURE AI_IMPORT_SITE_USES (
+        P_SITE_USE_ID           NUMBER,
+        P_SITE_USE_CODE         VARCHAR2,
+        P_PRIMARY_FLAG          VARCHAR2,
+        P_STATUS                VARCHAR2,
+        P_BILL_TO_SITE_USE_ID   NUMBER,
+        P_PAYMENT_TERM_ID       NUMBER,
+        P_ORDER_TYPE_ID         NUMBER,
+        P_PRICE_LIST_ID         NUMBER,
+        P_TERRITORY_ID          NUMBER,
+        P_SALESREP_ID       NUMBER
+    );
+
+    PROCEDURE AI_IMPORT_SITE_GROUP (
+        P_PRICE_LIST_ID     NUMBER,
+        P_ORG_CODE          VARCHAR2,
+        P_CLASS_CODE        VARCHAR2,
+        P_CUST_ACCOUNT_ID   NUMBER
+    );
+    
+    PROCEDURE AI_UPDATE_CUST_ACCOUNTS;
+
+    PROCEDURE AI_UPDATE_SITE_USES;
+
+END FRT_AI_ACCOUNT_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY APPS.FRT_AI_ACCOUNT_PKG
+AS
+   PROCEDURE AI_IMPORT_CUST_ACCOUNTS (P_CUST_ACCOUNT_ID        NUMBER,
+                                      P_ACCOUNT_NUMBER         VARCHAR2,
+                                      P_ACCOUNT_NAME           VARCHAR2,
+                                      P_STATUS                 VARCHAR2,
+                                      P_CUSTOMER_CLASS_CODE    VARCHAR2,
+                                      P_SALES_CHANNEL_CODE     VARCHAR2)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+   BEGIN
+      INSERT INTO FRT_CUST_ACCOUNTS (CUST_ACCOUNT_ID,
+                                     ACCOUNT_NUMBER,
+                                     ACCOUNT_NAME,
+                                     STATUS,
+                                     CUSTOMER_CLASS_CODE,
+                                     SALES_CHANNEL_CODE,
+                                     USER_ID,
+                                     FLAG,
+                                     CREATION_DATE)
+           VALUES (P_CUST_ACCOUNT_ID,
+                   P_ACCOUNT_NUMBER,
+                   P_ACCOUNT_NAME,
+                   P_STATUS,
+                   P_CUSTOMER_CLASS_CODE,
+                   P_SALES_CHANNEL_CODE,
+                   V_USER_ID,
+                   'N',
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_IMPORT_SITE_USES (P_SITE_USE_ID            NUMBER,
+                                  P_SITE_USE_CODE          VARCHAR2,
+                                  P_PRIMARY_FLAG           VARCHAR2,
+                                  P_STATUS                 VARCHAR2,
+                                  P_BILL_TO_SITE_USE_ID    NUMBER,
+                                  P_PAYMENT_TERM_ID        NUMBER,
+                                  P_ORDER_TYPE_ID          NUMBER,
+                                  P_PRICE_LIST_ID          NUMBER,
+                                  P_TERRITORY_ID           NUMBER,
+                                  P_SALESREP_ID            NUMBER)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+   BEGIN
+      INSERT INTO FRT_CUST_SITE_USES (SITE_USE_ID,
+                                      SITE_USE_CODE,
+                                      PRIMARY_FLAG,
+                                      STATUS,
+                                      BILL_TO_SITE_USE_ID,
+                                      PAYMENT_TERM_ID,
+                                      ORDER_TYPE_ID,
+                                      PRICE_LIST_ID,
+                                      TERRITORY_ID,
+                                      PRIMARY_SALESREP_ID,
+                                      USER_ID,
+                                      FLAG,
+                                      CREATION_DATE)
+           VALUES (P_SITE_USE_ID,
+                   P_SITE_USE_CODE,
+                   P_PRIMARY_FLAG,
+                   P_STATUS,
+                   P_BILL_TO_SITE_USE_ID,
+                   P_PAYMENT_TERM_ID,
+                   P_ORDER_TYPE_ID,
+                   P_PRICE_LIST_ID,
+                   P_TERRITORY_ID,
+                   P_SALESREP_ID,
+                   V_USER_ID,
+                   'N',
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_IMPORT_SITE_GROUP (P_PRICE_LIST_ID      NUMBER,
+                                   P_ORG_CODE           VARCHAR2,
+                                   P_CLASS_CODE         VARCHAR2,
+                                   P_CUST_ACCOUNT_ID    NUMBER)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+   BEGIN
+      FOR SITE_USE
+         IN (SELECT CSU.SITE_USE_ID
+               FROM HZ_CUST_SITE_USES_ALL CSU,
+                    HZ_CUST_ACCT_SITES_ALL CAS,
+                    HZ_CUST_ACCOUNTS_ALL HCA
+              WHERE     CSU.CUST_ACCT_SITE_ID = CAS.CUST_ACCT_SITE_ID
+                    AND CAS.CUST_ACCOUNT_ID = HCA.CUST_ACCOUNT_ID
+                    AND CSU.SITE_USE_CODE = 'SHIP_TO'
+                    AND (       CAS.ATTRIBUTE10 = P_ORG_CODE
+                            AND HCA.CUSTOMER_CLASS_CODE = P_CLASS_CODE
+                         OR     HCA.CUST_ACCOUNT_ID = P_CUST_ACCOUNT_ID
+                            AND P_ORG_CODE IS NULL
+                            AND P_CLASS_CODE IS NULL))
+      LOOP
+         INSERT INTO FRT_CUST_SITE_USES (SITE_USE_ID,
+                                         PRICE_LIST_ID,
+                                         USER_ID,
+                                         FLAG,
+                                         CREATION_DATE)
+              VALUES (SITE_USE.SITE_USE_ID,
+                      P_PRICE_LIST_ID,
+                      V_USER_ID,
+                      'N',
+                      SYSDATE);
+      END LOOP;
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_UPDATE_CUST_ACCOUNTS
+   IS
+      V_CUST_ACCOUNT_REC        HZ_CUST_ACCOUNT_V2PUB.CUST_ACCOUNT_REC_TYPE;
+      X_RETURN_STATUS           VARCHAR2 (10);
+      X_MSG_COUNT               NUMBER;
+      X_MSG_DATA                VARCHAR2 (2000);
+      V_OBJECT_VERSION_NUMBER   NUMBER;
+      V_ACCOUNT_NUMBER          NUMBER;
+      V_USER_ID                 NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID                 NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID                 NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID                  NUMBER := 81;
+      FAIL_MSG                  VARCHAR2 (100);
+      ERR                       EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR ACCTS (P_USER_ID NUMBER)
+      IS
+         SELECT *
+           FROM FRT_CUST_ACCOUNTS
+          WHERE USER_ID = P_USER_ID;
+   BEGIN
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      FOR ACCT IN ACCTS (V_USER_ID)
+      LOOP
+         BEGIN
+            SELECT ACCOUNT_NUMBER, OBJECT_VERSION_NUMBER
+              INTO V_ACCOUNT_NUMBER, V_OBJECT_VERSION_NUMBER
+              FROM HZ_CUST_ACCOUNTS
+             WHERE CUST_ACCOUNT_ID = ACCT.CUST_ACCOUNT_ID;
+
+            V_CUST_ACCOUNT_REC.CUST_ACCOUNT_ID := ACCT.CUST_ACCOUNT_ID;
+            V_CUST_ACCOUNT_REC.ACCOUNT_NUMBER := V_ACCOUNT_NUMBER;
+            V_CUST_ACCOUNT_REC.ACCOUNT_NAME := ACCT.ACCOUNT_NAME;
+            V_CUST_ACCOUNT_REC.STATUS := ACCT.STATUS;
+            V_CUST_ACCOUNT_REC.CUSTOMER_CLASS_CODE := ACCT.CUSTOMER_CLASS_CODE;
+            V_CUST_ACCOUNT_REC.SALES_CHANNEL_CODE := ACCT.SALES_CHANNEL_CODE;
+
+            HZ_CUST_ACCOUNT_V2PUB.UPDATE_CUST_ACCOUNT (
+               P_INIT_MSG_LIST           => 'T',
+               P_CUST_ACCOUNT_REC        => V_CUST_ACCOUNT_REC,
+               P_OBJECT_VERSION_NUMBER   => V_OBJECT_VERSION_NUMBER,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_MSG_COUNT > 0
+            THEN
+               X_MSG_DATA :=
+                  FND_MSG_PUB.GET (P_MSG_INDEX => 1, P_ENCODED => 'F');
+
+               RAISE_APPLICATION_ERROR (-20011, X_MSG_DATA);
+            END IF;
+
+            COMMIT;
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ROLLBACK;
+
+               DELETE FROM FRT_CUST_ACCOUNTS
+                     WHERE USER_ID = V_USER_ID;
+
+               COMMIT;
+               FAIL_MSG := FAIL_MSG || ';' || SQLERRM;
+               FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+         END;
+      END LOOP;
+
+      DELETE FROM FRT_CUST_ACCOUNTS
+            WHERE USER_ID = V_USER_ID;
+
+      COMMIT;
+      FAIL_MSG := SQLERRM;
+      FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+   END;
+
+   PROCEDURE AI_UPDATE_SITE_USES
+   IS
+      V_CUST_SITE_USE_REC       HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+      X_RETURN_STATUS           VARCHAR2 (10);
+      X_MSG_COUNT               NUMBER;
+      X_MSG_DATA                VARCHAR2 (2000);
+      V_OBJECT_VERSION_NUMBER   NUMBER;
+      V_CUST_ACCT_SITE_ID       NUMBER;
+      V_USER_ID                 NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID                 NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID                 NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID                  NUMBER := 81;
+      FAIL_MSG                  VARCHAR2 (100);
+      ERR                       EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR SITE_USES (P_USER_ID NUMBER)
+      IS
+         SELECT *
+           FROM FRT_CUST_SITE_USES
+          WHERE USER_ID = P_USER_ID;
+   BEGIN
+      V_USER_ID := FND_GLOBAL.USER_ID;
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      FOR SITE_USE IN SITE_USES (V_USER_ID)
+      LOOP
+         BEGIN
+            SELECT CUST_ACCT_SITE_ID, OBJECT_VERSION_NUMBER
+              INTO V_CUST_ACCT_SITE_ID, V_OBJECT_VERSION_NUMBER
+              FROM HZ_CUST_SITE_USES_ALL
+             WHERE SITE_USE_ID = SITE_USE.SITE_USE_ID;
+
+            V_CUST_SITE_USE_REC.SITE_USE_ID := SITE_USE.SITE_USE_ID;
+            V_CUST_SITE_USE_REC.CUST_ACCT_SITE_ID := V_CUST_ACCT_SITE_ID;
+            V_CUST_SITE_USE_REC.STATUS := SITE_USE.STATUS;
+            V_CUST_SITE_USE_REC.PRIMARY_FLAG := SITE_USE.PRIMARY_FLAG;
+            V_CUST_SITE_USE_REC.PAYMENT_TERM_ID := SITE_USE.PAYMENT_TERM_ID;
+            V_CUST_SITE_USE_REC.ORDER_TYPE_ID := SITE_USE.ORDER_TYPE_ID;
+            V_CUST_SITE_USE_REC.PRICE_LIST_ID := SITE_USE.PRICE_LIST_ID;
+            V_CUST_SITE_USE_REC.TERRITORY_ID := SITE_USE.TERRITORY_ID;
+            V_CUST_SITE_USE_REC.PRIMARY_SALESREP_ID :=
+               SITE_USE.PRIMARY_SALESREP_ID;
+
+            HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_SITE_USE (
+               P_INIT_MSG_LIST           => 'T',
+               P_CUST_SITE_USE_REC       => V_CUST_SITE_USE_REC,
+               P_OBJECT_VERSION_NUMBER   => V_OBJECT_VERSION_NUMBER,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_MSG_COUNT > 0
+            THEN
+               X_MSG_DATA :=
+                  FND_MSG_PUB.GET (P_MSG_INDEX => 1, P_ENCODED => 'F');
+               RAISE_APPLICATION_ERROR (-20011, X_MSG_DATA);
+            END IF;
+
+            COMMIT;
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ROLLBACK;
+
+               DELETE FROM FRT_CUST_SITE_USES
+                     WHERE USER_ID = V_USER_ID;
+
+               COMMIT;
+               FAIL_MSG := FAIL_MSG || ';' || SQLERRM;
+               FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+         END;
+      END LOOP;
+
+      DELETE FROM FRT_CUST_SITE_USES
+            WHERE USER_ID = V_USER_ID;
+
+      COMMIT;
+      FAIL_MSG := SQLERRM;
+      FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+   END;
+END FRT_AI_ACCOUNT_PKG;
+/
+

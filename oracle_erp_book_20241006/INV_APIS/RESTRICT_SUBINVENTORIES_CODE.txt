@@ -1,0 +1,54 @@
+DECLARE
+   V_ITEM_TBL_TYP       EGO_ITEM_PUB.ITEM_TBL_TYPE;
+   X_ITEM_TBL_TYP       EGO_ITEM_PUB.ITEM_TBL_TYPE;
+   X_RETURN_STATUS      VARCHAR2 (100);
+   X_MSG_COUNT          NUMBER;
+   X_MESSAGE_LIST       ERROR_HANDLER.ERROR_TBL_TYPE;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   FOR ITM IN (SELECT *
+                 FROM MTL_SYSTEM_ITEMS
+                WHERE SEGMENT1 LIKE '12%' AND ORGANIZATION_ID = 112)
+   LOOP
+      BEGIN
+         V_ITEM_TBL_TYP (1).TRANSACTION_TYPE := 'UPDATE';
+         V_ITEM_TBL_TYP (1).ORGANIZATION_ID := 82;
+         --V_ITEM_TBL_TYP (1).SEGMENT1 := itm.segment1;
+         --V_ITEM_TBL_TYP (1).DESCRIPTION := itm.DESCRIPTION;
+         V_ITEM_TBL_TYP (1).INVENTORY_ITEM_ID := ITM.INVENTORY_ITEM_ID;
+         V_ITEM_TBL_TYP (1).OBJECT_VERSION_NUMBER := ITM.OBJECT_VERSION_NUMBER;
+         V_ITEM_TBL_TYP (1).RESTRICT_SUBINVENTORIES_CODE := 1;
+         --V_ITEM_TBL_TYP (1).RESTRICT_LOCATORS_CODE := 1;
+
+         EGO_ITEM_PUB.PROCESS_ITEMS (
+            P_API_VERSION      => 1.0,
+            P_INIT_MSG_LIST    => 'F',
+            P_COMMIT           => 'T',
+            P_ITEM_TBL         => V_ITEM_TBL_TYP,
+            X_ITEM_TBL         => X_ITEM_TBL_TYP,
+            P_ROLE_GRANT_TBL   => EGO_ITEM_PUB.G_MISS_ROLE_GRANT_TBL,
+            X_RETURN_STATUS    => X_RETURN_STATUS,
+            X_MSG_COUNT        => X_MSG_COUNT);
+
+         DBMS_OUTPUT.PUT_LINE ('Result : ' ||itm.segment1 ||' => '|| X_RETURN_STATUS);
+
+         IF (X_RETURN_STATUS = 'S')
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('Done!');
+         ELSE
+            ERROR_HANDLER.GET_MESSAGE_LIST (X_MESSAGE_LIST);
+
+            FOR I IN 1 .. X_MESSAGE_LIST.COUNT
+            LOOP
+               DBMS_OUTPUT.PUT_LINE (X_MESSAGE_LIST (I).MESSAGE_TEXT);
+            END LOOP;
+         END IF;
+
+         COMMIT;
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,65 @@
+DECLARE
+   V_INVENTORY_ITEM_TBL   EAM_WORKORDERTRANSACTIONS_PUB.INVENTORY_ITEM_TBL_TYPE;
+   V_ATTRIBUTES_REC       EAM_WORKORDERTRANSACTIONS_PUB.ATTRIBUTES_REC_TYPE;
+   X_RETURN_STATUS        VARCHAR2 (30);
+   X_MSG_COUNT            NUMBER;
+   X_MSG_DATA             VARCHAR2 (2000);
+   V_WIP_ENTITY_ID        NUMBER;
+BEGIN
+   V_WIP_ENTITY_ID := 9381;
+   EAM_WORKORDERTRANSACTIONS_PUB.COMPLETE_WORK_ORDER (
+      P_API_VERSION           => 1.0,
+      P_INIT_MSG_LIST         => 'T',
+      P_COMMIT                => 'F',
+      P_WIP_ENTITY_ID         => V_WIP_ENTITY_ID,
+      P_TRANSACTION_TYPE      => 1,
+      P_TRANSACTION_DATE      => SYSDATE,
+      P_INSTANCE_ID           => NULL,
+      P_ACTUAL_START_DATE     => TO_DATE ('25-JUN-2023 13:14:00',
+                                          'DD-MON-YYYY HH24:MI:SS'),
+      P_ACTUAL_END_DATE       => TO_DATE ('25-JUN-2023 14:14:00',
+                                          'DD-MON-YYYY HH24:MI:SS'),
+      P_ACTUAL_DURATION       => 1,
+      P_SHUTDOWN_START_DATE   => TO_DATE ('25-JUN-2023 13:14:00',
+                                          'DD-MON-YYYY HH24:MI:SS'),
+      P_SHUTDOWN_END_DATE     => TO_DATE ('25-JUN-2023 14:14:00',
+                                          'DD-MON-YYYY HH24:MI:SS'),
+      P_SHUTDOWN_DURATION     => 1,
+      P_INVENTORY_ITEM_INFO   => V_INVENTORY_ITEM_TBL,
+      P_REQUEST_ID            => NULL,
+      P_APPLICATION_ID        => NULL,
+      P_PROGRAM_ID            => NULL,
+      P_RECONCILIATION_CODE   => NULL,
+      P_REFERENCE             => NULL,
+      P_REASON                => NULL,
+      P_USER_ID               => FND_GLOBAL.USER_ID,
+      P_ATTRIBUTES_REC        => V_ATTRIBUTES_REC,
+      X_RETURN_STATUS         => X_RETURN_STATUS,
+      X_MSG_COUNT             => X_MSG_COUNT,
+      X_MSG_DATA              => X_MSG_DATA);
+
+   DBMS_OUTPUT.PUT_LINE (
+         'RESULT: '
+      || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                          P_ENCODED     => FND_API.G_FALSE));
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+            'RESULT: '
+         || v_WIP_ENTITY_ID
+         || ' =>'
+         || X_RETURN_STATUS
+         || ' '
+         || X_MSG_DATA);
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA ' || X_MSG_DATA);
+   END IF;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+      DBMS_OUTPUT.PUT_LINE (DBMS_UTILITY.FORMAT_ERROR_STACK);
+END;

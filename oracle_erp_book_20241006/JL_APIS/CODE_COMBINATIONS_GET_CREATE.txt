@@ -1,0 +1,34 @@
+DECLARE
+   V_CCID          NUMBER;
+   V_COA_ID        NUMBER;
+   V_ERR_MSG       VARCHAR2 (500);
+   V_CONCAT_SEGS   VARCHAR2 (100);
+BEGIN
+   BEGIN
+      SELECT CHART_OF_ACCOUNTS_ID
+        INTO V_COA_ID
+        FROM GL_SETS_OF_BOOKS
+       WHERE SET_OF_BOOKS_ID = FND_PROFILE.VALUE ('GL_SET_OF_BKS_ID');
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+         DBMS_OUTPUT.PUT_LINE ('Chart of Accounts ID not found');
+         RAISE;
+   END;
+
+   V_CONCAT_SEGS := '01.00.1407.31111000.8700.00.1401.00000.00000';
+   V_CCID :=
+      FND_FLEX_EXT.GET_CCID (APPLICATION_SHORT_NAME=>'SQLGL',
+                             KEY_FLEX_CODE=>'GL#',
+                             STRUCTURE_NUMBER=>V_COA_ID,
+                             VALIDATION_DATE=>TO_CHAR (SYSDATE, FND_FLEX_EXT.DATE_FORMAT),
+                             CONCATENATED_SEGMENTS=>V_CONCAT_SEGS);
+
+   IF V_CCID > 0
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Result: ' || V_CCID);
+   ELSE
+      V_ERR_MSG := FND_MESSAGE.GET;
+      DBMS_OUTPUT.PUT_LINE ('Result: ' || V_ERR_MSG);
+   END IF;
+END;

@@ -1,0 +1,94 @@
+DECLARE
+   X_RETURN_STATUS             VARCHAR2 (100);
+   X_ERRORCODE                 VARCHAR2 (100);
+   X_MSG_COUNT                 NUMBER;
+   X_MSG_DATA                  VARCHAR2 (500);
+   V_ITEM_ID                   NUMBER;
+   V_ITEM_CODE                 VARCHAR2 (30);
+   V_CATEGORY_SET_ID           NUMBER;
+   V_CATEGORY_ID               NUMBER;
+   V_OLD_CATEGORY_ID           NUMBER;
+   V_ORGANIZATION_ID           NUMBER;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   FOR Z IN (SELECT *
+               FROM FRT_INTERFACE)
+   LOOP
+      BEGIN
+         SELECT INVENTORY_ITEM_ID
+           INTO V_ITEM_ID
+           FROM MTL_SYSTEM_ITEMS
+          WHERE ORGANIZATION_ID = 82 AND SEGMENT1 = Z.C02;
+
+         V_ORGANIZATION_ID := 82;
+         V_CATEGORY_SET_ID := Z.C14;
+         V_CATEGORY_ID := Z.C15;
+         V_OLD_CATEGORY_ID := 3133;
+
+         INV_ITEM_CATEGORY_PUB.UPDATE_CATEGORY_ASSIGNMENT (
+            P_API_VERSION         => 1.0,
+            P_INIT_MSG_LIST       => 'T',
+            P_COMMIT              => 'F',
+            P_CATEGORY_ID         => V_CATEGORY_ID,
+            P_OLD_CATEGORY_ID     => V_OLD_CATEGORY_ID,
+            P_CATEGORY_SET_ID     => V_CATEGORY_SET_ID,
+            P_INVENTORY_ITEM_ID   => V_ITEM_ID,
+            P_ORGANIZATION_ID     => V_ORGANIZATION_ID,
+            X_RETURN_STATUS       => X_RETURN_STATUS,
+            X_ERRORCODE           => X_ERRORCODE,
+            X_MSG_COUNT           => X_MSG_COUNT,
+            X_MSG_DATA            => X_MSG_DATA);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            DBMS_OUTPUT.PUT_LINE (
+               Z.C02 || ' ' || X_RETURN_STATUS || ' Done!');
+         ELSE
+            DBMS_OUTPUT.PUT_LINE (
+                  'INV CAT ERR: '
+               || V_ITEM_CODE
+               || ' '
+               || X_MSG_DATA
+               || ' '
+               || X_ERRORCODE);
+         END IF;
+
+         COMMIT;
+
+         V_CATEGORY_SET_ID := Z.C16;
+         V_CATEGORY_ID := Z.C17;
+
+         INV_ITEM_CATEGORY_PUB.CREATE_CATEGORY_ASSIGNMENT (
+            P_API_VERSION         => 1.0,
+            P_INIT_MSG_LIST       => 'F',
+            P_COMMIT              => 'F',
+            P_CATEGORY_ID         => V_CATEGORY_ID,
+            P_CATEGORY_SET_ID     => V_CATEGORY_SET_ID,
+            P_INVENTORY_ITEM_ID   => V_ITEM_ID,
+            P_ORGANIZATION_ID     => V_ORGANIZATION_ID,
+            X_RETURN_STATUS       => X_RETURN_STATUS,
+            X_ERRORCODE           => X_ERRORCODE,
+            X_MSG_COUNT           => X_MSG_COUNT,
+            X_MSG_DATA            => X_MSG_DATA);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            DBMS_OUTPUT.PUT_LINE (
+               Z.C02 || ' ' || X_RETURN_STATUS || ' Done!');
+         ELSE
+            DBMS_OUTPUT.PUT_LINE (
+               'COST CAT ERR: ' || V_ITEM_CODE || ' ' || X_MSG_DATA);
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE (V_ITEM_CODE || ' ' || SQLERRM);
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,147 @@
+--Create auto login wallet cwallet.sso and PKCS#12 wallet ewallet.p12
+
+orapki wallet create -wallet C:\app\AIT\product\21c\orawallet -pwd Twin_181084 -auto_login
+
+--Create Oracle PKCS#12 wallet ewallet.p12
+
+orapki wallet create -wallet C:\app\AIT\product\21c\orawallet -pwd Twin_181084
+
+create an auto login wallet cwallet.sso
+
+orapki wallet create -wallet wallet_location -auto_login_only
+
+--add certificate to the wallet
+
+orapki wallet add -wallet C:\app\AIT\product\21c\orawallet -trusted_cert -cert C:\cert\w3c2.crt -pwd Twin_181084
+
+--add user certificate to the wallet
+
+orapki wallet add -wallet C:\app\AIT\product\21c\orawallet -user_cert -cert C:\cert\w3c2.crt -pwd Twin_181084
+
+
+-- display certificates in the wallet
+
+orapki wallet display -wallet C:\app\AIT\product\21c\orawallet
+
+--Change wallet password
+
+orapki wallet change_pwd -wallet C:\app\AIT\product\21c\orawallet -oldpwd Twin_181084 -newpwd Twin_123456
+
+
+--Assign wallet to ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_WALLET_ACE (
+      WALLET_PATH   => 'file:C:\app\AIT\product\21c\orawallet',
+      ACE           => XS$ACE_TYPE (
+                         PRIVILEGE_LIST   => XS$NAME_LIST (
+                                               'use_client_certificates'),
+                         PRINCIPAL_NAME   => 'AI',
+                         PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Remove wallet from ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.REMOVE_WALLET_ACE (
+      WALLET_PATH        => 'file:C:\app\AIT\product\21c\orawallet',
+      ACE                => XS$ACE_TYPE (
+                              PRIVILEGE_LIST   => XS$NAME_LIST (
+                                                    'use_client_certificates'),
+                              PRINCIPAL_NAME   => 'AI',
+                              PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB),
+      REMOVE_EMPTY_ACL   => TRUE);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Set wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.SET_WALLET_ACL (
+      ACL           => 'test_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIT\product\21c\orawallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Assign wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ASSIGN_WALLET_ACL (
+      ACL           => 'test_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIT\product\21c\orawallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Un-assign wallet from ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.UNASSIGN_WALLET_ACL (
+      ACL           => 'test_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIT\product\21c\orawallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Append wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_WALLET_ACL (
+      ACL           => 'test_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIT\product\21c\orawallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+SELECT * FROM DBA_XS_OBJECTS;
+SELECT * FROM NACL$_NAME_MAP;
+SELECT * FROM DBA_XS_ACES;
+SELECT * FROM NACL$_HOST;
+SELECT * FROM DBA_NETWORK_ACLS;
+SELECT * FROM DBA_NETWORK_ACL_PRIVILEGES;
+SELECT * FROM NACL$_WALLET;
+SELECT * FROM DBA_WALLET_ACLS;
+
+/
+-- Test https request
+--Success with google certificates
+DECLARE
+  l_url            VARCHAR2(100) := 'https://accounts.google.com';
+  l_http_request   UTL_HTTP.req;
+  l_http_response  UTL_HTTP.resp;
+BEGIN
+
+  UTL_HTTP.SET_WALLET('file:C:\app\AIT\product\21c\orawallet', 'Twin_123456'); 
+  -- Make a HTTP request and get the response.
+  l_http_request  := UTL_HTTP.begin_request(l_url,'GET');
+  l_http_response := UTL_HTTP.get_response(l_http_request);
+  UTL_HTTP.end_response(l_http_response);
+END;

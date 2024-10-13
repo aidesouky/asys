@@ -1,0 +1,44 @@
+1. Create a private key in a JKS keystore.
+# keytool -genkey -keyalg RSA -alias myprivatekey -keysize 2048 -validity 365 -keystore keystore.jks -dname "CN=twin.local,OU=ai,O=twin,L=portsaid,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:admin@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+2. Create a PKCS12 keystore from the JKS keystore.
+# keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -srcstoretype jks
+
+3. Extract the key and certificate in PEM format.
+# openssl pkcs12 -in keystore.p12 -nodes -nocerts -out privatekey.pem
+# openssl pkcs12 -in keystore.p12 -nokeys -out certificate.pem
+
+3. Convert them to DER format.
+# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.pem -out privatekey.der -nocrypt
+# openssl x509 -inform PEM -outform DER -in certificate.pem -out certificate.der
+
+===================================================================================================
+
+1.create private key and new certificate request in one shot
+# openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=DK/ST=DK/emailAddress=admin@twin.local/CN=twin.local/"
+
+2. create certificate issued by ca certificate
+# openssl x509 -req -days 3650 -CA rootca.crt -CAkey rootkey.key -CAcreateserial -in request.csr -out certificate.crt -extfile san.txt
+--------san.txt------------
+authorityKeyIdentifier=keyid,issuer 
+basicConstraints=CA:FALSE 
+subjectAltName = @alt_names 
+[alt_names] 
+DNS.1 = twin.local
+DNS.2 = ai.twin.local
+DNS.3 = *.twin.local
+DNS.4 = localhost
+----------------------------
+
+3. Convert them to DER format.
+# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.key -out privatekey.der -nocrypt
+# openssl x509 -inform PEM -outform DER -in certificate.crt -out certificate.der
+
+===================================================================================================
+
+4. configure ords ssl
+# ords --config . config set standalone.https.port 8443
+# ords --config . config set standalone.https.cert /<path>/certificate.der
+# ords --config . config set standalone.https.cert.key /<path>/privatekey.der
+
+5. copy certificate.der,privatekey.der to /<ordsconfig>/global/standalone

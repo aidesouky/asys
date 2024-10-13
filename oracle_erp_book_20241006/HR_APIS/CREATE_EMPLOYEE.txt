@@ -1,0 +1,70 @@
+DECLARE
+   V_PERSON_ID                   NUMBER;
+   V_ASSIGNMENT_ID               NUMBER;
+   V_PER_OBJECT_VERSION_NUMBER   NUMBER;
+   V_ASG_OBJECT_VERSION_NUMBER   NUMBER;
+   V_PER_EFFECTIVE_START_DATE    DATE;
+   V_PER_EFFECTIVE_END_DATE      DATE;
+   V_FULL_NAME                   VARCHAR (200);
+   V_PER_COMMENT_ID              NUMBER;
+   V_ASSIGNMENT_SEQUENCE         NUMBER;
+   V_ASSIGNMENT_NUMBER           VARCHAR2 (20);
+   V_EMPLOYEE_NUMBER             VARCHAR2 (20);
+   V_NAME_COMBINATION_WARNING    BOOLEAN;
+   V_ASSIGN_PAYROLL_WARNING      BOOLEAN;
+   V_ORIG_HIRE_WARNING           BOOLEAN;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+
+   FOR Z IN (SELECT * FROM FRT_EAM_INTERFACE)
+   LOOP
+      BEGIN
+         HR_EMPLOYEE_API.CREATE_EMPLOYEE (
+            -- IN parameters
+            P_VALIDATE                    => FALSE,
+            P_HIRE_DATE                   => SYSDATE,
+            P_BUSINESS_GROUP_ID           => 0,
+            P_FIRST_NAME                  => Z.C01,
+            P_LAST_NAME                   => Z.C02,
+            P_MIDDLE_NAMES                => NULL,
+            P_EMAIL_ADDRESS               => 'w.gamal@atyab-foods.com',
+            P_DATE_OF_BIRTH               => TO_DATE('01-JAN-1990','DD-MON-YYYY'),
+            P_NATIONAL_IDENTIFIER         => Z.C03,
+            P_OFFICE_NUMBER               => Z.C04,
+            P_SEX                         => 'M',
+            P_INTERNAL_LOCATION           => 'AEM',
+            P_PERSON_TYPE_ID              => 6,
+            P_EMPLOYEE_NUMBER             => V_EMPLOYEE_NUMBER,
+            -- OUT parameters
+            P_PERSON_ID                   => V_PERSON_ID,
+            P_ASSIGNMENT_ID               => V_ASSIGNMENT_ID,
+            P_PER_OBJECT_VERSION_NUMBER   => V_PER_OBJECT_VERSION_NUMBER,
+            P_ASG_OBJECT_VERSION_NUMBER   => V_ASG_OBJECT_VERSION_NUMBER,
+            P_PER_EFFECTIVE_START_DATE    => V_PER_EFFECTIVE_START_DATE,
+            P_PER_EFFECTIVE_END_DATE      => V_PER_EFFECTIVE_END_DATE,
+            P_FULL_NAME                   => V_FULL_NAME,
+            P_PER_COMMENT_ID              => V_PER_COMMENT_ID,
+            P_ASSIGNMENT_SEQUENCE         => V_ASSIGNMENT_SEQUENCE,
+            P_ASSIGNMENT_NUMBER           => V_ASSIGNMENT_NUMBER,
+            P_NAME_COMBINATION_WARNING    => V_NAME_COMBINATION_WARNING,
+            P_ASSIGN_PAYROLL_WARNING      => V_ASSIGN_PAYROLL_WARNING,
+            P_ORIG_HIRE_WARNING           => V_ORIG_HIRE_WARNING);
+
+         COMMIT;
+
+         IF V_EMPLOYEE_NUMBER IS NOT NULL
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('RESULT: ' || Z.C04 || ' => S');
+         ELSE
+            DBMS_OUTPUT.PUT_LINE (' RESULT: ' || Z.C04 || ' => E');
+         END IF;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('ERR: ' || SQLERRM);
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,220 @@
+#! /bin/bash
+#set -x 	 ###### set script in debug mode
+#set -e 	 ###### exit script if any command fail
+echo args is $@  # echo all script parameters
+shift		 # shift parameters trem first parameter
+echo args is $@
+
+###### create function===============================================
+func1(){
+###### define an array
+arr=(aaaa bbbb cccc dddd eeee ffff gggg)
+###### print second element in array
+echo second element is ${arr[1]}
+###### define key value array
+declare -A array
+array=([name]=ahmed [age]=40)
+###### print value for key fromarray
+echo name is ${array[name]}
+###### define and assign string variable
+var="my name is ahmed ibrahim"
+
+###### replace all spaces with - in string
+var2=${var// /-}
+echo no white space is $var2
+###### make text as upper case
+var3=${var^^}
+echo upper case is $var3
+###### make string as lower case
+var4=${var3,,}
+echo lower case is $var4
+###### get length of string
+echo length of string is ${#var}
+###### cut 5 charachters from 11 position
+echo my name is ${var:11:5}
+
+###### make math operations
+num1=$((20*5))
+num2=$((10+5))
+num3=$(($num1%$num2))
+echo 20*5= $num1
+echo 100%15= $num3
+
+###### print current date with format
+echo "date" $(date +'%d-%m-%Y')
+
+# if seconds in some range print some message
+if [ $(date +'%S') -le 20 ]
+then
+	echo this is fist part of minut $(date +'%S')
+elif [ $(date +'%S') -le 40 ]
+then
+	echo this is middle part of minute $(date +'%S')
+else
+	echo this is last part of minute $(date +'%S')
+fi
+
+###### get current second from date
+sec=$(date +'%S')
+echo seconds $sec
+
+###### same as previous example with case block
+case $sec in
+	[0-1]*)echo minute part 1 $sec;;
+	[2-3]*)echo minute part 2 $sec;;
+	[4-5]*)echo minute part 3 $sec;;
+	*)echo final $sec
+esac
+
+###### for variable i in all elements of array 
+###### print element in the same line and sleep 500 ms
+for i in ${arr[*]}
+do
+	echo -ne "$i\r"
+	sleep 0.5
+done
+
+for i in {0..5}
+	echo element $i = ${arr[$i]}
+do
+
+done
+###### loop in the same line using carriage return \r
+n=30
+while [ $n -ge 0 ]
+do
+	echo -ne "hello $n\r"
+	sleep 0.1
+	n=$(($n-1))
+done
+
+}
+
+func2(){
+###### get first line from bash command df after sort result
+res=$(df -h | sort -h | head -n 1)
+# print result
+echo $res
+###### loop for result and print every element
+for s in $res
+do
+	echo $s
+done
+###### get element number 5
+res2=$(echo $res | awk '{ print $5 }')
+# replace % with null
+res2=${res2//%/}
+###### print result
+echo usage without % $res2
+###### read elements in result line into variables
+read a b c d e f <<< $res
+echo usage percent is $e
+###### read elements in result line into an array
+read -a ara <<< $res
+echo usage percent is ${ara[4]}
+
+###### loop for result array and print elements except elements contains boot,dev
+for a in ${ara[*]}
+do
+	if [[ $a == [/]* ]] && [[ $a == *"boot"* ]] || [[ $a == *"dev"* ]]
+	then
+	continue # break
+	fi
+	echo $a
+done
+
+###### read value inline until press ;
+read -d ';' -p "enter text " val
+echo "your value is" $val
+###### read value inline with initial value
+read -i "aaaa" var  #not understand
+echo your entry is $var
+###### read value inline with prompet text
+read -p "enter your name " name
+echo $name
+###### read value inline with time out 5 sec 
+###### and do not print characters when typing like password
+read -p "enter password " -t 5 -s pass
+echo your passowrd is $pass
+}
+##### create function =============================================================
+func3(){
+read -p "enter site: " site
+ping -c 0 $site
+#telnet $site
+
+###### print result of the previous command
+rc=$?
+###### delay 1 sec
+sleep 1
+
+if [ $rc -eq 0 ]
+then
+	echo connected succefully
+else
+	echo connction faild code $rc
+fi
+
+###### read value inline
+read -p "exit now?[y]" -i "y" ex
+###### ext = ex or ext = y and ex not changed if ex is null
+ext=${ex:-y}
+###### ext = ex or ext = y and ex = y if ex is null
+ext=${ex:=y}
+###### ext = ex = y or ext = ex = null if ex is null
+ext=${ex:+y}
+###### assign value to ext
+set ext="y"
+###### set ext with null
+unset ext
+##### condition when lowercase of variable
+if [[ ${ext,,} == "y" ]]
+then
+	echo now
+	exit
+else
+	echo not yet
+fi
+
+###### print random number from 0 to 32000
+echo randome number $RANDOM
+###### print user id
+echo user id $UID
+###### print current directory
+echo current dir $PWD
+
+###### check if directory is exists
+if [ -d /home ]
+	then
+		echo dir /home is exists
+	else
+		echo dir /home is not exists
+fi
+
+###### check if file is exists
+if [ -f test.mp3 ]
+then
+	echo file test.mp3 is exists
+else
+	echo file test.mp3 is not exists
+fi
+}
+
+####### create function with parameters=====================================
+func4(){
+	param1=$1
+	param2=$2
+	echo all params are '$@' $@
+	echo number of params is '$#' $#
+	echo param1 is $param1 and param2 is $param2
+}
+
+#func1
+#func2
+#func3
+#func4 ahmed 84
+#echo enter param1 param2
+#read p1 p2
+#func4 $p1 $p2
+
+

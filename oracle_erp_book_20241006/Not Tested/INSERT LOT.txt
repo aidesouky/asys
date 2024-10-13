@@ -1,0 +1,58 @@
+/* Formatted on 4/7/2023 11:07:00 PM (QP5 v5.256.13226.35538) */
+DECLARE
+   X_OBJECT_ID       NUMBER;
+   X_RETURN_STATUS   VARCHAR2 (1);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+   X_EXPIRE_DATE     DATE;
+
+BEGIN
+   ---— initialization required for R12
+    MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   MO_GLOBAL.INIT ('INV');
+
+   ---— Initialization for Organization_id
+   INV_GLOBALS.SET_ORG_ID (81);
+
+   ---— initialize environment
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2826,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+
+      INV_LOT_API_PUB.INSERTLOT (
+         P_API_VERSION         => 1,
+         P_INIT_MSG_LIST       => FND_API.G_TRUE,
+         P_COMMIT              => FND_API.G_FALSE,
+         P_VALIDATION_LEVEL    => FND_API.G_VALID_LEVEL_FULL,
+         P_INVENTORY_ITEM_ID   =>887,
+         P_ORGANIZATION_ID     => 112,
+         P_LOT_NUMBER          => 'LOT011',
+         P_EXPIRATION_DATE     => X_EXPIRE_DATE,
+         X_OBJECT_ID           => X_OBJECT_ID,
+         X_RETURN_STATUS       => X_RETURN_STATUS,
+         X_MSG_COUNT           => X_MSG_COUNT,
+         X_MSG_DATA            => X_MSG_DATA);
+
+
+      DBMS_OUTPUT.PUT_LINE (
+         'The Status Returned by the API is => ' || X_RETURN_STATUS);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         COMMIT;
+         DBMS_OUTPUT.PUT_LINE ('Success');
+      ELSE
+      DBMS_OUTPUT.PUT_LINE (
+            'Err: '
+         || FND_MSG_PUB.GET (FND_MSG_PUB.G_LAST, FND_API.G_FALSE));
+         ROLLBACK;
+      END IF;
+
+      DBMS_OUTPUT.PUT_LINE ('x_object_id :' || X_OBJECT_ID);
+      DBMS_OUTPUT.PUT_LINE ('x_msg_count :' || X_MSG_COUNT);
+      DBMS_OUTPUT.PUT_LINE ('x_msg_data :' || X_MSG_DATA);
+      EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERR: ' || SQLERRM);
+END;

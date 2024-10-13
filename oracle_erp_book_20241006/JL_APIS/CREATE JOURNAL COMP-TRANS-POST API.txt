@@ -1,0 +1,217 @@
+DECLARE
+   V_ORG_ID               NUMBER := 81;
+   V_USER_ID              NUMBER := 1155;
+   V_RESP_ID              NUMBER := 50717;
+   V_RESP_APPL_ID         NUMBER := 101;
+   X_RETURN_STATUS        VARCHAR2 (10);
+   X_MSG_COUNT            NUMBER;
+   X_MSG_DATA             VARCHAR2 (4000);
+   X_AE_HEADER_ID         NUMBER;
+   X_EVENT_ID             NUMBER;
+   X_AE_LINE_NUM          NUMBER;
+   X_COMPLETION_RETCODE   VARCHAR2 (100);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                               RESP_ID        => V_RESP_ID,
+                               RESP_APPL_ID   => V_RESP_APPL_ID);
+
+   XLA_JOURNAL_ENTRIES_PUB_PKG.CREATE_JOURNAL_ENTRY_HEADER (
+      P_API_VERSION              => 1.0,
+      P_INIT_MSG_LIST            => FND_API.G_TRUE,
+      P_APPLICATION_ID           => 200,
+      P_LEDGER_ID                => 2021,
+      P_LEGAL_ENTITY_ID          => 23273,
+      P_GL_DATE                  => SYSDATE,
+      P_DESCRIPTION              => 'TEST JOURNAL',
+      P_JE_CATEGORY_NAME         => 'Purchase Invoices',
+      P_BALANCE_TYPE_CODE        => 'A',
+      P_BUDGET_VERSION_ID        => NULL,
+      P_REFERENCE_DATE           => NULL,
+      P_BUDGETARY_CONTROL_FLAG   => NULL,
+      P_ATTRIBUTE_CATEGORY       => NULL,
+      P_ATTRIBUTE1               => NULL,
+      P_ATTRIBUTE2               => NULL,
+      P_ATTRIBUTE3               => NULL,
+      P_ATTRIBUTE4               => NULL,
+      P_ATTRIBUTE5               => NULL,
+      P_ATTRIBUTE6               => NULL,
+      P_ATTRIBUTE7               => NULL,
+      P_ATTRIBUTE8               => NULL,
+      P_ATTRIBUTE9               => NULL,
+      P_ATTRIBUTE10              => NULL,
+      P_ATTRIBUTE11              => NULL,
+      P_ATTRIBUTE12              => NULL,
+      P_ATTRIBUTE13              => NULL,
+      P_ATTRIBUTE14              => NULL,
+      P_ATTRIBUTE15              => NULL,
+      X_RETURN_STATUS            => X_RETURN_STATUS,
+      X_MSG_COUNT                => X_MSG_COUNT,
+      X_MSG_DATA                 => X_MSG_DATA,
+      X_AE_HEADER_ID             => X_AE_HEADER_ID,
+      X_EVENT_ID                 => X_EVENT_ID);
+
+   DBMS_OUTPUT.PUT_LINE (
+      FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                       P_ENCODED     => FND_API.G_FALSE));
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+         'Journal Header: ' || X_AE_HEADER_ID || ' created successfuly');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('Journal Error: ' || X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+            'Journal Error: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+
+   COMMIT;
+   XLA_JOURNAL_ENTRIES_PUB_PKG.CREATE_JOURNAL_ENTRY_LINE (
+      P_API_VERSION             => 1.0,
+      P_INIT_MSG_LIST           => FND_API.G_TRUE,
+      P_APPLICATION_ID          => 200,
+      P_AE_HEADER_ID            => X_AE_HEADER_ID,
+      P_DISPLAYED_LINE_NUMBER   => 1,
+      P_CODE_COMBINATION_ID     => 1015,
+      P_GL_TRANSFER_MODE        => 'S',
+      P_ACCOUNTING_CLASS_CODE   => 'ACCRUAL',
+      P_CURRENCY_CODE           => 'EGP',
+      P_ENTERED_DR              => 100,
+      P_ENTERED_CR              => 0,
+      P_ACCOUNTED_DR            => 100,
+      P_ACCOUNTED_CR            => 0,
+      P_CONVERSION_TYPE         => 'User',
+      P_CONVERSION_DATE         => SYSDATE,
+      P_CONVERSION_RATE         => 1,
+      P_PARTY_TYPE_CODE         => NULL,
+      P_PARTY_ID                => NULL,
+      P_PARTY_SITE_ID           => NULL,
+      P_DESCRIPTION             => 'TEST LINE',
+      P_STATISTICAL_AMOUNT      => NULL,
+      P_JGZZ_RECON_REF          => NULL,
+      P_ATTRIBUTE_CATEGORY      => NULL,
+      P_ENCUMBRANCE_TYPE_ID     => NULL,
+      P_ATTRIBUTE1              => NULL,
+      P_ATTRIBUTE2              => NULL,
+      P_ATTRIBUTE3              => NULL,
+      P_ATTRIBUTE4              => NULL,
+      P_ATTRIBUTE5              => NULL,
+      P_ATTRIBUTE6              => NULL,
+      P_ATTRIBUTE7              => NULL,
+      P_ATTRIBUTE8              => NULL,
+      P_ATTRIBUTE9              => NULL,
+      P_ATTRIBUTE10             => NULL,
+      P_ATTRIBUTE11             => NULL,
+      P_ATTRIBUTE12             => NULL,
+      P_ATTRIBUTE13             => NULL,
+      P_ATTRIBUTE14             => NULL,
+      P_ATTRIBUTE15             => NULL,
+      X_AE_LINE_NUM             => X_AE_LINE_NUM,
+      X_RETURN_STATUS           => X_RETURN_STATUS,
+      X_MSG_COUNT               => X_MSG_COUNT,
+      X_MSG_DATA                => X_MSG_DATA);
+
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+         'Journal Line: ' || X_AE_LINE_NUM || ' created successfuly');
+      COMMIT;
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('Line Error: ' || X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+            'Line Error: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+
+   XLA_JOURNAL_ENTRIES_PUB_PKG.CREATE_JOURNAL_ENTRY_LINE (
+      P_API_VERSION             => 1.0,
+      P_INIT_MSG_LIST           => FND_API.G_TRUE,
+      P_APPLICATION_ID          => 200,
+      P_AE_HEADER_ID            => X_AE_HEADER_ID,
+      P_DISPLAYED_LINE_NUMBER   => 2,
+      P_CODE_COMBINATION_ID     => 7263,
+      P_GL_TRANSFER_MODE        => 'S',
+      P_ACCOUNTING_CLASS_CODE   => 'LIABILITY',
+      P_CURRENCY_CODE           => 'EGP',
+      P_ENTERED_DR              => 0,
+      P_ENTERED_CR              => 100,
+      P_ACCOUNTED_DR            => 0,
+      P_ACCOUNTED_CR            => 100,
+      P_CONVERSION_TYPE         => 'User',
+      P_CONVERSION_DATE         => SYSDATE,
+      P_CONVERSION_RATE         => 1,
+      P_PARTY_TYPE_CODE         => NULL,
+      P_PARTY_ID                => NULL,
+      P_PARTY_SITE_ID           => NULL,
+      P_DESCRIPTION             => 'TEST LINE',
+      P_STATISTICAL_AMOUNT      => NULL,
+      P_JGZZ_RECON_REF          => NULL,
+      P_ATTRIBUTE_CATEGORY      => NULL,
+      P_ENCUMBRANCE_TYPE_ID     => NULL,
+      P_ATTRIBUTE1              => NULL,
+      P_ATTRIBUTE2              => NULL,
+      P_ATTRIBUTE3              => NULL,
+      P_ATTRIBUTE4              => NULL,
+      P_ATTRIBUTE5              => NULL,
+      P_ATTRIBUTE6              => NULL,
+      P_ATTRIBUTE7              => NULL,
+      P_ATTRIBUTE8              => NULL,
+      P_ATTRIBUTE9              => NULL,
+      P_ATTRIBUTE10             => NULL,
+      P_ATTRIBUTE11             => NULL,
+      P_ATTRIBUTE12             => NULL,
+      P_ATTRIBUTE13             => NULL,
+      P_ATTRIBUTE14             => NULL,
+      P_ATTRIBUTE15             => NULL,
+      X_AE_LINE_NUM             => X_AE_LINE_NUM,
+      X_RETURN_STATUS           => X_RETURN_STATUS,
+      X_MSG_COUNT               => X_MSG_COUNT,
+      X_MSG_DATA                => X_MSG_DATA);
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+         'Journal Line: ' || X_AE_LINE_NUM || ' created successfuly');
+      COMMIT;
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('Line Error: ' || X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+            'Line Error: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+
+   COMMIT;
+
+   XLA_JOURNAL_ENTRIES_PUB_PKG.COMPLETE_JOURNAL_ENTRY (
+      P_API_VERSION          => 1.0,
+      P_INIT_MSG_LIST        => FND_API.G_TRUE,
+      P_APPLICATION_ID       => 200,
+      P_AE_HEADER_ID         => X_AE_HEADER_ID,
+      P_COMPLETION_OPTION    => 'T', -- C COMPLETE, T TRANSFER, P POST
+      X_COMPLETION_RETCODE   => X_COMPLETION_RETCODE,
+      X_RETURN_STATUS        => X_RETURN_STATUS,
+      X_MSG_COUNT            => X_MSG_COUNT,
+      X_MSG_DATA             => X_MSG_DATA);
+
+   COMMIT;
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Completion Code: ' || X_COMPLETION_RETCODE);
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('Completion Error: ' || X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+            'Completion Error: '
+         || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                             P_ENCODED     => FND_API.G_FALSE));
+   END IF;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Error: ' || SQLERRM);
+END;

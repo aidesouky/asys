@@ -1,0 +1,239 @@
+CREATE SEQUENCE FRTOBTRXSEQ
+  START WITH 1
+  INCREMENT BY   1
+  MAXVALUE 999999
+  MINVALUE 1
+  GLOBAL;
+/
+CREATE OR REPLACE PACKAGE APPS.FRT_AI_OB_PKG
+AS
+   PROCEDURE AI_IMPORT_TRX_AMOUNTS (P_ACCOUNT_NUMBER    VARCHAR2,
+                                    P_TRX_AMOUNT        NUMBER,
+                                    P_TRX_DATE          DATE,
+                                    P_DESCRIPTION       VARCHAR2);
+
+   PROCEDURE AI_CREATE_TRANSACTION (P_DEFAULT_DATE VARCHAR2);
+
+   PROCEDURE AI_MODIFY_DATES (P_DEFAULT_DATE VARCHAR2, P_ACTIVE VARCHAR2);
+END FRT_AI_OB_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY APPS.FRT_AI_OB_PKG
+AS
+   PROCEDURE AI_IMPORT_TRX_AMOUNTS (P_ACCOUNT_NUMBER    VARCHAR2,
+                                    P_TRX_AMOUNT        NUMBER,
+                                    P_TRX_DATE          DATE,
+                                    P_DESCRIPTION       VARCHAR2)
+   IS
+      V_ORG               VARCHAR2 (20);
+      V_BRAND             VARCHAR2 (20);
+      V_CUST_CLASS        VARCHAR2 (50);
+      V_CUST_ACCOUNT_ID   NUMBER;
+      V_CUST_SITE_ID      NUMBER;
+      V_TRX_TYPE_ID       NUMBER;
+      V_TERM_ID           NUMBER;
+      V_SERIAL            NUMBER;
+   BEGIN
+      SELECT ATTRIBUTE10, ATTRIBUTE11, CUSTOMER_CLASS_CODE
+        INTO V_ORG, V_BRAND, V_CUST_CLASS
+        FROM HZ_CUST_ACCOUNTS
+       WHERE ACCOUNT_NUMBER = P_ACCOUNT_NUMBER;
+
+      SELECT TO_NUMBER (
+                REPLACE (
+                      TO_CHAR (P_TRX_DATE, 'YYMMDD')
+                   || TO_CHAR (FRTOBTRXSEQ.NEXTVAL, '000000'),
+                   ' ',
+                   ''))
+        INTO V_SERIAL
+        FROM DUAL;
+
+      SELECT HCA.CUST_ACCOUNT_ID, CAS.CUST_ACCT_SITE_ID
+        INTO V_CUST_ACCOUNT_ID, V_CUST_SITE_ID
+        FROM HZ_CUST_ACCT_SITES_ALL CAS, HZ_CUST_ACCOUNTS_ALL HCA
+       WHERE     CAS.CUST_ACCOUNT_ID = HCA.CUST_ACCOUNT_ID
+             AND CAS.ATTRIBUTE10 = HCA.ATTRIBUTE10
+             AND HCA.ACCOUNT_NUMBER = P_ACCOUNT_NUMBER
+             AND ROWNUM = 1;
+
+      IF P_TRX_AMOUNT > 0
+      THEN
+         V_TERM_ID := 5;
+      END IF;
+
+      SELECT ATTRIBUTE6
+        INTO V_TRX_TYPE_ID
+        FROM FRT_LOOKUPS_ALL
+       WHERE     LOOKUP_TYPE = 'OBTRXTYPE'
+             AND ATTRIBUTE1 = V_ORG
+             AND ATTRIBUTE2 = V_BRAND
+             AND ATTRIBUTE3 = V_CUST_CLASS
+             AND ATTRIBUTE4 =
+                    CASE WHEN P_TRX_AMOUNT > 0 THEN 'DR' ELSE 'CR' END;
+
+
+      INSERT INTO RA_INTERFACE_LINES_ALL (INTERFACE_LINE_ID,
+                                          INTERFACE_LINE_CONTEXT,
+                                          INTERFACE_LINE_ATTRIBUTE1,
+                                          INTERFACE_LINE_ATTRIBUTE2,
+                                          INTERFACE_LINE_ATTRIBUTE3,
+                                          INTERFACE_LINE_ATTRIBUTE11,
+                                          INTERFACE_LINE_ATTRIBUTE12,
+                                          INTERFACE_LINE_ATTRIBUTE13,
+                                          BATCH_SOURCE_NAME,
+                                          LINE_TYPE,
+                                          ORIG_SYSTEM_BILL_CUSTOMER_ID,
+                                          ORIG_SYSTEM_BILL_ADDRESS_ID,
+                                          TRX_NUMBER,
+                                          TRX_DATE,
+                                          GL_DATE,
+                                          DESCRIPTION,
+                                          TERM_ID,
+                                          CURRENCY_CODE,
+                                          CONVERSION_TYPE,
+                                          CONVERSION_RATE,
+                                          AMOUNT,
+                                          UNIT_STANDARD_PRICE,
+                                          UNIT_SELLING_PRICE,
+                                          CUST_TRX_TYPE_ID,
+                                          QUANTITY,
+                                          ORG_ID,
+                                          PRIMARY_SALESREP_ID,
+                                          HEADER_ATTRIBUTE4)
+           VALUES (V_SERIAL,
+                   'Opening Balance',
+                   V_SERIAL,
+                   V_SERIAL,
+                   V_SERIAL,
+                   0,
+                   V_SERIAL,
+                   V_SERIAL,
+                   'Opening Balance',
+                   'LINE',
+                   V_CUST_ACCOUNT_ID,
+                   V_CUST_SITE_ID,
+                   '',
+                   P_TRX_DATE,
+                   P_TRX_DATE,
+                   P_DESCRIPTION,
+                   V_TERM_ID,
+                   'EGP',
+                   'User',
+                   1,
+                   P_TRX_AMOUNT,
+                   P_TRX_AMOUNT,
+                   P_TRX_AMOUNT,
+                   V_TRX_TYPE_ID,
+                   1,
+                   81,
+                   -3,
+                   '');
+   END;
+
+   PROCEDURE AI_CREATE_TRANSACTION (P_DEFAULT_DATE VARCHAR2)
+   AS
+      V_REQID     NUMBER;
+      V_DATE      DATE;
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID   NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID   NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID    NUMBER := 81;
+   BEGIN
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      V_DATE := TO_DATE (P_DEFAULT_DATE, 'YYYY-MM-DD HH24:MI:SS');
+
+      V_REQID :=
+         FND_REQUEST.SUBMIT_REQUEST (
+            APPLICATION   => 'AR',
+            PROGRAM       => 'RAXMTR',
+            DESCRIPTION   => NULL,
+            START_TIME    => NULL,
+            SUB_REQUEST   => FALSE,
+            ARGUMENT1     => '1',
+            ARGUMENT2     => -99,
+            ARGUMENT3     => '3001',
+            ARGUMENT4     => 'Opening Balance',
+            ARGUMENT5     => TO_CHAR (V_DATE, 'YYYY/MM/DD'),
+            ARGUMENT6     => NULL,
+            ARGUMENT7     => NULL,
+            ARGUMENT8     => NULL,
+            ARGUMENT9     => NULL,
+            ARGUMENT10    => NULL,
+            ARGUMENT11    => NULL,
+            ARGUMENT12    => NULL,
+            ARGUMENT13    => NULL,
+            ARGUMENT14    => NULL,
+            ARGUMENT15    => NULL,
+            ARGUMENT16    => NULL,
+            ARGUMENT17    => NULL,
+            ARGUMENT18    => NULL,
+            ARGUMENT19    => NULL,
+            ARGUMENT20    => NULL,
+            ARGUMENT21    => NULL,
+            ARGUMENT22    => NULL,
+            ARGUMENT23    => NULL,
+            ARGUMENT24    => NULL,
+            ARGUMENT25    => NULL,
+            ARGUMENT26    => 'Y',
+            ARGUMENT27    => NULL);
+      COMMIT;
+   END;
+
+   PROCEDURE AI_MODIFY_DATES (P_DEFAULT_DATE VARCHAR2, P_ACTIVE VARCHAR2)
+   AS
+      V_DATE       DATE;
+      V_ENC_DATE   VARCHAR2 (20);
+      V_SERIAL     NUMBER;
+      V_SEQUENCE   VARCHAR (20);
+      V_USER_ID    NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID    NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID    NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID     NUMBER := 81;
+
+      CURSOR TRX_LINES (CDATE DATE)
+      IS
+         SELECT INTERFACE_LINE_ID, INTERFACE_LINE_ATTRIBUTE1
+           FROM RA_INTERFACE_LINES_ALL
+          WHERE BATCH_SOURCE_NAME = 'Opening Balance' AND TRX_DATE > CDATE;
+   BEGIN
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      IF P_ACTIVE = 'Y'
+      THEN
+         V_DATE := TO_DATE (P_DEFAULT_DATE, 'YYYY-MM-DD HH24:MI:SS');
+
+         FOR LNE IN TRX_LINES (V_DATE)
+         LOOP
+            V_ENC_DATE := TO_CHAR (V_DATE, 'YYMMDD');
+            V_SEQUENCE := SUBSTR (LNE.INTERFACE_LINE_ATTRIBUTE1, 7, 6);
+
+            SELECT TO_NUMBER (V_ENC_DATE || V_SEQUENCE)
+              INTO V_SERIAL
+              FROM DUAL;
+
+            UPDATE RA_INTERFACE_LINES_ALL
+               SET TRX_DATE = V_DATE,
+                   GL_DATE = V_DATE,
+                   INTERFACE_LINE_ATTRIBUTE1 = V_SERIAL,
+                   INTERFACE_LINE_ATTRIBUTE2 = V_SERIAL,
+                   INTERFACE_LINE_ATTRIBUTE3 = V_SERIAL,
+                   INTERFACE_LINE_ATTRIBUTE12 = V_SERIAL,
+                   INTERFACE_LINE_ATTRIBUTE13 = V_SERIAL
+             WHERE INTERFACE_LINE_ID = LNE.INTERFACE_LINE_ID;
+         END LOOP;
+
+         COMMIT;
+      END IF;
+   END;
+END FRT_AI_OB_PKG;
+/

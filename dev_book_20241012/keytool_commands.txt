@@ -1,0 +1,44 @@
+1.generate a private key and create jks keystore(if not exists)
+# keytool -genkey -keyalg RSA -alias myprivatekey -keysize 2048 -validity 365 -storepass 123456 -keypass 123456 -keystore keystore.jks -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+2.generate a certificate keypair and create jks keystore(if not exists)
+# keytool -genkeypair -alias myprivatekey -keyalg RSA -keysize 2048 -validity 365 -storepass 123456 -keystore keystore.jks -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+3.generate a private key and create pkcs12 keystore(if not exists)
+# keytool -genkey -keyalg RSA -alias myprivatekey -keysize 2048 -validity 365 -storetype pkcs12 -storepass 123456 -keystore keystore.p12 -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+4.generate a certificate keypair and create pkcs12 keystore(if not exists)
+# keytool -genkeypair -alias myprivatekey -keyalg RSA -keysize 2048 -validity 365 -storetype pkcs12 -storepass 123456 -keystore keystore.p12 -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+5.generate secret key and create pkcs12 keystore(if not exists)
+# keytool -genseckey -keyalg AES -alias myseckey -keysize 256 -validity 365 -storetype pkcs12 -storepass 123456 -keystore keystore.p12 -dn
+ame "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local"
+
+6.generate a certificate request
+# keytool -certreq -alias myrequest -keyalg RSA -keystore keystore.p12 -storepass 123456 -file "request.csr" -dname "CN=ai.twin.local,OU=ai,O=twin,L=CA,ST=DK,C=EG,emailAddress=admin@twin.local" -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+7.export private key from keystore
+# openssl pkcs12 -in keystore.p12 -nodes -nocerts -out private.key
+
+8.export certificate from keystore
+# keytool -export -alias mycertificate -file rootca.crt -keystore keystore.jks -ext "san=email:contact@twin.local,dns:twin.local,dns:*.twin.local,dns:localhost,ip:192.168.1.100"
+
+9.import a certificate from file to keystore
+# keytool -import -v -trustcacerts -alias mycertificate -file certifcate.crt -keystore keystore.jks
+
+10.import an object from keystore to another keystore
+# keytool -importkeystore -alias mycertificate -srckeystore keystore.p12 -destkeystore newkeystore.p12 -srcstoretype pkcs12 -deststorepass <passw> -destkeypass <pass>
+
+11.import all object from keystore to another keystore
+# keytool -importkeystore -srckeystore keystore.jks -destkeystore newkeystore.p12 -srcstoretype jks -deststoretype pkcs12 -deststorepass <pass> -srcstorepass <pass>
+
+12.change keystore password
+# keytool -storepass <pass> -storepasswd -keystore keystore.jks
+
+13.check a keystore
+# keytool -list -keystore keystore.jks -storetype jks
+# keytool -v -list -keystore keystore.jks -storetype jks
+# keytool -list -rfc -keystore keystore.jks -storetype jks
+
+14. convert keystore from jks to pkcs12
+# keytool -importkeystore -srckeystore keystore.jks -destkeystore keystore.p12 -deststoretype pkcs12

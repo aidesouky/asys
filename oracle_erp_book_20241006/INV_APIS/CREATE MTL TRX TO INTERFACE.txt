@@ -1,0 +1,1704 @@
+/* MATERIAL TRANSACTIONS INTERFACE */
+--Scenario: 1: Account Alias Receipt (NO Lot/Serial)
+
+/*Testing the transaction open interface with minimum columns populated.
+Account alias receipt for an item that is neither Lot or Serial control.
+We have defined an item, bmw, and we have assigned the item to W1 Cherry hill organization.
+We are going to receive 10 quantity into subinventory FGI and locator '1.1.1'.
+Below is a SQL statement to check the organization id for organization W1:
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'W1';
+
+--Below is a SQL statement to check the inventory_item_id for out item bmw:
+
+SELECT INVENTORY_ITEM_ID, SEGMENT, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT = 'bmw' AND ORGANIZATION_ID = 1884;
+
+--Below is a SQL statement to find out the transaction_type_id for transaction type Account alias receipt:
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Account alias receipt';
+
+--Below is the script to get the alias account name and the account id it is linked to.
+--Segment is the account alias name.
+
+SELECT DISPOSITION_ID,
+       DESCRIPTION,
+       SEGMENT,
+       DISTRIBUTION_ACCOUNT
+  FROM MTL_GENERIC_DISPOSITIONS
+ WHERE ORGANIZATION_ID = 1884;
+
+--Below is a SQL statement to get the locator id for locator ‘1.1.1’ associated with subinventory ‘FGI’.
+
+SELECT INVENTORY_LOCATION_ID,
+       SEGMENT1,
+       SEGMENT2,
+       SEGMENT3,
+       SUBINVENTORY_CODE
+  FROM MTL_ITEM_LOCATIONS
+ WHERE     ORGANIZATION_ID = 1884
+       AND SUBINVENTORY_CODE = 'FGI'
+       AND SEGMENT1 = '1'
+       AND SEGMENT2 = '1'
+       AND SEGMENT3 = '1';
+
+--Below is a script to find the segments (account c) for the distribution acc021. to account
+--alias screen in Inventory and verify the account for the alias that is defined:
+
+SELECT CODE_COMBINATION_ID,
+       SEGMENT1,
+       SEGMENT2,
+       SEGMENT3,
+       SEGMENT4,
+       SEGMENT5
+  FROM GL_CODE_COMBINATIONS
+ WHERE CODE_COMBINATION_ID = 17021;
+
+--Finally here is the complete SQL statement to interface an account alias receipt. The values populated are based on the values obtained :rom the above SQL sttatements.
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_SOURCE_NAME,
+                                        TRANSACTION_SOURCE_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Alias Receipt',                                    --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             10531,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             ' DEFAULT ',                                 --transaction source
+             147,                                      --transaction source id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             41,                                         --transaction type id
+             '10 ',                              --segment account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000'                              --segment5 account combination
+                  );
+
+COMMIT;
+
+--Scenario: 2: Account Alias Issue (No Lot/Serial)
+
+--Account alias issue for an item that is neither Lot or Serial control.
+--We are issuing out 10 qty that we had received earlier. The subinventory is FGI and the locator is '1.1.1'. We are using the same account alias ' DEFAULT '.
+--Below is a SQL statement to find out the transaction_type_id for the transaction type Account alias issue:
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Account alias issue';
+
+--Below is the complete SQL statement to interface the account alias issue.
+--Note that the transaction type id is 3 for account alias issue and as we are issuing 10 quantity out, the transaction quantity is - 10.
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_SOURCE_NAME,
+                                        TRANSACTION_SOURCE_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Alias Issue',                                      --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             10531,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             ' DEFAULT ',                                 --transaction source
+             147,                                      --transaction source id
+             -10,                                       --transaction quantity
+             10,                                            --Primary quantity
+             31,                                         --transaction type id
+             '01',                              --segment1 account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000'                              --segment5 account combination
+                  );
+
+COMMIT;
+
+--Scenario: 3: Account Alias Receipt (Lot Controled)
+
+/*
+Account alias receipt for an item that is Lot controlled.
+We have defined an item bmwlot and we have assigned the item to W1 Cherry hill organization. We are going to receive 10 quantity into subinventory FGI and locator '1.1.1'. The lot number we are going to assign is LT0001.
+*/
+
+SELECT INVENTORY_ITEM_ID,
+       SEGMENT,
+       ORGANIZATION_ID,
+       AUTO_LOT_ALPHA_PREFI,
+       START_AUTO_LOT_NUMBER
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT = 'bmwlot' AND ORGANIZATION_ID = 1884;
+
+--Below is the complete SQL statement to interface the account alias receipt. The values populated are based on the values obtained from the above SQL statements:
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_SOURCE_NAME,
+                                        TRANSACTION_SOURCE_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5,
+                                        TRANSACTION_INTERFACE_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Alias Receipt',                                    --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             10532,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             ' DEFAULT ',                                 --transaction source
+             147,                                      --transaction source id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             41,                                         --transaction type id
+             '01',                              --segment1 account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000',                             --segment5 account combination
+             999                                    --transaction interface id
+                );
+
+
+INSERT INTO MTL_TRANSACTION_LOTS_INTERFACE (TRANSACTION_INTERFACE_ID,
+                                            LOT_NUMBER,
+                                            LOT_EXPIRATION_DATE,
+                                            TRANSACTION_QUANTITY,
+                                            LAST_UPDATE_DATE,
+                                            LAST_UPDATED_BY,
+                                            CREATION_DATE,
+                                            CREATED_BY)
+     VALUES (999,
+             'LT00001',
+             SYSDATE + 100,
+             10,
+             SYSDATE,
+             0,
+             SYSDATE,
+             0);
+
+COMMIT;
+
+--Scenario: 4: Account Alias Receipt (Serial Controlled)
+
+/*
+Account alias receipt for an item that is Serial controlled.
+We have defined an item bmwserial and we have assigned the item to W1 Cherry hill organization. We are going to receive 10 quantity into subinventory FGI and locator '1.1.1'. The serial numbers we are going to assign are from SR0001 to SR001:.
+*/
+
+SELECT INVENTORY_ITEM_ID,
+       SEGMENT1,
+       ORGANIZATION_ID,
+       AUTO_SERIAL_ALPHA_PREFIX,
+       START_AUTO_SERIAL_NUMBER
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'bmwserial' AND ORGANIZATION_ID = 1884;
+
+--Below is the complete SQL statement to interface the account alias receipt. The values populated are based on the values obtained from the above SQL statements:
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_SOURCE_NAME,
+                                        TRANSACTION_SOURCE_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5,
+                                        TRANSACTION_INTERFACE_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Alias Receipt',                                    --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             10534,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             ' DEFAULT ',                                 --transaction source
+             147,                                      --transaction source id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             41,                                         --transaction type id
+             '01',                              --segment1 account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000',                             --segment5 account combination
+             999                                    --transaction interface id
+                );
+
+INSERT INTO MTL_SERIAL_NUMBERS_INTERFACE (TRANSACTION_INTERFACE_ID,
+                                          FM_SERIAL_NUMBER,
+                                          TO_SERIAL_NUMBER,
+                                          LAST_UPDATE_DATE,
+                                          LAST_UPDATED_BY,
+                                          CREATION_DATE,
+                                          CREATED_BY)
+     VALUES (999,                                   --transaction interface_id
+             'SR0001',                                    --from serial number
+             'SR0010',                                      --to serial number
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0                                                    --created by
+              );
+
+COMMIT;
+
+--Scenario: 5: Subinventory Transfer
+
+/*
+Subinventory transfer for a lot controlled item.
+We have defined an item bmwlot and we have assigned the item to W1 Cherry hill organization. We have already received 10 quantity into subinventory FGI and locator '1.1.1'. We are planning to move a quantity of 2 from subinventory FGI locator '1.1.1' to subinventory 'TC-LOOSE' and locator 'TCLO.1.1.'
+Below is the SQL statement to find the locator id for locator 'TCLO.1.1'
+*/
+
+SELECT INVENTORY_LOCATION_ID,
+       SEGMENT1,
+       SEGMENT2,
+       SEGMENT3,
+       SUBINVENTORY_CODE
+  FROM MTL_ITEM_LOCATIONS
+ WHERE ORGANIZATION_ID = 1884 AND SUBINVENTORY_CODE = 'TC-LOOSE';
+
+--Below is the SQL statement to find the transaction type id for transaction type 'Subinventory Transfer'
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Subinventory Transfer';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSFER_SUBINVENTORY,
+                                        TRANSFER_LOCATOR,
+                                        TRANSACTION_INTERFACE_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Subinventory Transfer',                            --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                           --created date
+             0,                                                   --created by
+             10532,                                        --inventory item id
+             'FGI',                                        --subinventory code
+             1884,                                           --organization id
+             2,                                         --transaction quantity
+             2,                                             --primary quantity
+             2,                                          --transaction type id
+             'TC-LOOSE',                                  -- from subinventory
+             1482,                                          -- from locator id
+             999);                                          --transaction interface id
+
+INSERT INTO MTL_TRANSACTION_LOTS_INTERFACE (TRANSACTION_INTERFACE_ID,
+                                            LOT_NUMBER,
+                                            LOT_EXPIRATION_DATE,
+                                            TRANSACTION_QUANTITY,
+                                            LAST_UPDATE_DATE,
+                                            LAST_UPDATED_BY,
+                                            CREATION_DATE,
+                                            CREATED_BY)
+     VALUES (999,                                   --transaction interface id
+             'LT00001',                                           --Lot number
+             SYSDATE + 100,                              --Lot expiration date
+             2,                                         --transaction quantity
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0);                                    --created by
+
+COMMIT;
+
+--Scenario: 6:  Misc. Receipt (with LPN and serial)
+
+/*
+Miscellaneous receipt using LPN for an item under serial control
+Overview of License Plate Numbers (LPN):
+LPN's are used in the Oracle Warehouse Management System (WMS). Oracle WMS provides full visibility to inventory items that are stored in LPNs. An LPN in Oracle WMS is any object that
+exists in a location and holds items. Although LPNs are associated with containers, they do not need to represent a physical identity, such as a box. Thus, a LPN might be defined as just a label or a collection of items. Oracle WMS enables you to track, transact and nest LPNs and their contents.
+Using License Plate Numbers:
+The Oracle WMS LPN features enable you to do the following:
+a. Receive, store, and pick material by LPN
+b. View on-hand balances by LPN
+c. View contents of LPN, including item number, serial number, quantity, and so on
+d. Move many items in a transaction using the LPN
+e. Print labels and reports for referencing container contents
+f. Track nested LPNs (for example, cartons on a pallet)
+g. Pack, unpack, consolidate, split, and update LPNs
+h. Reuse empty LPNs
+Points to remember when using LPN s (License Plate Numbers):
+LPN_ID : the LPN from which an Unpack operation is to be done
+TRANSFER_LPN_ID : the LPN to which a Pack operation is to be done
+CONTENT_LPN_ID: field is populated for Issue transactions and the TRANSFER_LPN_ID for Receipt transactions (LPN_ID field in MTI should NOT be used for these transactions)
+We cannot issue individual serials from an LPN through an Issue transaction. If a Miscellaneous Issue is performed for an LPN the ENTIRE LPN and ALL ITS CONTENTS are issued out. If you want to issue out a single serial from an LPN, then you must first unpack the serial from the LPN by posting an unpack transaction and then issue the individual serial.
+In our scenario we will receive item bmwlpnserial into LPN A using a miscellaneous receipt. We are going to receive 10 quantity of the item into subinventory FGI and locator'1.1.1'. We have generated the LPN using Generate LPN program through Warehouse Manger responsibility and the concurrent program is under Other> Requests > Run. You can check the LPN number in the log file of the Generate LPN program.
+Below is the SQL statement to check the LPN information then Generate LPN program.
+*/
+
+SELECT LPN_ID, LICENSE_PLATE_NUMBER, LPN_CONTENT
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN1A';
+
+--Below is the SQL statement to find out the meaning for the LPN content:
+
+  SELECT LOOKUP_CODE, :MEANING
+    FROM MFG_LOOKUPS
+   WHERE LOOKUP_TYPE = 'WMS_LPN_CONTEXT'
+ORDER BY LOOKUP_CODE;
+
+/*
+LOOKUP_CODE MEANING
+----------- --------------------------------------------------------------------------------
+1  Resides in Inventory
+2  Resides in WIP
+3  Resides in Receiving
+4  Issued out of Stores
+5  Defined but not used
+6  Resides in Intransit
+7  Resides in Vendor
+8  Packing content
+9  Loaded to Dock
+10 Prepack for WIP
+11 Picked
+We are going to use LPN A which has a content code of  5 - Defined but not used .
+*/
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Miscellaneous receipt';
+
+SELECT INVENTORY_ITEM_ID, SEGMENT, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'bmwlpnserial' AND ORGANIZATION_ID = 1884;
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5,
+                                        TRANSACTION_INTERFACE_ID,
+                                        TRANSFER_LPN_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Miscellaneous Receipt',                            --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             11821,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             42,                                         --transaction type id
+             '01',                              --segment1 account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000',                             --segment5 account combination
+             999,                                   --transaction interface id
+             128);                                          --transfer lpn id
+
+INSERT INTO MTL_SERIAL_NUMBERS_INTERFACE (TRANSACTION_INTERFACE_ID,
+                                          FM_SERIAL_NUMBER,
+                                          TO_SERIAL_NUMBER,
+                                          LAST_UPDATE_DATE,
+                                          LAST_UPDATED_BY,
+                                          CREATION_DATE,
+                                          CREATED_BY)
+     VALUES (999,                                   --transaction interface_id
+             'SR00001',                                   --from serial number
+             'SR00010',                                     --to serial number
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0                                                    --created by
+              );
+
+COMMIT;
+
+--After the import when you check the content of  LPN1A you will see that the content has changed to Resides in Inventory .
+
+SELECT LPN_ID, LICENSE_PLATE_NUMBER, LPN_CONTENT
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN1A';
+
+--Scenario: 7: Misc. Issue (with LPN and serial)
+
+/*
+Miscellaneous issue using LPN for an item under serial control
+We are going to perform a miscellaneous issue of the LPN, LPN A and its entire contents that we had received in scenario 6.
+*/
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Miscellaneous issue';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        DST_SEGMENT1,
+                                        DST_SEGMENT2,
+                                        DST_SEGMENT3,
+                                        DST_SEGMENT4,
+                                        DST_SEGMENT5,
+                                        TRANSACTION_INTERFACE_ID,
+                                        CONTENT_LPN_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Miscellaneous Issue',                              --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             2,                                                   --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             11821,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             -10,                                       --transaction quantity
+             10,                                            --Primary quantity
+             32,                                         --transaction type id
+             '01',                              --segment1 account combination
+             '520',                             --segment2 account combination
+             '5250',                            --segment3 account combination
+             '0000',                            --segment4 account combination
+             '000',                             --segment5 account combination
+             999,                                   --transaction interface id
+             128);                                          --transfer lpn id
+
+INSERT INTO MTL_SERIAL_NUMBERS_INTERFACE (TRANSACTION_INTERFACE_ID,
+                                          FM_SERIAL_NUMBER,
+                                          TO_SERIAL_NUMBER,
+                                          LAST_UPDATE_DATE,
+                                          LAST_UPDATED_BY,
+                                          CREATION_DATE,
+                                          CREATED_BY)
+     VALUES (999,                                   --transaction interface_id
+             'SR00001',                                   --from serial number
+             'SR00010',                                     --to serial number
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0                                                    --created by
+              );
+
+COMMIT;
+
+SELECT LPN_ID, LICENSE_PLATE_NUMBER, LPN_CONTENT
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN1A';
+
+--After the issue transaction when you check the content of LPN LPN1A you will see that the content has changed to 4 Issued out of Stores
+
+--Scenario: 8: Container Pack (No Lot/Serial)
+
+/*
+Container pack item that is not Lot/Serial Control Into LPN
+Generated an LPN using Generate LPN program. Now we are going to pack item bmwp which we have defined and has received loose qty (10) in subinventory FGI and locator'1.1.1' into LPN 'LPN21A' .
+*/
+
+SELECT LPN_ID, LICENSE_PLATE_NUMBER, LPN_CONTENT
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN21A';
+
+--We are going to use LPN21A which has a content 5 Defined but not used
+
+SELECT INVENTORY_ITEM_ID, SEGMENT, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT = 'bmwp' AND ORGANIZATION_ID = 1884;
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Container Pack';
+
+--The transaction type id for Container Pack is 87
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSFER_LPN_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Container Pack',                                   --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             11822,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             87,                                         --transaction type id
+             135);                                          --transfer lpn id
+COMMIT;
+
+SELECT LICENSE_PLATE_NUMBER,
+       LPN_CONTENT,
+       SUBINVENTORY_CODE,
+       LOCATOR_ID,
+       SEALED_STATUS
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN21A';
+
+--LPN content is 1 which means Resides in Inventory .
+
+--Scenario: 9: Container Unpack from LPN
+
+/*
+Container Unpack from LPN
+We are going to unpack LPN LPN21A which we had packed in scenario 8.
+*/
+
+SELECT TRANSACTION_TYPE_ID, TRANSACTION_TYPE_NAME, DESCRIPTION
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Container Unpack';
+
+/*
+The transaction type id for Container UnPack is 88
+Note that we are using column LPN_ID and NOT TRANSFER_LPN_ID as we are doing an unpack transaction.
+*/
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        SOURCE_CODE,
+                                        SOURCE_LINE_ID,
+                                        SOURCE_HEADER_ID,
+                                        PROCESS_FLAG,
+                                        TRANSACTION_MODE,
+                                        LOCK_FLAG,
+                                        LOCATOR_ID,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        INVENTORY_ITEM_ID,
+                                        SUBINVENTORY_CODE,
+                                        ORGANIZATION_ID,
+                                        TRANSACTION_QUANTITY,
+                                        PRIMARY_QUANTITY,
+                                        TRANSACTION_TYPE_ID,
+                                        LPN_ID)
+     VALUES ('Ea',                                           --transaction uom
+             SYSDATE,                                       --transaction date
+             'Container UnPack',                                 --source code
+             99,                                              --source line id
+             99,                                            --source header id
+             1,                                                 --process flag
+             3,                                             --transaction mode
+             2,                                                    --lock flag
+             1291,                                                --locator id
+             SYSDATE,                                       --last update date
+             0,                                              --last updated by
+             SYSDATE,                                          --creation date
+             0,                                                   --created by
+             11822,                                        --inventory item id
+             'FGI',                                   --From subinventory code
+             1884,                                           --organization id
+             10,                                        --transaction quantity
+             10,                                            --Primary quantity
+             88,                                         --transaction type id
+             135);                                          --lpn id
+
+COMMIT;
+
+SELECT LICENSE_PLATE_NUMBER,
+       LPN_CONTENT,
+       SUBINVENTORY_CODE,
+       LOCATOR_ID,
+       SEALED_STATUS
+  FROM WMS_LICENSE_PLATE_NUMBERS
+ WHERE LICENSE_PLATE_NUMBER = 'LPN21A';
+
+--You can see that LPN21A content is 5 Defined but not used and the subinventory and locator id is null in wms_license_plate_numbers table.
+
+--Scenario: 10: Direct Org Transfer (No Lot/Serial)
+
+/*
+Direct-org transfer transaction open interface with minimum columns populated.
+We have defined an item PISTON7 and we have assigned the item to M1 Seattle Manufacturing organization.
+Below is the SQL statement to check organization id for organization M1 .
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON7 .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'PISTON7' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt.
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Direct Org Transfer';
+
+--Direct Org Transfer Direct transfer between two orgs 3
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSFER_ORGANIZATION,
+                                        TRANSFER_SUBINVENTORY)
+     VALUES ('KM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264814,
+             5,
+             'Ea',
+             SYSDATE,
+             3,
+             3,
+             13,
+             17347,
+             116,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             '209',
+             'FGI');
+
+COMMIT;
+
+--Scenario: 11: Intransit Org Transfer (No Lot/Serial)
+
+/*
+Intransit transaction open interface for an item that is neither lot or serial controlled.
+We have defined an item PISTON7 and we have assigned the item to M1 Seattle Manufacturing organization.
+Below is the SQL statement to get the organization id for organization M1 .
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for our item PISTON7 .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'PISTON7' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt.
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Intransit Shipment';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSFER_ORGANIZATION,
+                                        TRANSFER_SUBINVENTORY)
+     VALUES ('KM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264814,
+             -5,
+             'Ea',
+             SYSDATE,
+             21,
+             21,
+             13,
+             17347,
+             120,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             '209',
+             'FGI');
+
+COMMIT;
+
+--Scenario: 12: Sales Order Issue (No Lot/Serial)
+
+/*
+Sales order transaction open interface for an item that is neither lot or serial controlled.
+We have defined an assembly WAKEBOARD and we have assigned the item to the M1 Seattle Manufacturing organization. The assembly has components L BOOT and R BOOT.
+The setup for this process is as follows:
+1. Create Sales Order
+2. Release Sales Order
+3. Transact the Move Order
+*/
+--Below is the SQL statement to get the organization id for organization M1.
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON7 .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'WAKEBOARD' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt.
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Sales order issue';
+
+--Below is the SQL statement to find out the transaction_source_id from the mtl_sales_orders table where the transaction_source_id is the sales order id:
+
+SELECT SALES_ORDER_ID
+  FROM MTL_SALES_ORDERS
+ WHERE SEGMENT1 = '62034';
+
+--Below is the SQL statement to find the source_header_id and transaction_reference:
+
+SELECT HEADER_ID
+  FROM OE_ORDER_HEADERS_ALL
+ WHERE ORDER_NUMBER = '62034';
+
+--Below is the SQL statement to find the source_line_id and trx_source_line_id:
+
+SELECT LINE_ID
+  FROM OE_ORDER_LINES_ALL
+ WHERE HEADER_ID = 120601;
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSACTION_SOURCE_ID,
+                                        TRX_SOURCE_LINE_ID,
+                                        ACCT_PERIOD_ID,
+                                        TRANSACTION_REFERENCE)
+     VALUES ('ORDER ENTRY',
+             120601,
+             218694,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             1022349,
+             -5,
+             'Ea',
+             SYSDATE,
+             33,
+             1,
+             2,
+             17347,
+             147,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             900350,
+             218694,
+             246356,
+             120601);
+
+COMMIT;
+
+--Scenario: 13: Account Issue (No Lot/Serial)
+
+/*
+Account issue transaction for an item that is neither Lot or Serial controlled.
+We have defined an item PISTON3 and we have assigned the item to M1 Seattle Manufacturing organization.
+Below is the SQL statement to get the organization id for organization M1 .
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON:
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'PISTON3' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account issue:
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Account issue';
+
+SELECT C.DISTRIBUTION_ACCOUNT_ID, C.*
+  FROM MTL_MATERIAL_TRANSACTIONS C
+ WHERE INVENTORY_ITEM_ID = 262810;
+
+--Below is the complete SQL statement to do the account issue. The values populated are based on the values obtained from the above SQL statements:
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5)
+     VALUES ('KM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             262810,
+             -15,
+             'Ea',
+             SYSDATE,
+             1,
+             1,
+             3,
+             17347,
+             116,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000');
+
+COMMIT;
+
+--Scenario: 14: Account Receipt (No Lot/Serial)
+
+/*
+Account receipt transaction open interface for an item that is neither Lot or Serial controlled.
+We have defined an item PISTON and have assigned the item to M1 Seattle Manufacturing organization.
+1) Below is the SQL statement to get the organization id for organization M1 .
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the sql to check the inventory_item_id for out item PISTON .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'PISTON3' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find the transaction_type_id for transaction type Account receipt:
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'Account receipt';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5)
+     VALUES ('KM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             262810,
+             15,
+             'Ea',
+             SYSDATE,
+             40,
+             27,
+             3,
+             17347,
+             116,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000');
+
+COMMIT;
+
+--Scenario: 15: WIP Assembly Return (No Lot/Serial)
+
+/*
+WIP assembly return transaction open interface for an item that is neither Lot or Serial controlled.
+We have defined an assembly WAKEBOARD and we have assigned the item to M1 Seattle Manufacturing organization. The assembly has components L BOOT and R BOOT.
+Below is the SQL statement to check organization id for organization M1 .
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON7 .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'WAKEBOARD' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt.
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'WIP Completion Return';
+
+--Below is the SQL statement to find out the transaction_source_id. For a WIP Issue the transaction_source_id is the wip_entity value. Choose the highest value (most current WIP job):
+
+SELECT WIP_ENTITY_ID
+  FROM WIP_ENTITIES
+ WHERE PRIMARY_ITEM_ID LIKE '264815';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSACTION_SOURCE_ID,
+                                        WIP_ENTITY_TYPE,
+                                        OPERATION_SEQ_NUM)
+     VALUES ('CM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264816,
+             5,
+             'Ea',
+             SYSDATE,
+             43,
+             27,
+             5,
+             17347,
+             134,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             730992,
+             1,
+             10);
+
+COMMIT;
+
+--Scenario: 16: WIP Component Return (No Lot/Serial)
+
+/*
+WIP component return transaction open interface for an item that is neither Lot or Serial controlled.
+We have defined an assembly WAKEBOARD and we have assigned the item to M1 Seattle Manufacturing organization. The assembly has components L BOOT and R BOOT.
+Below is the SQL statement to get the organization id for organization M1:
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON7:
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'L BOOT' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt:
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'WIP Issue';
+
+--Below is the SQL statement to find out the transaction_source_id. For a WIP Issue the transaction_source_id is the wip_entity value. Choose the highest value (most current WIP job).
+
+SELECT WIP_ENTITY_ID
+  FROM WIP_ENTITIES
+ WHERE PRIMARY_ITEM_ID LIKE '264816';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSACTION_SOURCE_ID,
+                                        WIP_ENTITY_TYPE,
+                                        OPERATION_SEQ_NUM)
+     VALUES ('CM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264816,
+             5,
+             'Ea',
+             SYSDATE,
+             43,
+             27,
+             5,
+             17347,
+             134,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             730988,
+             1,
+             10);
+
+COMMIT;
+
+--Scenario: 17: WIP Assembly Completion (No Lot/Serial)
+
+/*
+WIP assembly completion transaction open interface for an item that is neither Lot or Serial controlled.
+We have defined an assembly WAKEBOARD and we have assigned the item to M1 Seattle Manufacturing organization. The assembly has components L BOOT and R BOOT.
+Below is the sql to check organization id for organization M1:
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement to check the inventory_item_id for out item PISTON7 .
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'WAKEBOARD' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt:
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'WIP Completion';
+
+--Below is the SQL statement to find out the transaction_source_id. For a WIP Issue the transaction_source_id is the wip_entity value. Choose the highest value (most current WIP job).
+
+SELECT WIP_ENTITY_ID
+  FROM WIP_ENTITIES
+ WHERE PRIMARY_ITEM_ID LIKE '264816';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSACTION_SOURCE_ID,
+                                        WIP_ENTITY_TYPE,
+                                        OPERATION_SEQ_NUM,
+                                        FINAL_COMPLETION_FLAG)
+     VALUES ('CM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264815,
+             5,
+             'Ea',
+             SYSDATE,
+             44,
+             31,
+             5,
+             17347,
+             134,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             730991,
+             1,
+             10,
+             'N');
+
+COMMIT;
+
+--Scenario: 18: WIP Component Issue
+
+/*
+WIP component issue transaction open interface for an item that is neither Lot or Serial controlled.
+We have defined an assembly WAKEBOARD and we have assigned the item to M1 Seattle Manufacturing organization. The assembly has components L BOOT and R BOOT.
+Below is the sql to check organization id for organization M1:
+*/
+
+SELECT ORGANIZATION_CODE, ORGANIZATION_ID
+  FROM ORG_ORGANIZATION_DEFINITIONS
+ WHERE ORGANIZATION_CODE = 'M1';
+
+--Below is the SQL statement  to check the inventory_item_id for out item PISTON7:
+
+SELECT INVENTORY_ITEM_ID, SEGMENT1, ORGANIZATION_ID
+  FROM MTL_SYSTEM_ITEMS_B
+ WHERE SEGMENT1 = 'L BOOT' AND ORGANIZATION_ID = 207;
+
+--Below is the SQL statement to find out the transaction_type_id for transaction type Account receipt:
+
+SELECT TRANSACTION_TYPE_ID,
+       TRANSACTION_TYPE_NAME,
+       DESCRIPTION,
+       TRANSACTION_ACTION_ID
+  FROM MTL_TRANSACTION_TYPES
+ WHERE TRANSACTION_TYPE_NAME = 'WIP Issue';
+
+--Below is the SQL statement to find out the transaction_source_id. For a WIP Issue the transaction_source_id is the wip_entity value.
+
+SELECT WIP_ENTITY_ID
+  FROM WIP_ENTITIES
+ WHERE PRIMARY_ITEM_ID LIKE '264816';
+
+INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                        SOURCE_HEADER_ID,
+                                        SOURCE_LINE_ID,
+                                        PROCESS_FLAG,
+                                        LOCK_FLAG,
+                                        TRANSACTION_MODE,
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        ORGANIZATION_ID,
+                                        INVENTORY_ITEM_ID,
+                                        TRANSACTION_QUANTITY,
+                                        TRANSACTION_UOM,
+                                        TRANSACTION_DATE,
+                                        TRANSACTION_TYPE_ID,
+                                        TRANSACTION_ACTION_ID,
+                                        TRANSACTION_SOURCE_TYPE_ID,
+                                        DISTRIBUTION_ACCOUNT_ID,
+                                        TRANSACTION_INTERFACE_ID,
+                                        SUBINVENTORY_CODE,
+                                        DSP_SEGMENT1,
+                                        DSP_SEGMENT2,
+                                        DSP_SEGMENT3,
+                                        DSP_SEGMENT4,
+                                        DSP_SEGMENT5,
+                                        TRANSACTION_SOURCE_ID,
+                                        WIP_ENTITY_TYPE,
+                                        OPERATION_SEQ_NUM)
+     VALUES ('CM',
+             1,
+             1,
+             1,
+             2,
+             3,
+             SYSDATE,
+             999,
+             SYSDATE,
+             999,
+             207,
+             264816,
+             -5,
+             'Ea',
+             SYSDATE,
+             35,
+             1,
+             5,
+             17347,
+             133,
+             'FGI',
+             '01',
+             '580',
+             '7740',
+             '0000',
+             '000',
+             730986,
+             1,
+             10);
+
+COMMIT;
+
+/*
+Frequently Asked Questions (FAQ):
+a. How do I know what error has occurred?
+Ans .  The process_flag in mtl_transactions_interface will be 3. The Error_Code and Error Explanation
+columns will usually explain why the error has occurred.
+The process flag indicates whether the row has been processed by the concurrent manager.
+The process flag status codes are:
+    1 = Pending
+    2 = Running
+    3 = Error
+b. What things should I check if I am getting errors?
+Ans. First check if you are populating the correct values in all the fields then check if there are any mandatory  columns. Often people forget to populate the mandatory values and the transaction import fails.
+Check if the item is transactable or not by going to theorganization items screen.
+Also check for invalid objects
+Select object_name,object_type from all_objects where status = 'INVALID';
+If any invalid objects exist recompile them and retest the transactions import.
+If you are using serial numbers check the following:
+The MTL_TRANSACTIONS_INTERFACE.TRANSACTION_QUANTITY will either match
+the sum of the records in the
+MTL_SERIAL_NUMBERS_INTERFACE.TRANSACTION_INTERFACE_ID for a specific
+MTL_TRANSACTIONS_INTERFACE.TRANSACTION_INTERFACE_ID, or the 
+FM_SERIAL_NUMBER and TO_SERIAL_NUMBER will have the number range to match the MTL_TRANSACTIONS_INTERFACE.TRANSACTION_QUANTITY for a particular record.
+If you are using Lot numbers check the following:
+Check to ensure that for a specific
+MTL_TRANSACTIONS_INTERFACE.TRANSACTION_INTERFACE_ID there is a corresponding record in the MTL_TRANSACTION_LOTS_INTERFACE table with a matching MTL_TRANSACTION_LOTS_INTERFACE.TRANSACTION_INTERFACE_ID.
+c. How do I resubmit the errored transactions?
+1. Resubmission through the Application
+Navigation Inventory:Transactions >Transaction Open Interface
+Click in the check box under the "Submit" column then Save
+2. Resubmission through SQL*Plus:
+
+Update MTL_TRANSACTIONS_INTERFACE
+    Set     PROCESS_FLAG = 1,
+            LOCK_FLAG = 2,
+            TRANSACTION_MODE = 3,
+            VALIDATION_REQUIRED = 1,
+            ERROR_CODE = NULL,
+            ERROR_EXPLANATION = NULL
+    Where   PROCESS_FLAG IN (1,3);
+*/

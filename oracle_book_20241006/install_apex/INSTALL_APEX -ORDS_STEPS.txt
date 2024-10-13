@@ -1,0 +1,203 @@
+Copy apex folder to c:\app\apex
+# cd c:\apex\apex
+
+Copy apex directory to /opt/apex
+# cd /opt/apex/apex
+
+# sqlplus
+-user-name: sys as sysdba.
+-password: psassword
+
+SQL>> ALTER SESSION SET CONTAINER = XEPDB1(ORCLPDB1);
+SQL>> @apexins.sql SYSAUX SYSAUX TEMP /i/
+SQL>> @apxchpwd.sql
+SQL>> @apex_rest_config.sql
+
+---=======================================================================
+--------------------------------------------------------------
+In SQLPLUS
+--------------------------------------------------------------
+SQL>> ALTER SESSION SET CONTAINER = XEPDB1(ORCLPDB1);
+
+----------------------------EVERY USER------------------------
+SQL>> SELECT USERNAME FROM DBA_USERS WHERE USERNAME LIKE 'APEX%';
+SQL>> ALTER USER <USERNAME> IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+
+ALTER USER APEX_230100 IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_LISTENER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_PUBLIC_USER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_REST_PUBLIC_USER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+--------------------------------------------------------------
+SQL>> @sys_install_acl.sql APEX_230200 -----NOT APEX FILE-----
+
+-------------------------EXIT AND LOGIN AGAIN-----------------
+SQL>> ALTER USER ANONYMOUS IDENTIFIED BY ANONYMOUS ACCOUNT UNLOCK;
+
+------------------------------------------------------------
+
+---================================OR====================================
+------------------------------------------------------------
+In Toad (XE)-(ORCLCDB):
+------------------------------------------------------------
+ALTER USER ANONYMOUS IDENTIFIED BY ANONYMOUS ACCOUNT UNLOCK;
+------------------------------------------------------------
+
+In Toad (XEPDB1)-(ORCLPDB1):
+----------------------------------------------------
+SELECT    'ALTER USER '
+       || USERNAME
+       || ' IDENTIFIED BY System_11 ACCOUNT UNLOCK;'
+  FROM DBA_USERS
+ WHERE USERNAME LIKE 'APEX%';
+------------------------------------------------------------------------
+ALTER USER APEX_230200 IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_LISTENER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_PUBLIC_USER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+ALTER USER APEX_REST_PUBLIC_USER IDENTIFIED BY System_11 ACCOUNT UNLOCK;
+------------------------------------------------------------------------
+
+In Toad (XEPDB1):
+----------------------------------------------------------------------
+BEGIN
+    DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE (
+        HOST   => '*',
+        ace    =>
+            xs$ace_type (privilege_list   => xs$name_list ('connect'),
+                         principal_name   => 'APEX_230200',
+                         principal_type   => xs_acl.ptype_db));
+END;
+/
+----------------------------------------------------------------------
+BEGIN
+    DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE (
+        HOST   => 'localhost',
+        ace    =>
+            xs$ace_type (privilege_list   => xs$name_list ('connect'),
+                         principal_name   => 'APEX_230200',
+                         principal_type   => xs_acl.ptype_db));
+END;
+/
+---====================================================================
+
+----------------------------------------------------------------------
+INSTALL ORDS
+----------------------------------------------------------------------
+==windows
+install java 11+
+set JAVA_HOME = C:\Program Files\Java\jdk-11.0.16.1\
+set path += C:\Program Files\Java\jdk-11.0.16.1\bin
+Copy ords folder to c:\app\ords
+# cd C:\app\ords\bin>
+# ords install
+
+==Linux
+# sudo yum search java-11-openjdk
+# sudo yum install java-11-openjdk
+# java --version
+
+# cd C:\apex\ords\bin
+# cd /opt/apex/ords/bin
+
+# ./ords install
+
+ORDS: Release 22.4 Production on Sun May 28 15:23:01 2023
+Copyright (c) 2010, 2023, Oracle.
+Configuration: /C:/app/ords/bin/
+The configuration folder C:\app\ords\bin does not contain any configuration files.
+Oracle REST Data Services - Interactive Install
+-------------------------------------------------
+  Enter a number to select the type of installation
+    [1] Install or upgrade ORDS in the database only
+    [2] Create or update a database pool and install/upgrade ORDS in the database
+    [3] Create or update a database pool only
+  Choose [2]: 2
+-------------------------------------------------
+  Enter a number to select the database connection type to use
+    [1] Basic (host name, port, service name)
+    [2] TNS (TNS alias, TNS directory)
+    [3] Custom database URL
+  Choose [1]: 1
+-------------------------------------------------
+  Enter the database host name [localhost]:
+  Enter the database listen port [1521]:
+  Enter the database service name [orcl]: xepdb1(orclpdb1)
+  Provide database user name with administrator privileges.
+  Enter the administrator username: sys
+  Enter the database password for SYS AS SYSDBA:<password>
+Connecting to database user: SYS AS SYSDBA url: jdbc:oracle:thin:@//localhost:1521/xepdb1(orclpdb1)
+-------------------------------------------------
+Retrieving information.
+  Enter the default tablespace for ORDS_METADATA and ORDS_PUBLIC_USER [SYSAUX]:
+  Enter the temporary tablespace for ORDS_METADATA and ORDS_PUBLIC_USER [TEMP]:
+  Enter a number to select additional feature(s) to enable:
+    [1] Database Actions  (Enables all features)
+    [2] REST Enabled SQL and Database API
+    [3] REST Enabled SQL
+    [4] Database API
+    [5] None
+  Choose [1]: 1
+-------------------------------------------------
+  Enter a number to configure and start ORDS in standalone mode
+    [1] Configure and start ORDS in standalone mode
+    [2] Skip
+  Choose [1]: 1
+  Enter a number to select the protocol
+    [1] HTTP
+    [2] HTTPS
+  Choose [1]: 1
+  Enter the HTTP port [8080]: 8090S
+  Enter the APEX static resources location: C:\app\apex\images
+-------------------------------------------------
+The setting named: db.connectionType was set to: basic in configuration: default
+The setting named: db.hostname was set to: localhost in configuration: default
+The setting named: db.port was set to: 1521 in configuration: default
+The setting named: db.servicename was set to: xepdb1 in configuration: default
+The setting named: plsql.gateway.mode was set to: proxied in configuration: default
+The setting named: db.username was set to: ORDS_PUBLIC_USER in configuration: default
+The setting named: db.password was set to: ****** in configuration: default
+The setting named: feature.sdw was set to: true in configuration: default
+The global setting named: database.api.enabled was set to: true
+The setting named: restEnabledSql.active was set to: true in configuration: default
+The setting named: security.requestValidationFunction was set to: ords_util.authorize_plsql_gateway in configuration: default
+The global setting named: standalone.http.port was set to: 8090
+The global setting named: standalone.static.path was set to: /C:/app/apex/images/
+The global setting named: standalone.static.context.path was set to: /i
+The global setting named: standalone.context.path was set to: /ords
+The global setting named: standalone.doc.root was set to: C:\app\ords\bin\global\doc_root
+2023-05-28T15:27:30.036Z INFO        Installing Oracle REST Data Services version 22.4.3.r0331239 in XEPDB1 (ORCLPDB1)
+------------------------------------------------------------
+Date       : 28 May 2023 15:27:30
+Release    : Oracle REST Data Services 22.4.3.r0331239
+Type       : ORDS Install
+Database   : Oracle Database 21c Express Edition
+DB Version : 21.3.0.0.0
+------------------------------------------------------------
+Container Name: XEPDB1 (ORCLPDB1)
+Executing scripts for core
+------------------------------------------------------------
+Completed installation for Oracle REST Data Services version 22.4.3.r0331239.
+
+----------
+Run ORDS
+----------
+
+==windows
+# cd C:\apex\ords\bin
+# ords serve
+
+==Linux
+# cd /opt/apex/ords/bin
+# ./ords serve
+
+-----------------------------------------------------------------
+Configure apex with Tomcat server
+-----------------------------------------------------------------
+Set environment variable
+==WINDOWS
+JAVA_TOOL_OPTIONS="-Dconfig.url=<ords_config_directory> -Xms1024M -Xmx1024M"
+
+==LINUX
+export JAVA_OPTS="-Dconfig.url=<ords_config_directory>"
+copy <apex>/images to <tomcat>/webapps/i
+copy <ords>/ords.war to <tomcat>/webapps/ords.war
+run tomcat

@@ -1,0 +1,38 @@
+DECLARE
+   V_ITEMTYPE     VARCHAR2 (20);
+   V_ITEMKEY      NUMBER;
+   V_PROCESS      VARCHAR2 (30);
+   V_USER_KEY     VARCHAR2 (30);
+   V_OWNER_ROLE   VARCHAR2 (30);
+BEGIN
+   V_ITEMTYPE := 'FRTAIT01';
+   V_ITEMKEY := FRT_RUNWFPROCESS_SEQ.NEXTVAL;
+   V_PROCESS := 'AI_TEST_PROCESS01';
+   V_USER_KEY := 'AI' || V_ITEMKEY;
+   V_OWNER_ROLE := 'AIBRAHIM';
+
+   WF_ENGINE.CREATEPROCESS (ITEMTYPE     => V_ITEMTYPE,
+                            ITEMKEY      => V_ITEMKEY,
+                            PROCESS      => V_PROCESS,
+                            USER_KEY     => V_USER_KEY,
+                            OWNER_ROLE   => V_OWNER_ROLE);
+
+   WF_ENGINE.SETITEMATTRTEXT (ITEMTYPE   => V_ITEMTYPE,
+                              ITEMKEY    => V_ITEMKEY,
+                              ANAME      => 'REQUESTER',
+                              AVALUE     => 'MIBRAHEEM');
+
+   WF_ENGINE.SETITEMATTRTEXT (ITEMTYPE   => V_ITEMTYPE,
+                              ITEMKEY    => V_ITEMKEY,
+                              ANAME      => 'APPROVER',
+                              AVALUE     => 'AIBRAHIM');
+
+   WF_ENGINE.SETITEMATTRNUMBER (ITEMTYPE   => V_ITEMTYPE,
+                                ITEMKEY    => V_ITEMKEY,
+                                ANAME      => 'WONUMBER',
+                                AVALUE     => 2000);
+
+   WF_ENGINE.STARTPROCESS (ITEMTYPE => V_ITEMTYPE, ITEMKEY => V_ITEMKEY);
+   
+   COMMIT;
+END;

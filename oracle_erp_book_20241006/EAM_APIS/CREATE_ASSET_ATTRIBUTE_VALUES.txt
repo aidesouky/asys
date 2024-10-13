@@ -1,0 +1,74 @@
+DECLARE
+   X_RETURN_STATUS   VARCHAR2 (20);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+BEGIN
+   EAM_ASSETATTR_VALUE_PUB.INSERT_ASSETATTR_VALUE (
+      P_API_VERSION                  => 1.0,
+      P_INIT_MSG_LIST                => 'F',
+      P_COMMIT                       => 'F',
+      P_VALIDATION_LEVEL             => FND_API.G_VALID_LEVEL_FULL,
+      X_RETURN_STATUS                => X_RETURN_STATUS,
+      X_MSG_COUNT                    => X_MSG_COUNT,
+      X_MSG_DATA                     => X_MSG_DATA,
+      P_ASSOCIATION_ID               => 366,
+      P_APPLICATION_ID               => 401,
+      P_DESCRIPTIVE_FLEXFIELD_NAME   => 'MTL_EAM_ASSET_ATTR_VALUES',
+      P_ORGANIZATION_ID              => 292,
+      P_MAINTENANCE_OBJECT_TYPE      => 3,
+      P_MAINTENANCE_OBJECT_ID        => 10000,
+      P_CREATION_ORGANIZATION_ID     => 292,
+      P_INVENTORY_ITEM_ID            => NULL, --329725
+      P_SERIAL_NUMBER                => NULL,--'PU-PRE-FLA-001'
+      P_ATTRIBUTE_CATEGORY           => 'Test Attr Group2',
+      P_C_ATTRIBUTE1                 => NULL,
+      P_C_ATTRIBUTE2                 => NULL,
+      P_C_ATTRIBUTE3                 => NULL,
+      P_C_ATTRIBUTE4                 => NULL,
+      P_C_ATTRIBUTE5                 => NULL,
+      P_C_ATTRIBUTE6                 => NULL,
+      P_C_ATTRIBUTE7                 => NULL,
+      P_C_ATTRIBUTE8                 => NULL,
+      P_C_ATTRIBUTE9                 => NULL,
+      P_C_ATTRIBUTE10                => 20,
+      P_C_ATTRIBUTE11                => 30,
+      P_C_ATTRIBUTE12                => 40,
+      P_C_ATTRIBUTE13                => NULL,
+      P_C_ATTRIBUTE14                => NULL,
+      P_C_ATTRIBUTE15                => NULL,
+      P_C_ATTRIBUTE16                => NULL,
+      P_C_ATTRIBUTE17                => NULL,
+      P_C_ATTRIBUTE18                => NULL,
+      P_C_ATTRIBUTE19                => NULL,
+      P_C_ATTRIBUTE20                => NULL,
+      P_D_ATTRIBUTE1                 => NULL,
+      P_D_ATTRIBUTE2                 => NULL,
+      P_D_ATTRIBUTE3                 => NULL,
+      P_D_ATTRIBUTE4                 => NULL,
+      P_D_ATTRIBUTE5                 => NULL,
+      P_D_ATTRIBUTE6                 => NULL,
+      P_D_ATTRIBUTE7                 => NULL,
+      P_D_ATTRIBUTE8                 => NULL,
+      P_D_ATTRIBUTE9                 => NULL,
+      P_D_ATTRIBUTE10                => NULL,
+      P_N_ATTRIBUTE1                 => NULL,
+      P_N_ATTRIBUTE2                 => NULL,
+      P_N_ATTRIBUTE3                 => NULL,
+      P_N_ATTRIBUTE4                 => NULL,
+      P_N_ATTRIBUTE5                 => NULL,
+      P_N_ATTRIBUTE6                 => NULL,
+      P_N_ATTRIBUTE7                 => NULL,
+      P_N_ATTRIBUTE8                 => NULL,
+      P_N_ATTRIBUTE9                 => NULL,
+      P_N_ATTRIBUTE10                => NULL);
+   COMMIT;
+
+   DBMS_OUTPUT.PUT_LINE ('X_RETURN_STATUS : ' || X_RETURN_STATUS);
+
+   IF (X_RETURN_STATUS = 'S')
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+   DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA : ' || X_MSG_DATA);
+   END IF;
+END;

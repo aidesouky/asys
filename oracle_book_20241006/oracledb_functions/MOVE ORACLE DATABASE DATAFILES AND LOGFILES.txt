@@ -1,0 +1,82 @@
+MOVE ORACLE DATABASE DATAFILES AND LOGFILES
+============================================
+============================================
+
+LINUX
+=====
+XE DATAFILES
+=============
+select name from v$dbfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host mv /opt/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf /u01/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf
+SQL> STARTUP MOUNT;
+SQL> ALTER DATABASE RENAME FILE '/opt/oracle/oradata/XE/APEX_3400594320487963.dbf' TO '/u01/oracle/oradata/XE/APEX_3400594320487963.dbf';
+SQL> ALTER DATABASE OPEN;
+
+XE LOGFILES
+===========
+SQL> select member from v$logfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host mv /opt/oracle/oradata/XE/redo01.log /u01/oracle/oradata/XE/redo01.log
+SQL> STARTUP MOUNT;
+SQL> ALTER DATABASE RENAME FILE '/opt/oracle/oradata/XE/redo01.log' TO '/u01/oracle/oradata/XE/redo01.log';
+SQL> ALTER DATABASE OPEN;
+
+XE CONTROLFILES
+===============
+SQL> select name from v$controlfile;
+SQL> ALTER SYSTEM SET control_files='/new_path/control01.ctl',  '/new_path/control02.ctl', '/new_path/control03.ctl' SCOPE=SPFILE;
+SQL> SHUTDOWN IMMEDIATE
+SQL> host mv /old_path/control01.ctl /new_path/control01.ctl
+SQL> host mv /old_path/control02.ctl /new_path/control02.ctl
+SQL> host mv /old_path/control03.ctl /new_path/control03.ctl
+SQL> STARTUP
+
+XEPDB1 DATAFILES
+================
+SQL> ALTER SESSION SET CONTAINER = XEPDB1;
+SQL> select name from v$dbfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host mv /opt/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf /u01/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf
+SQL> ALTER DATABASE RENAME FILE '/opt/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf' TO '/u01/oracle/oradata/XE/XEPDB1/APEX_3400594320487963.dbf';
+SQL> STARTUP;
+
+
+WINDOWS
+=======
+XE DATAFILES
+=============
+SQL> select name from v$dbfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF C:\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF;
+SQL> STARTUP MOUNT;
+SQL> ALTER DATABASE RENAME FILE 'C:\APP\AIT\PRODUCT\21C\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF' TO 'C:\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF';
+SQL> ALTER DATABASE OPEN;
+
+XE LOGFILES
+============
+SQL> select member from v$logfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\redo01.log C:\ORADATA\XE\redo01.log
+SQL> STARTUP MOUNT;
+SQL> ALTER DATABASE RENAME FILE 'C:\APP\AIT\PRODUCT\21C\ORADATA\XE\redo01.log' TO 'C:\ORADATA\XE\redo01.log';
+SQL> ALTER DATABASE OPEN;
+
+XE CONTROLFILES
+===============
+SQL> select name from v$controlfile;
+SQL> ALTER SYSTEM SET control_files='C:\ORADATA\XE\control01.ctl',  'C:\ORADATA\XE\control02.ctl', 'C:\ORADATA\XE\control03.ctl' SCOPE=SPFILE;
+SQL> SHUTDOWN IMMEDIATE
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\control03.ctl C:\ORADATA\XE\control01.ctl
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\control03.ctl C:\ORADATA\XE\control02.ctl
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\control03.ctl C:\ORADATA\XE\control03.ctl
+SQL> STARTUP
+
+XEPDB1 DATAFILES
+================
+SQL> ALTER SESSION SET CONTAINER = XEPDB1;
+SQL> select name from v$dbfile;
+SQL> SHUTDOWN IMMEDIATE;
+SQL> host move C:\APP\AIT\PRODUCT\21C\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF C:\ORADATA\XE\XEPDB1\APEX_2200454718695664.DBF;
+SQL> ALTER DATABASE RENAME FILE 'C:\APP\AIT\PRODUCT\21C\ORADATA\XE\APEX_2200454718695664.DBF' TO 'C:\ORADATA\XE\APEX_2200454718695664.DBF';
+SQL> STARTUP;

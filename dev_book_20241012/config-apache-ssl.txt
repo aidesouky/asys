@@ -1,0 +1,45 @@
+ Setup Apache to support SSL or https
+=========================================
+
+------------------------------------
+#1.Generating keystore file : server.keystore
+------------------------------------
+# openssl req -x509 -sha256 -days 3650 -newkey rsa:2048 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=DK/ST=DK/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,DNS:localhost"
+# openssl pkcs12 -export -out keystore.p12 -inkey privatekey.key -in certificate.crt
+
+#2.Configure Server for SSL connction
+# vim /opt/lampp/httpd.conf
+check if below lines are exists:
+ LoadModule ssl_module modules/mod_ssl.so
+ Include etc/extra/httpd-ssl.conf
+ Include etc/extra/httpd-vhosts.conf
+ 
+# vim /opt/lampp/etc/extra/httpd-ssl.conf
+check if below lines are exists:
+ SSLCertificateFile "/root/server.crt"
+ SSLCertificateKeyFile "/root/server.key"
+ ServerName twin.local:443
+ 
+#3.Configure vhosts to accept SSL connction
+# vim /opt/lampp/etc/extra/httpd-vhosts.conf
+ add virtual host
+ 
+<VirtualHost *:80>
+    ServerName twin.local
+    ServerAlias twin.local
+    ServerAdmin ai@twin.local
+    DocumentRoot "/opt/lampp/htdocs"
+    RewriteEngine on
+    RewriteCond %{SERVER_NAME} =twin.local
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI}[END,NE,R=permanent]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName twin.local
+    ServerAlias twin.local
+    ServerAdmin ai@twin.local
+    DocumentRoot "/opt/lampp/htdocs"
+    SSLEngin on
+    SSLCertificateFile "/root/server.crt"
+    SSLCertificateKeyFile "/root/server.key"
+</VirtualHost>

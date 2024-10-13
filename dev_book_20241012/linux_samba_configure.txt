@@ -1,0 +1,109 @@
+##1. Install samba #####
+=========================
+# apt install samba
+
+##2. start samba service #####
+===============================
+# systemctl status smbd
+# systemctl start smbd
+
+##3. create shared directory #####
+===================================
+# mkdir -p /home/sharing
+
+##4. Create samba user #####
+============================
+# smbpasswd -a user1
+or
+# useradd user2			create user user2
+# passwd user2			set password for user2
+# smbpasswd -a user2		add user2 to samba user list and set samba password for the user
+
+##5. grant permissions #####
+============================
+# chown user2:user2 /home/sharing
+or
+# setfacl -R -m "u:user2:rwx" /home/sharing
+
+##6. Configure samba share directory #####
+==========================================
+# vim /etc/samba/smb.conf
+[sharing]
+comment = Samba share directory
+path = /home/sharing
+inherit permission = yes
+------------------------
+read only = no
+writable = yes
+browseable = yes
+guest ok = no
+valid users = @user1 @user2
+---------------------------
+[sharing]: Represents the directory name. This is the directory location Windows users see.
+comment: Serves as a shared directory description.
+path: This parameter specifies the shared directory location. The example uses a directory in /home, but users can also place the shared files under /samba.
+inherit permission: apply permission on all child directories
+read only: This parameter allows users to modify the directory and add or change files when set to no.
+writeable: Grants read and write access when set to yes.
+browseable: This parameter allows other machines in the network to find the Samba server and Samba share when set to yes. 
+ Otherwise, users must know the exact Samba server name and type in the path to access the shared directory.
+guest ok: When set to no, this parameter disables guest access. Users need to enter a username and password to access the shared directory.
+valid users: Only the users mentioned have access to the Samba share.
+-------------------------------------------
+
+##6.1. Configure samba options #####
+==================================
+# vim /etc/samba/smb.conf
+workgroup = WORKGROUP
+server string = samba_server
+interfaces = lo enp0s3v
+bind interfaces only = yes
+log file = /var/log/samba/log.%m
+max log size = 1000
+logging = file
+panic action = /usr/share/samba/panic-action %d
+server role = standalone server
+obey pam restrictions = yes
+unix password sync = yes
+passwd program = /usr/bin/passwd
+passwd chat = *Enter\snew\s*\spassword:* %n\n *Retype\snew\s*\spassword:* %n\n *password\supdated\ssuccessfully* .
+pam password change = yes
+map to guest = bad user
+usershare allow guests = yes
+
+##7. Test Parameters #####
+==========================
+# testparam			test if configration data is valid
+
+##8. allow samba service #####
+==============================
+# ufw allow samba
+
+##9. restart samba service #####
+==============================
+# systemctl restart smbd
+
+##10. connect to shared directory #####
+==============================
+from linux: smb://192.168.1.109/sharing
+from windows: \\192.168.1.109
+
+##11. Install cifs-utils #####
+==============================
+# apt install cifs-utils
+
+## mount shared directory in system #####
+=========================================
+mount -t cifs //1192.168.1.109/sharing /mnt/smb/sharing -w --make-shared -o username=ai,password=ai,uid=1000,gid=1000,workgroup=WORKGROUP,dir_mode=0777,file_mode=0666
+
+## Check Mounted Points #####
+=============================
+# mount
+# df -h
+
+## display shared directory #####
+=================================
+smbclient -L 192.168.1.115 -U ai%ai
+smbclient -L 192.168.1.115 -U ai
+smbclient -L 192.168.1.115 --no-pass
+

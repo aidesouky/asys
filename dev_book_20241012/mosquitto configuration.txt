@@ -1,0 +1,93 @@
+# mosquitto_passwd -c -b <path>/passwd <user> <pass>
+# mosquitto_passwd -b <file> <user> <pass>
+# mosquitto_passwd -D <file> <user>
+# mosquitto -c <path>/mosquitto.conf
+# mosquitto_sub -i <client_id> -t <topic> -d
+# mosquitto_sub -i <client_id> -t <topic> -h <host> -p <port> -d
+# mosquitto_sub -i <client_id> -t <topic> -u <user> -P <pass> -d
+# mosquitto_pub -i <client_id> -t <topic> -m <msg> -d
+# mosquitto_pub -i <client_id> -t <topic> -m <msg> -h <host> -p <port> -d
+# mosquitto_pub -i <client_id> -t <topic> -m <msg> -u <user> -P <pass> -d
+
+##============conf================
+##--------------------------------
+## add more than listener set true
+per_listener_settings true
+
+## use tcp mqtt without users
+listener 1883
+allow_anonymous true
+
+## use websocket ws without users
+listener 1884
+allow_anonymous true
+protocol websockets
+
+## use tcp mqtt with users
+listener 1885
+allow_anonymous false
+password_file /<path>/pwfile.txt
+
+## use websocket ws with users
+listener 1886
+allow_anonymous false
+password_file /<path>/pwfile.txt
+protocol websockets
+
+## use ssl connection with tcp mqtts
+listener 8883
+allow_anonymous false
+password_file /<path>/pwfile.txt
+cafile /<path>/cacert.crt
+keyfile /<path>/privatekey.key
+certfile /<path>/certificate.crt
+
+## use ssl connection with websocket wws
+listener 8884
+allow_anonymous false
+password_file /<path>/pwfile.txt
+protocol websockets #[mqtt,websockets]
+cafile /<path>/cacert.crt
+keyfile /<path>/privatekey.key
+certfile /<path>/certificate.crt
+
+#require_certificate true
+#message_size_limit 10
+#max_connections 1000
+#max_queued_messages 1000
+#max_packet_size 0
+#max_qos 2
+
+#retain_available true
+#check_retain_source true
+
+## use auto clientid
+#allow_zero_length_clientid true
+#auto_id_prefix client-
+#use_username_as_clientid false
+#use_identity_as_username false
+#clientid_prefixes ai-
+# user <username>
+
+# topic [read|write|readwrite|deny] <topic>
+
+## save data in database
+persistence true
+persistence_file mosquitto.db
+persistence_location /<path>/
+autosave_interval 1
+autosave_on_changes true
+
+## log actions
+#log_timestamp true
+#log_timestamp_format %Y-%m-%dT%H:%M:%S
+connection_messages true
+log_type subscribe
+log_type unsubscribe
+log_type websockets
+log_type error
+log_type warning
+log_type notice
+log_type information
+log_dest file /<path>/mosquitto.log
+##--------------------------------

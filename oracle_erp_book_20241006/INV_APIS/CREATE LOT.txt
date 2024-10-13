@@ -1,0 +1,125 @@
+DECLARE
+   -- Intialize Parameters
+   V_USER_ID            NUMBER := 1318;
+   V_RESP_ID            NUMBER := 50583;
+   V_RESP_APPL_ID       NUMBER := 401;
+
+
+   -- API Standard Parameters
+   V_API_VERSION        NUMBER := 1.0;
+   V_INIT_MSG_LIST      VARCHAR2 (100) := FND_API.G_FALSE;
+   V_COMMIT             VARCHAR2 (100) := FND_API.G_FALSE;
+   V_RETURN_STATUS      VARCHAR2 (100);
+   V_MSG_COUNT          NUMBER;
+   V_MSG_DATA           VARCHAR2 (3000);
+
+   -- Message API Parameters
+   V_MSG_INDEX          NUMBER;
+   V_MSG_INDEX_OUT      NUMBER;
+
+   -- Lot Parameters
+   V_VALIDATION_LEVEL   NUMBER := FND_API.G_VALID_LEVEL_FULL;
+   V_ORIGIN_TXN_ID      NUMBER := NULL;
+   V_SOURCE             NUMBER := NULL;
+   V_ROW_ID             ROWID;
+   V_LOT_REC         MTL_LOT_NUMBERS%ROWTYPE;
+   X_LOT_REC            MTL_LOT_NUMBERS%ROWTYPE;
+BEGIN
+   -- Set EBS Grobal Informations
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2826,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+   -- Initialize Message List
+   FND_MSG_PUB.INITIALIZE;
+
+   -- Set Parameters
+   V_LOT_REC.INVENTORY_ITEM_ID := 887;  
+   V_LOT_REC.ORGANIZATION_ID := 112;              
+   V_LOT_REC.LOT_NUMBER := 'LOT012';
+   V_LOT_REC.PARENT_LOT_NUMBER := NULL;
+   V_LOT_REC.EXPIRATION_DATE := TO_DATE ('31-MAR-2025', 'DD-MON-YYYY');
+   V_LOT_REC.STATUS_ID:=61;
+   V_LOT_REC.DISABLE_FLAG := NULL;
+   V_LOT_REC.ORIGINATION_DATE := SYSDATE;
+   V_LOT_REC.CREATION_DATE := SYSDATE;
+   V_LOT_REC.LAST_UPDATE_DATE := SYSDATE;
+   V_LOT_REC.CREATED_BY := FND_GLOBAL.USER_ID;
+   V_LOT_REC.LAST_UPDATED_BY := FND_GLOBAL.USER_ID;
+   V_LOT_REC.LAST_UPDATE_LOGIN := FND_GLOBAL.LOGIN_ID;
+
+   -- Call API
+   DBMS_OUTPUT.PUT_LINE ('Start CREATE_INV_LOT API');
+
+   INV_LOT_API_PUB.CREATE_INV_LOT (X_RETURN_STATUS      => V_RETURN_STATUS,
+                                   X_MSG_COUNT          => V_MSG_COUNT,
+                                   X_MSG_DATA           => V_MSG_DATA,
+                                   X_ROW_ID             => V_ROW_ID,
+                                   X_LOT_REC            => X_LOT_REC,
+                                   P_LOT_REC            => V_LOT_REC ,
+                                   P_SOURCE             => V_SOURCE,
+                                   P_API_VERSION        => V_API_VERSION,
+                                   P_INIT_MSG_LIST      => V_INIT_MSG_LIST,
+                                   P_COMMIT             => V_COMMIT,
+                                   P_VALIDATION_LEVEL   => V_VALIDATION_LEVEL,
+                                   P_ORIGIN_TXN_ID      => V_ORIGIN_TXN_ID);
+
+   DBMS_OUTPUT.PUT_LINE ('Create_Inv_lot return ' || V_RETURN_STATUS);
+
+   -- Error Handling
+   IF V_RETURN_STATUS = FND_API.G_RET_STS_SUCCESS
+   THEN
+      IF V_MSG_COUNT = 0 OR V_MSG_COUNT IS NULL
+      THEN
+         DBMS_OUTPUT.PUT_LINE (
+            'Lot Number has been generated Successfully!!');
+         COMMIT;
+         DBMS_OUTPUT.PUT_LINE (
+            '    organization_id    : ' || X_LOT_REC.ORGANIZATION_ID);
+         DBMS_OUTPUT.PUT_LINE (
+            '    inventory_item_id  : ' || X_LOT_REC.INVENTORY_ITEM_ID);
+         DBMS_OUTPUT.PUT_LINE (
+            '    lot_number         : ' || X_LOT_REC.LOT_NUMBER);
+         DBMS_OUTPUT.PUT_LINE (
+            '    created_by         : ' || X_LOT_REC.CREATED_BY);
+         DBMS_OUTPUT.PUT_LINE (
+            '    creation_date      : ' || X_LOT_REC.CREATION_DATE);
+      ELSE
+         DBMS_OUTPUT.PUT_LINE ('WARNING!!');
+         ROLLBACK;
+      END IF;
+   ELSIF V_RETURN_STATUS = FND_API.G_RET_STS_ERROR
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR!!');
+      ROLLBACK;
+   ELSIF V_RETURN_STATUS = FND_API.G_RET_STS_UNEXP_ERROR
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('UNEXPECTED ERROR!!');
+      ROLLBACK;
+   END IF;
+
+
+   -- Message Handling
+   IF V_MSG_COUNT = 1
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Error Message : ' || V_MSG_DATA);
+   ELSIF V_MSG_COUNT > 1
+   THEN
+      FOR V_MSG_INDEX IN 1 .. V_MSG_COUNT
+      LOOP
+         FND_MSG_PUB.GET (P_MSG_INDEX       => V_MSG_INDEX,
+                          P_ENCODED         => FND_API.G_FALSE,
+                          P_DATA            => V_MSG_DATA,
+                          P_MSG_INDEX_OUT   => V_MSG_INDEX_OUT);
+         DBMS_OUTPUT.PUT_LINE (
+            'Error Message' || V_MSG_INDEX || ' : ' || V_MSG_DATA);
+      END LOOP;
+   END IF;
+
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      V_MSG_DATA := SUBSTR (SQLERRM, 0, 1000);
+      DBMS_OUTPUT.PUT_LINE (
+            'Message: '
+         || V_MSG_DATA);
+END;

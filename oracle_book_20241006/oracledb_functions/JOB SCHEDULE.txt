@@ -1,0 +1,198 @@
+--CREATE SCHEDULER PROGRAM - PLSQL_BLOCK
+BEGIN
+  DBMS_SCHEDULER.CREATE_PROGRAM(
+  PROGRAM_NAME => 'SCH_PROGRAM',
+  PROGRAM_TYPE => 'PLSQL_BLOCK',
+  PROGRAM_ACTION => 'BEGIN PKG_NAME.PROCEDURE_NAME(''SYS''); END;',
+  ENABLED => TRUE,
+  COMMENTS => 'Program to execute stored procedure');
+END;
+/
+--CREATE SCHEDULER PROGRAM - STORED_PROCEDURE
+BEGIN
+  DBMS_SCHEDULER.CREATE_PROGRAM(
+  PROGRAM_NAME => 'SCH_PROGRAM',
+  PROGRAM_TYPE => 'STORED_PROCEDURE',
+  PROGRAM_ACTION => 'PKG_NAME.PROCEDURE_NAME',
+  NUMBER_OF_ARGUMENTS => 1,
+  ENABLED => FALSE,
+  COMMENTS => 'Program to run stored procedure');
+
+  DBMS_SCHEDULER.DEFINE_PROGRAM_ARGUMENT(
+   PROGRAM_NAME => 'SCH_PROGRAM',
+   ARGUMENT_NAME => 'user',
+   ARGUMENT_POSITION => 1,
+   ARGUMENT_TYPE => 'VARCHAR2',
+   DEFAULT_VALUE => 'SYS');
+END;
+/
+--CREATE SCHEDULER PROGRAM - EXECUTABLE
+BEGIN
+  DBMS_SCHEDULER.CREATE_PROGRAM(
+  PROGRAM_NAME => 'SCH_PROGRAM',
+  PROGRAM_TYPE => 'EXECUTABLE',
+  PROGRAM_ACTION => '/path/test.sh',
+  ENABLED => TRUE,
+  COMMENTS => 'Program to trigger sh');
+END;
+/
+-- TO ENABLE PROGRAM
+BEGIN
+  DBMS_SCHEDULER.ENABLE (PROGRAM_NAME=>'SCH_PROGRAM');
+END;
+/
+-- TO DISABLE PROGRAM
+BEGIN
+  DBMS_SCHEDULER.DISABLE (PROGRAM_NAME=>'SCH_PROGRAM',FORCE=>TRUE);
+END;
+/
+-- TO DROP PROGRAM
+BEGIN
+  DBMS_SCHEDULER.DROP_PROGRAM(PROGRAM_NAME=>'SCH_PROGRAM');
+END;
+/
+--CREATE SCHEDULER SCHEDULE - EXECUTABLE
+BEGIN
+  DBMS_SCHEDULER.CREATE_SCHEDULE (
+    SCHEDULE_NAME   => 'SCH_SCHEDULE',
+    START_DATE      => SYSTIMESTAMP,
+    REPEAT_INTERVAL => 'freq=hourly; byminute=0',
+    END_DATE        => NULL,
+    COMMENTS        => 'Repeats hourly');
+END;
+/
+-- TO DROP SCHEDULE
+BEGIN
+  DBMS_SCHEDULER.DROP_SCHEDULE (SCHEDULE_NAME => 'SCH_SCHEDULE');
+END;
+/
+--CREATE SCHEDULER JOB - STORED_PROCEDURE
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+   JOB_NAME           =>  'SCH_JOB',
+   JOB_TYPE           =>  'STORED_PROCEDURE',
+   JOB_ACTION         =>  'PKG_NAME.PROCEDURE_NAME',
+   START_DATE         =>  '28-APR-08 07.00.00 PM',
+   REPEAT_INTERVAL    =>  'FREQ=DAILY;INTERVAL=2',
+   END_DATE           =>  '20-NOV-08 07.00.00 PM',
+   ENABLED            =>  TRUE,
+   AUTO_DROP          =>   FALSE,
+   JOB_CLASS          =>  'JOB_CLASS',
+   COMMENTS           =>  'My test job');
+END;
+/
+--CREATE SCHEDULER JOB - PLSQL_BLOCK
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+   JOB_NAME                 =>  'SCH_JOB', 
+   JOB_TYPE                 =>  'PLSQL_BLOCK',
+   REPEAT_INTERVAL          =>  'FREQ=SECONDLY;INTERVAL=10',
+   JOB_ACTION               =>  'BEGIN PKG_NAME.PROCEDURE_NAME; END;',
+   ENABLED                  =>  TRUE,
+   AUTO_DROP                =>   FALSE,
+   SCHEDULE_NAME            =>  'My test job');
+END;
+/
+--CREATE SCHEDULER JOB - SCHEDULE_PROGRAM
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+   JOB_NAME         =>  'SCH_JOB',
+   PROGRAM_NAME     =>  'SCH_PROGRAM',
+   REPEAT_INTERVAL  =>  'FREQ=SECONDLY;INTERVAL=10',
+   END_DATE         =>  '30-APR-09 04.00.00 AM',
+   JOB_STYLE        => 'LIGHTWEIGHT',
+   ENABLED          =>  TRUE,
+   AUTO_DROP        =>   FALSE,
+   COMMENTS         => 'My test job');
+END;
+/
+--CREATE SCHEDULER JOB - SCHEDULE_PROGRAM - SCHEDULE_SCEDULE
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+   JOB_NAME            =>  'SCH_JOB', 
+   PROGRAM_NAME        =>  'SCH_PROGRAM', 
+   SCHEDULE_NAME       =>  'SCH_SCEDULE',
+   ENABLED             =>  TRUE,
+   AUTO_DROP           =>   FALSE);
+END;
+/
+--UPDATE SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.SET_ATTRIBUTE (
+   NAME         =>  'SCH_JOB',
+   ATTRIBUTE    =>  'REPEAT_INTERVAL',
+   VALUE        =>  'freq=weekly; byday=wed');
+END;
+/
+--RUN SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.RUN_JOB(
+    JOB_NAME            => 'SCH_JOB, SCH_JOB2',
+    USE_CURRENT_SESSION => FALSE);
+END;
+/
+--STOP SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.STOP_JOB(JOB_NAME =>'SCH_JOB, SCH_JOB2');
+END;
+/
+--ENABLE SCHEDULER JOB
+BEGIN
+ DBMS_SCHEDULER.ENABLE (JOB_NAME =>'SCH_JOB, SCH_JOB2');
+END;
+/
+--DISABLE SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.DISABLE(JOB_NAME =>'SCH_JOB, SCH_JOB2',FORCE=>TRUE);
+END;
+/
+--DROP SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.DROP_JOB (JOB_NAME =>'SCH_JOB, SCH_JOB2');
+END;
+/
+--DROP SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.DROP_JOB(
+     JOB_NAME         => 'SCH_JOB, SCH_JOB2',
+     DEFER            => TRUE,
+     COMMIT_SEMANTICS => 'TRANSACTIONAL');
+END;
+/
+--DROP SCHEDULER JOB
+BEGIN
+  DBMS_SCHEDULER.DROP_JOB(
+     JOB_NAME         => 'SCH_JOB, SCH_JOB2',
+     COMMIT_SEMANTICS => 'ABSORB_ERRORS');
+END;
+/
+
+SELECT * FROM DBA_SCHEDULER_PROGRAMS;
+SELECT * FROM DBA_SCHEDULER_SCHEDULES;
+SELECT * FROM DBA_SCHEDULER_JOBS;
+SELECT * FROM DBA_SCHEDULER_JOB_RUN_DETAILS;
+
+--run everyday at midnight
+----'freq=daily; byhour=0; byminute=0; bysecond=0;'
+--run everyday at 4 pm
+----'freq=daily; byhour=16; byminute=0; bysecond=0;'
+--run every hour at 10 minutes. 1:10, 2:10 …..
+----'freq=hourly; byminute=10; bysecond=0;'
+--run every 5 minutes
+----'freq=minutely; interval=5; bysecond=0;'
+--run every monday and thursday at 9 pm
+----'freq=weekly, byday=mon,thu; byhour=21; byminute=0; bysecond=0;'
+--run friday of each quarter
+----'freq=monthly; bymonth=1,4,7,10; byday=fri;'
+
+--===========================
+
+--Below are different job states
+----Disabled – Job is disabled
+----Scheduled – Job is scheduled to be executed
+----Running – Job is currently running
+----Completed – Job completed, not scheduled to run again
+----Stopped – Job scheduled to run once and was stopped during its run
+----Broken – Job is broken and has issues
+----Failed – Job scheduled to run once and failed
+----Succeeded – Job scheduled to run once and completed successfully

@@ -1,0 +1,214 @@
+DECLARE
+   V_ORGANIZATION_REC       HZ_PARTY_V2PUB.ORGANIZATION_REC_TYPE;
+   V_CUST_ACCOUNT_REC       HZ_CUST_ACCOUNT_V2PUB.CUST_ACCOUNT_REC_TYPE;
+   V_CUST_ACCT_SITE_REC     HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_ACCT_SITE_REC_TYPE;
+   V_CUST_SITE_USE_REC      HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+   V_PARTY_SITE_REC         HZ_PARTY_SITE_V2PUB.PARTY_SITE_REC_TYPE;
+   V_PARTY_VERSION          NUMBER;
+   V_PARTY_SITE_VERSION     NUMBER;
+   V_ACCOUNT_VERSION        NUMBER;
+   V_ACCOUNT_SITE_VERSION   NUMBER;
+   V_SITE_VERSION           NUMBER;
+   X_PROFILE_ID             NUMBER;
+   X_RETURN_STATUS          VARCHAR2 (30);
+   X_MSG_COUNT              NUMBER;
+   X_MSG_DATA               VARCHAR2 (2000);
+   V_ERROR_MSG              VARCHAR2 (2000);
+   V_USER_ID                NUMBER := 1170;                             --1170
+   V_RESP_ID                NUMBER := 51432;                           --51432
+   V_APPL_ID                NUMBER := 222;                               --222
+   V_ORG_ID                 NUMBER := 81;
+BEGIN
+   MO_GLOBAL.INIT ('AR');
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+   FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,             --1170
+                               RESP_ID        => V_RESP_ID,            --51432
+                               RESP_APPL_ID   => V_APPL_ID);             --222
+
+   --================ UPDATE PARTY =================[20]
+
+   FOR Z IN (SELECT PARTY_ID, PARTY_NAME, OBJECT_VERSION_NUMBER
+               FROM HZ_PARTIES
+              WHERE PARTY_ID IN (SELECT C03 FROM FRT_EAM_INTERFACE))
+   LOOP
+      V_PARTY_VERSION := Z.OBJECT_VERSION_NUMBER;
+      V_ORGANIZATION_REC.PARTY_REC.PARTY_ID := Z.PARTY_ID;
+      V_ORGANIZATION_REC.ORGANIZATION_NAME := Z.PARTY_NAME;
+      V_ORGANIZATION_REC.PARTY_REC.STATUS := 'A';
+      V_ORGANIZATION_REC.PARTY_REC.ATTRIBUTE12 := 'A';
+      HZ_PARTY_V2PUB.UPDATE_ORGANIZATION (
+         P_INIT_MSG_LIST                 => FND_API.G_FALSE,
+         P_ORGANIZATION_REC              => V_ORGANIZATION_REC,
+         P_PARTY_OBJECT_VERSION_NUMBER   => V_PARTY_VERSION,
+         X_PROFILE_ID                    => X_PROFILE_ID,
+         X_RETURN_STATUS                 => X_RETURN_STATUS,
+         X_MSG_COUNT                     => X_MSG_COUNT,
+         X_MSG_DATA                      => X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (Z.PARTY_ID || '-' || X_RETURN_STATUS);
+      ELSE
+         IF X_MSG_COUNT > 0
+         THEN
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.PARTY_ID || '-' || V_ERROR_MSG);
+         END IF;
+      END IF;
+   END LOOP;
+
+   --================ UPDATE CUST ACCOUNT =================[21]
+
+   FOR Z IN (SELECT CUST_ACCOUNT_ID, ACCOUNT_NAME, OBJECT_VERSION_NUMBER
+               FROM HZ_CUST_ACCOUNTS
+              WHERE CUST_ACCOUNT_ID IN (SELECT C04 FROM FRT_EAM_INTERFACE))
+   LOOP
+      V_ACCOUNT_VERSION := Z.OBJECT_VERSION_NUMBER;
+      V_CUST_ACCOUNT_REC.CUST_ACCOUNT_ID := Z.CUST_ACCOUNT_ID;
+      V_CUST_ACCOUNT_REC.ACCOUNT_NAME := Z.ACCOUNT_NAME;
+      V_CUST_ACCOUNT_REC.STATUS := 'A';
+      V_CUST_ACCOUNT_REC.ATTRIBUTE12 := 'A';
+      HZ_CUST_ACCOUNT_V2PUB.UPDATE_CUST_ACCOUNT (
+         P_INIT_MSG_LIST           => FND_API.G_FALSE,
+         P_CUST_ACCOUNT_REC        => V_CUST_ACCOUNT_REC,
+         P_OBJECT_VERSION_NUMBER   => V_ACCOUNT_VERSION,
+         X_RETURN_STATUS           => X_RETURN_STATUS,
+         X_MSG_COUNT               => X_MSG_COUNT,
+         X_MSG_DATA                => X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (Z.CUST_ACCOUNT_ID || '-' || X_RETURN_STATUS);
+      ELSE
+         IF X_MSG_COUNT > 0
+         THEN
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.CUST_ACCOUNT_ID || '-' || V_ERROR_MSG);
+         END IF;
+      END IF;
+   END LOOP;
+
+   --================ UPDATE PARTY SITE =================[23]
+
+   FOR Z IN (SELECT PARTY_SITE_ID, PARTY_ID, OBJECT_VERSION_NUMBER
+               FROM HZ_PARTY_SITES
+              WHERE PARTY_ID IN (SELECT C03 FROM FRT_EAM_INTERFACE))
+   LOOP
+      V_PARTY_SITE_VERSION := Z.OBJECT_VERSION_NUMBER;
+      V_PARTY_SITE_REC.PARTY_SITE_ID := Z.PARTY_SITE_ID;
+      V_PARTY_SITE_REC.PARTY_ID := Z.PARTY_ID;
+      V_PARTY_SITE_REC.STATUS := 'A';
+      V_PARTY_SITE_REC.ATTRIBUTE12 := 'A';
+      HZ_PARTY_SITE_V2PUB.UPDATE_PARTY_SITE (
+         P_INIT_MSG_LIST           => FND_API.G_FALSE,
+         P_PARTY_SITE_REC          => V_PARTY_SITE_REC,
+         P_OBJECT_VERSION_NUMBER   => V_PARTY_SITE_VERSION,
+         X_RETURN_STATUS           => X_RETURN_STATUS,
+         X_MSG_COUNT               => X_MSG_COUNT,
+         X_MSG_DATA                => X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (Z.PARTY_SITE_ID || '-' || X_RETURN_STATUS);
+      ELSE
+         IF X_MSG_COUNT > 0
+         THEN
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.PARTY_SITE_ID || '-' || V_ERROR_MSG);
+         END IF;
+      END IF;
+   END LOOP;
+
+
+   --================ UPDATE CUST ACCT SITE =================[24]
+
+   FOR Z IN (SELECT CUST_ACCT_SITE_ID, CUST_ACCOUNT_ID, OBJECT_VERSION_NUMBER
+               FROM HZ_CUST_ACCT_SITES_ALL
+              WHERE CUST_ACCOUNT_ID IN (SELECT C04 FROM FRT_EAM_INTERFACE))
+   LOOP
+      V_ACCOUNT_SITE_VERSION := Z.OBJECT_VERSION_NUMBER;
+      V_CUST_ACCT_SITE_REC.CUST_ACCT_SITE_ID := Z.CUST_ACCT_SITE_ID;
+      V_CUST_ACCT_SITE_REC.CUST_ACCOUNT_ID := Z.CUST_ACCOUNT_ID;
+      V_CUST_ACCT_SITE_REC.STATUS := 'A';
+      V_CUST_ACCT_SITE_REC.ATTRIBUTE12 := 'A';
+      HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_ACCT_SITE (
+         P_INIT_MSG_LIST           => FND_API.G_FALSE,
+         P_CUST_ACCT_SITE_REC      => V_CUST_ACCT_SITE_REC,
+         P_OBJECT_VERSION_NUMBER   => V_ACCOUNT_SITE_VERSION,
+         X_RETURN_STATUS           => X_RETURN_STATUS,
+         X_MSG_COUNT               => X_MSG_COUNT,
+         X_MSG_DATA                => X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (Z.CUST_ACCT_SITE_ID || '-' || X_RETURN_STATUS);
+      ELSE
+         IF X_MSG_COUNT > 0
+         THEN
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.CUST_ACCT_SITE_ID || '-' || V_ERROR_MSG);
+         END IF;
+      END IF;
+   END LOOP;
+
+
+   --================ UPDATE SITE USE =================[25]
+   FOR Z
+      IN (SELECT SITE_USE_ID,
+                 CUST_ACCT_SITE_ID,
+                 OBJECT_VERSION_NUMBER,
+                 STATUS
+            FROM HZ_CUST_SITE_USES_ALL
+           WHERE CUST_ACCT_SITE_ID IN (SELECT CUST_ACCT_SITE_ID
+                                         FROM HZ_CUST_ACCT_SITES_ALL
+                                        WHERE CUST_ACCOUNT_ID IN (SELECT C04
+                                                                    FROM FRT_EAM_INTERFACE)))
+   LOOP
+      V_SITE_VERSION := Z.OBJECT_VERSION_NUMBER;
+      V_CUST_SITE_USE_REC.SITE_USE_ID := Z.SITE_USE_ID;
+      V_CUST_SITE_USE_REC.CUST_ACCT_SITE_ID := Z.CUST_ACCT_SITE_ID;
+      V_CUST_SITE_USE_REC.STATUS := 'A';
+      V_CUST_SITE_USE_REC.ATTRIBUTE12 := 'A';
+
+      HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_SITE_USE (
+         P_INIT_MSG_LIST           => FND_API.G_FALSE,
+         P_CUST_SITE_USE_REC       => V_CUST_SITE_USE_REC,
+         P_OBJECT_VERSION_NUMBER   => V_SITE_VERSION,
+         X_RETURN_STATUS           => X_RETURN_STATUS,
+         X_MSG_COUNT               => X_MSG_COUNT,
+         X_MSG_DATA                => X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (Z.SITE_USE_ID || '-' || X_RETURN_STATUS);
+      ELSE
+         IF X_MSG_COUNT > 0
+         THEN
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.SITE_USE_ID || '-' || V_ERROR_MSG);
+         END IF;
+      END IF;
+   END LOOP;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      COMMIT;
+END;

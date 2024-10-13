@@ -1,0 +1,56 @@
+DECLARE
+   V_XREF_TBL        MTL_CROSS_REFERENCES_PUB.XREF_TBL_TYPE;
+   X_MESSAGE_LIST    ERROR_HANDLER.ERROR_TBL_TYPE;
+   X_RETURN_STATUS   VARCHAR2 (30);
+   X_MSG_COUNT       NUMBER;
+BEGIN
+   FOR ITM IN (SELECT * FROM FRT_SPAREPARTS_INTERFACE WHERE TEMP = 'NOREF')
+   LOOP
+      BEGIN
+         V_XREF_TBL (1).TRANSACTION_TYPE := 'CREATE';
+         V_XREF_TBL (1).X_RETURN_STATUS := NULL;
+         V_XREF_TBL (1).INVENTORY_ITEM_ID := ITM.ITEM_ID;
+         V_XREF_TBL (1).ORGANIZATION_ID := ITM.ORG_ID;
+         V_XREF_TBL (1).CROSS_REFERENCE_TYPE := ITM.ORG_CODE;
+         V_XREF_TBL (1).CROSS_REFERENCE := ITM.CROSS_REF;
+         V_XREF_TBL (1).CROSS_REFERENCE_ID := NULL;
+         V_XREF_TBL (1).DESCRIPTION := ITM.CROSS_REF_DESC;
+         V_XREF_TBL (1).ORG_INDEPENDENT_FLAG := 'N';
+         V_XREF_TBL (1).UOM_CODE := NULL;
+         V_XREF_TBL (1).REVISION_ID := NULL;
+         V_XREF_TBL (1).EPC_GTIN_SERIAL := NULL;
+
+
+         MTL_CROSS_REFERENCES_PUB.PROCESS_XREF (
+            P_API_VERSION     => 1.0,
+            P_INIT_MSG_LIST   => 'T',
+            P_COMMIT          => 'F',
+            P_XREF_TBL        => V_XREF_TBL,
+            X_RETURN_STATUS   => X_RETURN_STATUS,
+            X_MSG_COUNT       => X_MSG_COUNT,
+            X_MESSAGE_LIST    => X_MESSAGE_LIST);
+
+         DBMS_OUTPUT.PUT_LINE (
+            'RESULT : ' || ITM.CROSS_REF || ' => ' || X_RETURN_STATUS);
+
+         IF (X_RETURN_STATUS = 'S')
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('Done!');
+         ELSE
+            ERROR_HANDLER.GET_MESSAGE_LIST (X_MESSAGE_LIST);
+
+            FOR I IN 1 .. X_MESSAGE_LIST.COUNT
+            LOOP
+               DBMS_OUTPUT.PUT_LINE (X_MESSAGE_LIST (I).MESSAGE_TEXT);
+            END LOOP;
+         END IF;
+
+        
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('SQLERRM! ' || SQLERRM);
+      END;
+   END LOOP;
+    COMMIT;
+END;

@@ -1,0 +1,267 @@
+CREATE TABLE FRT_BSA_INTERFACE
+(
+   LINE_NUMBER    NUMBER,
+   DOCUMENT_NAME  VARCHAR2 (30),
+   ORDER_TYPE_ID  NUMBER,
+   ITEM_ID        NUMBER,
+   ITEM_CODE      VARCHAR2 (20),
+   UOM_CODE       VARCHAR2 (20),
+   MIN_QUANTITY   NUMBER,
+   MAX_QUANTITY   NUMBER,
+   MIN_AMOUNT     NUMBER,
+   MAX_AMOUNT     NUMBER,
+   START_DATE     DATE,
+   END_DATE       DATE,
+   RESULT VARCHAR2(1000)
+);
+/
+CREATE OR REPLACE PACKAGE APPS.FRT_AI_BSA_PKG
+AS
+   PROCEDURE AI_IMPORT_BSA (P_LINE_NUMBER     NUMBER,
+                            P_ITEM_CODE       VARCHAR2,
+                            P_MIN_QUANTITY    NUMBER,
+                            P_MAX_QUANTITY    NUMBER,
+                            P_MIN_AMOUNT      NUMBER,
+                            P_MAX_AMOUNT      NUMBER,
+                            P_START_DATE      DATE);
+
+   PROCEDURE AI_CREATE_BSA;
+END FRT_AI_BSA_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY APPS.FRT_AI_BSA_PKG
+AS
+   PROCEDURE AI_IMPORT_BSA (P_LINE_NUMBER     NUMBER,
+                            P_ITEM_CODE       VARCHAR2,
+                            P_MIN_QUANTITY    NUMBER,
+                            P_MAX_QUANTITY    NUMBER,
+                            P_MIN_AMOUNT      NUMBER,
+                            P_MAX_AMOUNT      NUMBER,
+                            P_START_DATE      DATE)
+   AS
+      V_DOCUMENT_NAME   VARCHAR2 (20);
+      V_END_DATE        DATE;
+      V_ITEM_ID         NUMBER;
+      V_UOM_CODE        VARCHAR (10);
+      V_ORDER_TYPE_ID   NUMBER := 1869;
+      V_MIN_QUANTITY    NUMBER;
+      V_MAX_QUANTITY    NUMBER;
+   BEGIN
+      V_DOCUMENT_NAME := 'BSA ' || TO_CHAR (P_START_DATE, 'MON-YYYY');
+      V_END_DATE := LAST_DAY (P_START_DATE);
+
+      SELECT INVENTORY_ITEM_ID, PRIMARY_UOM_CODE
+        INTO V_ITEM_ID, V_UOM_CODE
+        FROM MTL_SYSTEM_ITEMS_B
+       WHERE SEGMENT1 = P_ITEM_CODE AND ORGANIZATION_ID = 82;
+
+      V_MIN_QUANTITY := P_MIN_QUANTITY;
+      V_MAX_QUANTITY := P_MAX_QUANTITY;
+
+      IF V_UOM_CODE <> 'KG'
+      THEN
+         IF V_MIN_QUANTITY IS NOT NULL
+         THEN
+            V_MIN_QUANTITY :=
+               INV_CONVERT.INV_UM_CONVERT (V_ITEM_ID,
+                                           9,
+                                           P_MIN_QUANTITY,
+                                           'KG',
+                                           V_UOM_CODE,
+                                           NULL,
+                                           NULL);
+         END IF;
+
+         IF V_MAX_QUANTITY IS NOT NULL
+         THEN
+            V_MAX_QUANTITY :=
+               INV_CONVERT.INV_UM_CONVERT (V_ITEM_ID,
+                                           9,
+                                           P_MAX_QUANTITY,
+                                           'KG',
+                                           V_UOM_CODE,
+                                           NULL,
+                                           NULL);
+         END IF;
+      END IF;
+
+      INSERT INTO FRT_BSA_INTERFACE (LINE_NUMBER,
+                                     DOCUMENT_NAME,
+                                     ORDER_TYPE_ID,
+                                     ITEM_ID,
+                                     ITEM_CODE,
+                                     UOM_CODE,
+                                     MIN_QUANTITY,
+                                     MAX_QUANTITY,
+                                     MIN_AMOUNT,
+                                     MAX_AMOUNT,
+                                     START_DATE,
+                                     END_DATE)
+           VALUES (P_LINE_NUMBER,
+                   V_DOCUMENT_NAME,
+                   V_ORDER_TYPE_ID,
+                   V_ITEM_ID,
+                   P_ITEM_CODE,
+                   V_UOM_CODE,
+                   V_MIN_QUANTITY,
+                   V_MAX_QUANTITY,
+                   P_MIN_AMOUNT,
+                   P_MAX_AMOUNT,
+                   P_START_DATE,
+                   V_END_DATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_CREATE_BSA
+   AS
+      V_HEADER_REC           OE_BLANKET_PUB.HEADER_REC_TYPE;
+      V_HEADER_VAL_REC       OE_BLANKET_PUB.HEADER_VAL_REC_TYPE;
+      V_LINE_TBL             OE_BLANKET_PUB.LINE_TBL_TYPE;
+      V_LINE_VAL_TBL         OE_BLANKET_PUB.LINE_VAL_TBL_TYPE;
+      V_CONTROL_REC          OE_BLANKET_PUB.CONTROL_REC_TYPE;
+      V_LINE_REC             OE_BLANKET_PUB.LINE_REC_TYPE;
+      V_LINE_VAL_REC         OE_BLANKET_PUB.LINE_VAL_REC_TYPE;
+      V_OLD_HEADER_REC       OE_BLANKET_PUB.HEADER_REC_TYPE;
+      V_OLD_LINE_TBL         OE_BLANKET_PUB.LINE_TBL_TYPE;
+      V_OLD_HEADER_VAL_REC   OE_BLANKET_PUB.HEADER_VAL_REC_TYPE;
+      V_OLD_LINE_VAL_TBL     OE_BLANKET_PUB.LINE_VAL_TBL_TYPE;
+      X_HEADER_REC           OE_BLANKET_PUB.HEADER_REC_TYPE;
+      X_LINE_TBL             OE_BLANKET_PUB.LINE_TBL_TYPE;
+      X_RETURN_STATUS        VARCHAR2 (10);
+      X_MSG_COUNT            NUMBER;
+      X_MSG_DATA             VARCHAR2 (2000);
+      V_MSG_DATA             VARCHAR2 (2000);
+      V_DOCUMENT_NAME        VARCHAR2 (20);
+      V_ORDER_TYPE_ID        NUMBER;
+      V_START_DATE           DATE;
+      V_END_DATE             DATE;
+      V_USER_ID              NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID              NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID              NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID               NUMBER := 81;
+      V_LINE                 NUMBER;
+      V_COUNT                NUMBER;
+      FAIL_MSG               VARCHAR2 (1000);
+      ERR                    EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR BSA_CUR
+      IS
+           SELECT *
+             FROM FRT_BSA_INTERFACE
+         ORDER BY ITEM_CODE;
+   BEGIN
+      MO_GLOBAL.INIT ('ONT');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      SELECT DOCUMENT_NAME,
+             ORDER_TYPE_ID,
+             START_DATE,
+             END_DATE
+        INTO V_DOCUMENT_NAME,
+             V_ORDER_TYPE_ID,
+             V_START_DATE,
+             V_END_DATE
+        FROM FRT_BSA_INTERFACE
+       WHERE ROWNUM = 1;
+
+      SELECT COUNT (ORDER_NUMBER)
+        INTO V_COUNT
+        FROM OE_BLANKET_HEADERS_EXT
+       WHERE START_DATE_ACTIVE = V_START_DATE;
+
+      IF V_COUNT > 0
+      THEN
+         RAISE_APPLICATION_ERROR (-20011, 'AI-THIS DOCUMENT IS EXISTS');
+      END IF;
+
+      V_HEADER_REC := OE_BLANKET_PUB.G_MISS_HEADER_REC;
+      V_HEADER_VAL_REC := OE_BLANKET_PUB.G_MISS_HEADER_VAL_REC;
+      V_LINE_TBL := OE_BLANKET_PUB.G_MISS_LINE_TBL;
+      V_LINE_VAL_TBL := OE_BLANKET_PUB.G_MISS_LINE_VAL_TBL;
+      V_OLD_HEADER_REC := OE_BLANKET_PUB.G_MISS_HEADER_REC;
+      V_OLD_HEADER_VAL_REC := OE_BLANKET_PUB.G_MISS_HEADER_VAL_REC;
+      V_OLD_LINE_TBL := OE_BLANKET_PUB.G_MISS_LINE_TBL;
+      V_OLD_LINE_VAL_TBL := OE_BLANKET_PUB.G_MISS_LINE_VAL_TBL;
+      V_CONTROL_REC := OE_BLANKET_PUB.G_MISS_CONTROL_REC;
+
+      V_HEADER_REC.SALES_DOCUMENT_NAME := V_DOCUMENT_NAME;
+      V_HEADER_REC.ORDER_TYPE_ID := V_ORDER_TYPE_ID;                --BSA TYPE
+      V_HEADER_REC.START_DATE_ACTIVE := V_START_DATE;
+      V_HEADER_REC.END_DATE_ACTIVE := V_END_DATE;
+      V_HEADER_REC.OPEN_FLAG := 'Y';
+      V_HEADER_REC.OPERATION := OE_GLOBALS.G_OPR_CREATE;
+
+      V_LINE := 1;
+
+      FOR REC IN BSA_CUR
+      LOOP
+         V_LINE_VAL_REC := OE_BLANKET_PUB.G_MISS_BLANKET_LINE_VAL_REC;
+         V_LINE_REC := OE_BLANKET_PUB.G_MISS_BLANKET_LINE_REC;
+         V_LINE_REC.LINE_NUMBER := V_LINE;
+         V_LINE_REC.START_DATE_ACTIVE := REC.START_DATE;
+         V_LINE_REC.END_DATE_ACTIVE := REC.END_DATE;
+         V_LINE_REC.ITEM_IDENTIFIER_TYPE := 'INT';
+         V_LINE_REC.INVENTORY_ITEM_ID := REC.ITEM_ID;
+         V_LINE_REC.ORDERED_ITEM_ID := REC.ITEM_ID;
+         V_LINE_REC.ORDERED_ITEM := REC.ITEM_CODE;
+         V_LINE_REC.ORDER_QUANTITY_UOM := REC.UOM_CODE;
+         V_LINE_REC.PRICING_UOM := REC.UOM_CODE;
+         V_LINE_REC.BLANKET_MIN_QUANTITY := REC.MIN_QUANTITY;
+         V_LINE_REC.BLANKET_MAX_QUANTITY := REC.MAX_QUANTITY;
+         V_LINE_REC.BLANKET_MIN_AMOUNT := REC.MIN_AMOUNT;
+         V_LINE_REC.BLANKET_MAX_AMOUNT := REC.MAX_AMOUNT;
+         V_LINE_REC.OPERATION := OE_GLOBALS.G_OPR_CREATE;
+
+         V_LINE_TBL (V_LINE) := V_LINE_REC;
+         V_LINE_VAL_TBL (V_LINE) := V_LINE_VAL_REC;
+
+         V_LINE := V_LINE + 1;
+      END LOOP;
+
+      OE_BLANKET_PUB.PROCESS_BLANKET (
+         P_ORG_ID               => V_ORG_ID,
+         P_OPERATING_UNIT       => NULL,
+         P_API_VERSION_NUMBER   => 1.0,
+         P_HEADER_REC           => V_HEADER_REC,
+         P_HEADER_VAL_REC       => V_HEADER_VAL_REC,
+         P_LINE_TBL             => V_LINE_TBL,
+         P_LINE_VAL_TBL         => V_LINE_VAL_TBL,
+         P_CONTROL_REC          => V_CONTROL_REC,
+         X_HEADER_REC           => X_HEADER_REC,
+         X_LINE_TBL             => X_LINE_TBL,
+         X_RETURN_STATUS        => X_RETURN_STATUS,
+         X_MSG_COUNT            => X_MSG_COUNT,
+         X_MSG_DATA             => X_MSG_DATA);
+
+      IF X_RETURN_STATUS IN ('E', 'U')
+      THEN
+         IF X_MSG_COUNT > 0
+         THEN
+            V_MSG_DATA := OE_MSG_PUB.GET (P_MSG_INDEX => 1, P_ENCODED => 'F');
+            RAISE_APPLICATION_ERROR (-20011, V_MSG_DATA);
+         END IF;
+      END IF;
+
+      DELETE FROM FRT_BSA_INTERFACE
+            WHERE 1 = 1;
+
+      COMMIT;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         ROLLBACK;
+
+         DELETE FROM FRT_BSA_INTERFACE
+               WHERE 1 = 1;
+
+         COMMIT;
+         FAIL_MSG := SQLERRM;
+         FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+   END;
+END FRT_AI_BSA_PKG;
+/

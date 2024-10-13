@@ -1,0 +1,10 @@
+
+
+ds=$( du -h /home/ai | sort -h | tail -n 1 | awk '{ print $1 }' )
+#echo $ds
+#msg="size%20of%20directory%20home%20ai%20is%20$ds."
+msg="size of directory home ai is $ds."
+msg=$(echo $msg | sed 's/ /%20/g')
+url="https://api.telegram.org/bot6953262286:AAFeYtE5IletR8m_KvcmAeaU6mdBbHIABUY/sendMessage?chat_id=-1002015401041&text="$msg
+echo $url
+curl $url

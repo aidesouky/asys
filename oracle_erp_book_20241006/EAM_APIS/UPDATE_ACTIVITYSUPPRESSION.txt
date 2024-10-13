@@ -1,0 +1,57 @@
+DECLARE
+   V_TMPLT           VARCHAR2 (1) := 'Y';
+   V_PARENT_ID       NUMBER;
+   V_CHILD_ID        NUMBER;
+   V_DESCRIPTION     VARCHAR2 (100);
+   X_RETURN_STATUS   VARCHAR2 (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+   LINE_ID           NUMBER;
+
+   CURSOR SUPPRESS
+   IS
+      SELECT * FROM FRT_EAM_INTERFACE;
+BEGIN
+   FOR SUP IN SUPPRESS
+   LOOP
+      LINE_ID := SUP.ID;
+      V_PARENT_ID := SUP.C3;
+      V_CHILD_ID := SUP.C5;
+      V_DESCRIPTION := SUP.C6;
+      EAM_ACTIVITYSUPN_PUB.UPDATE_ACTIVITYSUPN (
+         P_API_VERSION             => 1.0,
+         P_INIT_MSG_LIST           => 'F',
+         P_COMMIT                  => 'F',
+         p_validation_level        => FND_API.G_VALID_LEVEL_FULL,
+         P_TMPL_FLAG               => V_TMPLT,
+         P_PARENT_ASSOCIATION_ID   => V_PARENT_ID,
+         P_CHILD_ASSOCIATION_ID    => V_CHILD_ID,
+         P_DESCRIPTION             => V_DESCRIPTION,
+         X_RETURN_STATUS           => X_RETURN_STATUS,
+         X_MSG_COUNT               => X_MSG_COUNT,
+         X_MSG_DATA                => X_MSG_DATA);
+
+      DBMS_OUTPUT.PUT_LINE (
+         'X_RETURN_STATUS ' || X_RETURN_STATUS || ' ' || X_MSG_DATA);
+
+      IF (X_RETURN_STATUS = 'S')
+      THEN
+         DBMS_OUTPUT.PUT_LINE ('Done!');
+
+         UPDATE FRT_EAM_INTERFACE
+            SET STATUS = 'T', ERRORS = NULL
+          WHERE ID = LINE_ID;
+      ELSE
+         UPDATE FRT_EAM_INTERFACE
+            SET STATUS = 'F', ERRORS = X_MSG_DATA
+          WHERE ID = LINE_ID;
+
+         DBMS_OUTPUT.PUT_LINE (
+               'Error: '
+            || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                                P_ENCODED     => FND_API.G_FALSE));
+      END IF;
+
+      COMMIT;
+   END LOOP;
+END;

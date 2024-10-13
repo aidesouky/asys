@@ -1,0 +1,32 @@
+DECLARE
+   V_NOTIFICATION_ID   NUMBER := NULL;
+   V_FROM_USER_NAME    VARCHAR2 (500) := 'XX_FROM_USER';
+   V_TO_USER_NAME      VARCHAR2 (500) := 'XX_TO_USER';
+   V_SUBJECT_LINE      VARCHAR2 (500) := 'Subject Line';
+   V_MESSAGE_LINE      VARCHAR2 (500) := 'Message Line';
+BEGIN
+   V_NOTIFICATION_ID :=
+      WF_NOTIFICATION.SEND (UPPER (V_TO_USER_NAME),
+                            'CS_MSGS',
+                            'EXPANDED_FYI_MSG');
+
+   WF_NOTIFICATION.SETATTRTEXT (V_NOTIFICATION_ID,
+                                '#FROM_ROLE',
+                                V_FROM_USER_NAME);
+
+   WF_NOTIFICATION.SETATTRTEXT (V_NOTIFICATION_ID,
+                                'OBJECT_TYPE',
+                                V_SUBJECT_LINE);
+
+   WF_NOTIFICATION.SETATTRTEXT (V_NOTIFICATION_ID,
+                                'SENDER',
+                                V_FROM_USER_NAME);
+
+   WF_NOTIFICATION.SETATTRTEXT (V_NOTIFICATION_ID,
+                                'MESSAGE_TEXT',
+                                V_MESSAGE_LINE);
+
+   WF_NOTIFICATION.DENORMALIZE_NOTIFICATION (V_NOTIFICATION_ID);
+
+   COMMIT;
+END;

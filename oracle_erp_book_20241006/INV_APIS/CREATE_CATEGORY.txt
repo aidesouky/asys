@@ -1,0 +1,105 @@
+DECLARE
+   V_CATEGORY_REC      INV_ITEM_CATEGORY_PUB.CATEGORY_REC_TYPE;
+   X_CATEGORY_ID       NUMBER;
+   X_RETURN_STATUS     VARCHAR2 (20);
+   X_ERRORCODE         NUMBER;
+   X_MSG_COUNT         NUMBER;
+   X_MSG_DATA          VARCHAR2 (500);
+   V_SEGMENT1          VARCHAR2 (30);
+   V_SEGMENT2          VARCHAR2 (30);
+   V_CATEGORY_SET_ID   NUMBER;
+   V_CATEGORY_ID       NUMBER;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+   FND_MSG_PUB.INITIALIZE;
+   
+   V_SEGMENT1 := 'KNIVES';
+   V_SEGMENT2 := 'ROUND';
+   V_CATEGORY_REC.CATEGORY_ID := NULL;
+   V_CATEGORY_REC.STRUCTURE_ID := 50168;
+   V_CATEGORY_REC.STRUCTURE_CODE := 'EAM_CATEGORIES';
+   V_CATEGORY_REC.SEGMENT1 := V_SEGMENT1;
+   V_CATEGORY_REC.SEGMENT2 := V_SEGMENT2;
+   V_CATEGORY_REC.DESCRIPTION := 'Maintenance round cutter';
+   V_CATEGORY_REC.SUMMARY_FLAG := 'N';
+   V_CATEGORY_REC.ENABLED_FLAG := 'Y';
+   V_CATEGORY_REC.START_DATE_ACTIVE := SYSDATE;
+   V_CATEGORY_REC.END_DATE_ACTIVE := NULL;
+   V_CATEGORY_REC.DISABLE_DATE := NULL;
+
+   INV_ITEM_CATEGORY_PUB.CREATE_CATEGORY (
+      P_API_VERSION     => 1.0,
+      P_INIT_MSG_LIST   => 'T',
+      P_COMMIT          => 'F',
+      P_CATEGORY_REC    => V_CATEGORY_REC,
+      X_CATEGORY_ID     => X_CATEGORY_ID,
+      X_RETURN_STATUS   => X_RETURN_STATUS,
+      X_ERRORCODE       => X_ERRORCODE,
+      X_MSG_COUNT       => X_MSG_COUNT,
+      X_MSG_DATA        => X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+         'RESULT0: '
+      || FND_MSG_PUB.GET (P_MSG_INDEX   => 1,
+                          P_ENCODED     => FND_API.G_FALSE));
+   DBMS_OUTPUT.PUT_LINE (
+         'RESULT: '
+      || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                          P_ENCODED     => FND_API.G_FALSE));
+   DBMS_OUTPUT.PUT_LINE (
+         'RESULT: '
+      || V_SEGMENT1
+      || ' =>'
+      || X_RETURN_STATUS
+      || ' '
+      || X_MSG_DATA);
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA ' || X_MSG_DATA);
+   END IF;
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      V_CATEGORY_SET_ID := 1000000014;
+      V_CATEGORY_ID := X_CATEGORY_ID;
+      COMMIT;
+
+      INV_ITEM_CATEGORY_PUB.CREATE_VALID_CATEGORY (
+         P_API_VERSION          => 1.0,
+         P_INIT_MSG_LIST        => 'F',
+         P_COMMIT               => 'F',
+         P_CATEGORY_SET_ID      => V_CATEGORY_SET_ID,
+         P_CATEGORY_ID          => V_CATEGORY_ID,
+         P_PARENT_CATEGORY_ID   => NULL,
+         X_RETURN_STATUS        => X_RETURN_STATUS,
+         X_ERRORCODE            => X_ERRORCODE,
+         X_MSG_COUNT            => X_MSG_COUNT,
+         X_MSG_DATA             => X_MSG_DATA);
+      DBMS_OUTPUT.PUT_LINE (
+            'RESULT2: '
+         || V_CATEGORY_ID
+         || ' =>'
+         || X_RETURN_STATUS
+         || ' '
+         || X_MSG_DATA);
+
+      IF X_RETURN_STATUS = 'S'
+      THEN
+         V_CATEGORY_ID := X_CATEGORY_ID;
+         DBMS_OUTPUT.PUT_LINE ('Done2!');
+      ELSE
+         DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA2 ' || X_MSG_DATA);
+      END IF;
+
+      COMMIT;
+   END IF;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+END;

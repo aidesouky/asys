@@ -1,0 +1,61 @@
+/* Formatted on 4/7/2023 11:29:29 PM (QP5 v5.256.13226.35538) */
+DECLARE
+   V_STATUS_REC      INV_MATERIAL_STATUS_PUB.MTL_STATUS_UPDATE_REC_TYPE;
+   V_OBJECT_TYPE     VARCHAR2 (1);
+   X_RETURN_STATUS   VARCHAR2 (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+BEGIN
+
+   ---— initialization required for R12
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   MO_GLOBAL.INIT ('INV');
+
+   ---— Initialization for Organization_id
+   INV_GLOBALS.SET_ORG_ID (81);
+
+   ---— initialize environment
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2826,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+   -- Initialize variables
+   V_OBJECT_TYPE := 'O'; -- 'O' = Lot , 'S' = Serial, 'Z' = Subinventory, 'L' = Locator, 'H' = Onhand
+
+   V_STATUS_REC.ORGANIZATION_ID := 112;
+   V_STATUS_REC.INVENTORY_ITEM_ID := 887;
+   V_STATUS_REC.LOT_NUMBER := 'LOT010';
+   --V_STATUS_REC.ZONE_CODE := 'RIP';
+   --V_STATUS_REC.LOCATOR_ID := NULL;
+   V_STATUS_REC.STATUS_ID := 1; -- 'Active'; select status_id, status_code from mtl_material_statuses_vl;
+   --V_STATUS_REC.UPDATE_REASON_ID := 1; --'Reviewed'; select reason_id, reason_name from mtl_transaction_reasons where reason_type_display = 'Update Status';
+   --V_STATUS_REC.UPDATE_METHOD := 1;
+
+   INV_MATERIAL_STATUS_PUB.UPDATE_STATUS (
+      P_API_VERSION_NUMBER   => 1.0,
+      P_INIT_MSG_LST         => FND_API.G_TRUE,
+      P_COMMIT               => FND_API.G_FALSE,
+      P_OBJECT_TYPE          => V_OBJECT_TYPE,
+      P_STATUS_REC           => V_STATUS_REC,
+      X_RETURN_STATUS        => X_RETURN_STATUS,
+      X_MSG_COUNT            => X_MSG_COUNT,
+      X_MSG_DATA             => X_MSG_DATA);
+      
+   DBMS_OUTPUT.PUT_LINE ('RETURN_STATUS: ' || X_RETURN_STATUS||' '||X_MSG_COUNT);
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Success');
+   ELSE
+   FOR I IN 1..X_MSG_COUNT LOOP
+      DBMS_OUTPUT.PUT_LINE ('Error '||I||': ' || FND_MSG_PUB.GET (I, FND_API.G_FALSE));
+    END LOOP;
+   END IF;
+  DBMS_OUTPUT.PUT_LINE (
+            'Err: '
+         || FND_MSG_PUB.GET (FND_MSG_PUB.G_LAST, FND_API.G_FALSE));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERR: ' || SQLERRM);
+END;

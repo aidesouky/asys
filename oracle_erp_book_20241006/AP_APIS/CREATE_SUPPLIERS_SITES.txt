@@ -1,0 +1,77 @@
+DECLARE
+   L_VENDOR_REC        AP_VENDOR_PUB_PKG.R_VENDOR_REC_TYPE;
+   L_VENDOR_SITE_REC   AP_VENDOR_PUB_PKG.R_VENDOR_SITE_REC_TYPE;
+   X_VENDOR_ID         NUMBER;
+   X_PARTY_ID          NUMBER;
+   X_RETURN_STATUS     VARCHAR2 (100);
+   X_MSG_COUNT         NUMBER;
+   X_MSG_DATA          VARCHAR2 (4000);
+
+   X_VENDOR_SITE_ID    NUMBER;
+   X_PARTY_SITE_ID     NUMBER;
+   X_LOCATION_ID       NUMBER;
+BEGIN
+   L_VENDOR_REC.SEGMENT1 := '99077';
+   L_VENDOR_REC.VENDOR_NAME := 'Test 99077';
+   L_VENDOR_REC.VENDOR_NAME_ALT := 'Test 99077';
+   L_VENDOR_REC.JGZZ_FISCAL_CODE := '12399077';
+   L_VENDOR_REC.MATCH_OPTION := 'R';
+   L_VENDOR_REC.START_DATE_ACTIVE := SYSDATE - 1;
+
+   AP_VENDOR_PUB_PKG.CREATE_VENDOR (P_API_VERSION        => 1.0,
+                                    P_INIT_MSG_LIST      => 'F',
+                                    P_COMMIT             => 'F',
+                                    P_VALIDATION_LEVEL   => 100,
+                                    P_VENDOR_REC         => L_VENDOR_REC,
+                                    X_VENDOR_ID          => X_VENDOR_ID,
+                                    X_PARTY_ID           => X_PARTY_ID,
+                                    X_RETURN_STATUS      => X_RETURN_STATUS,
+                                    X_MSG_COUNT          => X_MSG_COUNT,
+                                    X_MSG_DATA           => X_MSG_DATA);
+
+   IF (X_RETURN_STATUS = 'S')
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('VENDOR_ID: ' || X_VENDOR_ID);
+      DBMS_OUTPUT.PUT_LINE ('PARTY_ID: ' || X_PARTY_ID);
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('RETURN_STATUS: ' || X_RETURN_STATUS);
+      DBMS_OUTPUT.PUT_LINE ('MSG_DATA: ' || X_MSG_DATA);
+   END IF;
+
+   L_VENDOR_SITE_REC.VENDOR_ID := X_VENDOR_ID;
+   L_VENDOR_SITE_REC.VENDOR_SITE_CODE := 'TEST_SITE77';
+   L_VENDOR_SITE_REC.ADDRESS_LINE1 := 'TEST77';
+   L_VENDOR_SITE_REC.COUNTRY := 'EG';
+   L_VENDOR_SITE_REC.ORG_ID := '81';                      -- OPERATING UNIT ID
+   L_VENDOR_SITE_REC.PURCHASING_SITE_FLAG := 'Y';
+   L_VENDOR_SITE_REC.PAY_SITE_FLAG := 'Y';
+   L_VENDOR_SITE_REC.RFQ_ONLY_SITE_FLAG := 'N';
+
+   AP_VENDOR_PUB_PKG.CREATE_VENDOR_SITE (
+      P_API_VERSION        => 1.0,
+      P_INIT_MSG_LIST      => 'F',
+      P_COMMIT             => 'F',
+      P_VALIDATION_LEVEL   => 100,
+      X_RETURN_STATUS      => X_RETURN_STATUS,
+      X_MSG_COUNT          => X_MSG_COUNT,
+      X_MSG_DATA           => X_MSG_DATA,
+      P_VENDOR_SITE_REC    => L_VENDOR_SITE_REC,
+      X_VENDOR_SITE_ID     => X_VENDOR_SITE_ID,
+      X_PARTY_SITE_ID      => X_PARTY_SITE_ID,
+      X_LOCATION_ID        => X_LOCATION_ID);
+
+   IF (X_RETURN_STATUS = 'S')
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('VENDOR_SITE_ID: ' || X_VENDOR_SITE_ID);
+      DBMS_OUTPUT.PUT_LINE ('PARTY_SITE_ID: ' || X_PARTY_SITE_ID);
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('RETURN_STATUS: ' || X_RETURN_STATUS);
+      DBMS_OUTPUT.PUT_LINE ('MSG_DATA: ' || X_MSG_DATA);
+   END IF;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM: ' || SQLERRM);
+END;

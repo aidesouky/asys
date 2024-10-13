@@ -1,0 +1,25 @@
+-- To create an auto-login wallet
+orapki wallet create -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -pwd system11
+orapki wallet create -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -auto_login -pwd system11
+orapki wallet create -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -auto_login_local -pwd system11
+orapki wallet create -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -auto_login_only
+-- To view an Oracle wallet
+orapki wallet display -wallet C:\app\AIBRAHIM\product\21c\ora_wallet
+-- To change the wallet password
+orapki wallet change_pwd -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -oldpwd system11  -newpwd system12
+-- To change the wallet algorithm from 3DES to AES256
+orapki wallet convert -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -pwd system11 -compat_v12
+-- To add a certificate request to an Oracle wallet
+orapki wallet add -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -dn user_dn -keySize 512|1024|2048
+-- To add a trusted certificate to an Oracle wallet
+orapki wallet add -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -trusted_cert -cert certificate_location
+-- To add a root certificate to an Oracle wallet
+orapki wallet add -wallet wallet_location -dn certificate_dn -keySize 512|1024|2048 -self_signed -validity number_of_days
+-- To add a user certificate to an Oracle wallet
+orapki wallet add -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -user_cert -cert certificate_location
+-- To verify the credential details
+orapki wallet p11_verify -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -pwd system11
+-- To export a certificate from an Oracle wallet
+orapki wallet export -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -dn certificate_dn -cert certificate_filename
+-- To export a certificate request from an Oracle wallet
+orapki wallet export -wallet C:\app\AIBRAHIM\product\21c\ora_wallet -dn certificate_request_dn -request certificate_request_filename

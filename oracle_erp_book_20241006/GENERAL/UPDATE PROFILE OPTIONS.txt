@@ -1,0 +1,34 @@
+DECLARE
+   STAT   BOOLEAN;
+BEGIN
+   --stat := FND_PROFILE.SAVE('ORG_ID', valid_organization_id, 'SITE');
+   STAT :=
+      FND_PROFILE.SAVE (X_NAME          => 'WIP_MATERIAL_TRANSACTION',
+                        X_VALUE         => 1,
+                        X_LEVEL_NAME    => 'SITE',                 --SITE,USER
+                        X_LEVEL_VALUE   => 0);
+
+   IF STAT
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Stat = TRUE - profile updated');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('Stat = FALSE - profile NOT updated');
+   END IF;
+
+   COMMIT;
+END;
+/
+SELECT FPOT.PROFILE_OPTION_NAME,
+       FPOT.USER_PROFILE_OPTION_NAME,
+       FPO.PROFILE_OPTION_ID,
+       fpov.level_id,
+       fpov.level_value,
+       fpov.profile_option_value
+  FROM FND_PROFILE_OPTIONS_TL FPOT,
+       FND_PROFILE_OPTIONS FPO,
+       FND_PROFILE_OPTION_VALUES FPOV
+ WHERE     FPOT.USER_PROFILE_OPTION_NAME LIKE 'TP:WIP Material Transactions Form'
+       AND FPOT.LANGUAGE = 'US'
+       AND FPOT.PROFILE_OPTION_NAME = FPO.PROFILE_OPTION_NAME
+       AND FPOV.PROFILE_OPTION_ID = FPO.PROFILE_OPTION_ID
+       AND FPOV.APPLICATION_ID = FPOV.APPLICATION_ID

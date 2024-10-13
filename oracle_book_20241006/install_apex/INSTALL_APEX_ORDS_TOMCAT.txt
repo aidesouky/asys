@@ -1,0 +1,139 @@
+Quickly installing APEX 22 and ORDS 22
+
+Here are my quick notes on installing Oracle APEX Release 22.1 and Oracle REST Data Services 22.2.
+
+Extract Software
+1. Set path. Use this path when installing APEX, ORDS, and Tomcat. Customize as necessary.
+
+export JAVA_HOME=/u01/oracle/jdk-18.0.1
+export JAVA_OPTS="-Dconfig.url=${ORDS_CONFIG}"
+export APEX_HOME=/u01/oracle/apex
+export ORDS_HOME=/u01/oracle/ords
+export ORDS_CONFIG=/u01/oracle/ords
+export TOMCAT_HOME=/u01/oracle/apache-tomcat-8.5.78
+export PATH=$ORDS_HOME/bin:$JAVA_HOME/bin:$PATH
+export SOFTWARE_BINARIES=/u01/software
+2. Download Java, APEX, ORDS, and Tomcat software.
+
+cd ${SOFTWARE_BINARIES}
+wget --no-check-certificate https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz
+wget --no-check-certificate https://download.oracle.com/otn_software/apex/apex-latest.zip
+wget --no-check-certificate https://download.oracle.com/otn_software/java/ords/ords-latest.zip
+wget --no-check-certificate https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.78/bin/apache-tomcat-8.5.78.tar.gz
+3. Extract Java.
+
+cd /u01/oracle
+gtar -xzvf ${SOFTWARE_BINARIES}/jdk-18_linux-x64_bin.tar.gz
+4. Extract APEX.
+
+cd /u01/oracle
+unzip ${SOFTWARE_BINARIES}/apex-latest.zip
+5. Extract ORDS.
+
+mkdir -p ${ORDS_HOME}
+cd ${ORDS_HOME}
+unzip ${SOFTWARE_BINARIES}/ords-latest.zip
+6. Extract Tomcat.
+
+cd /u01/oracle
+tar xvf ${SOFTWARE_BINARIES}/apache-tomcat-8.5.78.tar.gz
+7. Copy images from APEX extracted folder to Tomcat webapps, and rename the folder from "images" to "i".
+
+cp -Rp ${APEX_HOME}/images ${TOMCAT_HOME}/webapps
+mv ${TOMCAT_HOME}/webapps/images ${TOMCAT_HOME}/webapps/i
+8. Change Tomcat configuration to allow the Tomcat Manager console to be accessed outside of localhost.
+
+vi ${TOMCAT_HOME}/webapps/manager/META-INF/context.xml
+Comment out the <Valve> entry.
+9. Change Tomcat configuration to create a user to access the Tomcat Manager console.
+
+vi ${TOMCAT_HOME}/conf/tomcat-users.xml
+Add the following entry:
+  <role rolename="manager-gui"/>
+  <user username="admin" password="welcome1" roles="manager-gui"/>
+Install APEX Schemas
+1. Copy ${APEX_HOME} to your database server.
+
+2. Change to the APEX folder (on your database server).
+
+cd ${APEX_HOME}
+3. Connect to the database as SYS.
+
+sqlplus "/ as sysdba"
+4. Run various APEX SQL scripts. If each script exits the sqlplus prompt, then simply reconnect and run the next script.
+
+SQL> @apexins APEX APEX TEMP /i/
+SQL> @apxchpwd.sql
+SQL> ALTER USER apex_public_user IDENTIFIED BY "welcome1" ACCOUNT UNLOCK;
+SQL> @apex_rest_config.sql
+Install ORDS
+1. Go back to the middleware host.
+
+2. Install ORDS.
+
+cd ${ORDS_HOME}
+ords install
+3. You will be prompted with the following:
+
+oracle@hostname:/u01/oracle/ords> ords install
+2022-05-20T12:34:07.142Z INFO
+Your configuration folder /u01/oracle/ords is located in ORDS product folder.
+Oracle recommends to use a different configuration folder.
+ 
+ORDS: Release 22.1 Production on Fri May 20 12:34:07 2022
+ 
+Copyright (c) 2010, 2022, Oracle.
+ 
+Configuration:
+  /u01/oracle/ords/
+ 
+The configuration folder /u01/oracle/ords does not contain any configuration files.
+ 
+Oracle REST Data Services - Interactive Install
+ 
+  Enter a number to select the type of installation
+    [1] Install or upgrade ORDS in the database only
+    [2] Create or update a database pool and install/upgrade ORDS in the database
+    [3] Create or update a database pool only
+  Choose [2]:
+3. Select Create or update a database pool and install/upgrade ORDS in the database.
+
+4. Select Basic (host name, port, service name).
+
+5. Enter your database information:
+
+Host name: dbhost
+Port: 1521
+Service name: servicename
+6. Enter the SYSTEM password.
+
+7. Select Install ORDS in the database, which uses the SYSAUX and TEMP tablespaces (you can change the schemas if you want).
+
+8. Select Database Actions (all features).
+
+9. Select Configure and start ORDS in standalone mode.
+
+10. Select HTTP protocol.
+
+HTTP port: 8080
+APEX static resources: /u01/oracle/apache-tomcat-8.5.78/webapps/i
+11. Create a database account for initial development and grant permissions:
+
+CREATE USER apex_mycustom IDENTIFIED BY "welcome1";
+GRANT resource, connect TO apex_mycustom;
+GRANT create dimension TO apex_mycustom;
+GRANT create job TO apex_mycustom;
+GRANT create materialized view TO apex_mycustom;
+GRANT create synonym TO apex_mycustom;
+GRANT create view TO apex_mycustom;
+Startup Tomcat
+1. Copy the ORDS WAR file to Tomcat webapps.
+
+cp ${ORDS_HOME}/ords.war ${TOMCAT_HOME}/webapps
+2. Startup Tomcat.
+
+cd ${TOMCAT_HOME}/bin
+./startup.sh
+3. Login to the APEX console as the INTERNAL workspace and user ADMIN.
+
+http://hostname:8080/ords/

@@ -1,0 +1,55 @@
+DECLARE
+   L_FILE       UTL_FILE.FILE_TYPE;
+   L_BUFFER     RAW (32767);
+   L_AMOUNT     BINARY_INTEGER := 32767;
+   L_POS        INTEGER := 1;
+   L_BLOB_LEN   INTEGER;
+   L_FILE_BLOB    BLOB;
+   L_FILENAME     VARCHAR2 (100);
+   L_DIR          VARCHAR2 (100):='AI_DIR';
+BEGIN
+   FOR Z IN (SELECT * FROM APEX_APPLICATION_TEMP_FILES)
+   LOOP
+      L_FILE_BLOB := Z.BLOB_CONTENT;
+      L_FILENAME := Z.FILENAME;
+      :P3_IMAGE_NAME:= Z.FILENAME;
+      L_BLOB_LEN := DBMS_LOB.GETLENGTH (L_FILE_BLOB);
+
+      -- Open the destination file.
+      L_FILE :=
+         UTL_FILE.FOPEN (L_DIR,
+                         L_FILENAME,
+                         'wb',
+                         32767);
+
+      -- Read chunks of the BLOB and write them to the file until complete.
+      WHILE L_POS <= L_BLOB_LEN
+      LOOP
+         DBMS_LOB.READ (L_FILE_BLOB,
+                        L_AMOUNT,
+                        L_POS,
+                        L_BUFFER);
+         UTL_FILE.PUT_RAW (L_FILE, L_BUFFER, TRUE);
+         --UTL_FILE.FFLUSH(L_FILE);
+         L_POS := L_POS + L_AMOUNT;
+      END LOOP;
+      
+      -- Close the file.
+      UTL_FILE.FCLOSE (L_FILE);
+   END LOOP;
+   DELETE FROM APEX_APPLICATION_TEMP_FILES WHERE 1=1;
+   COMMIT;
+   :P3_IMAGE:=NULL;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      -- Close the file if something goes wrong.
+      IF UTL_FILE.IS_OPEN (L_FILE)
+      THEN
+         UTL_FILE.FCLOSE (L_FILE);
+      END IF;
+    DELETE FROM APEX_APPLICATION_TEMP_FILES WHERE 1=1;
+   COMMIT;
+   :P3_IMAGE:=NULL;
+      RAISE;
+END;

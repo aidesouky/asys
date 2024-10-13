@@ -1,0 +1,240 @@
+/* Formatted on 7/10/2023 2:23:55 PM (QP5 v5.256.13226.35538) */
+CREATE OR REPLACE PACKAGE bom_resource_instances_pkg
+AS
+   /* =============================================================== */
+   /* Procedure:                                                      */
+   /*   insert_row                                                    */
+   /*                                                                 */
+   /* DESCRIPTION:                                                    */
+   /*                                                                 */
+   /* The following Procedure Insert Resource employee                */
+   /* Successfully                                                    */
+   /*                                                                 */
+   /* History :                                                       */
+   /* aibrahim 01/05/2023                                             */
+   /* =============================================================== */
+   PROCEDURE insert_row (x_resource_id             NUMBER,
+                         x_organization_id         NUMBER,
+                         x_person_id               NUMBER,
+                         x_inventory_item_id       NUMBER,
+                         x_instance_id             NUMBER DEFAULT NULL,
+                         x_effective_start_date    DATE,
+                         x_effective_end_date      DATE,
+                         x_interleave              NUMBER,
+                         x_last_update_date        DATE,
+                         x_last_updated_by         NUMBER,
+                         x_creation_date           DATE,
+                         x_created_by              NUMBER,
+                         x_last_update_login       NUMBER DEFAULT NULL,
+                         x_attribute_category      VARCHAR2 DEFAULT NULL,
+                         x_attribute1              VARCHAR2 DEFAULT NULL,
+                         x_attribute2              VARCHAR2 DEFAULT NULL,
+                         x_attribute3              VARCHAR2 DEFAULT NULL,
+                         x_attribute4              VARCHAR2 DEFAULT NULL,
+                         x_attribute5              VARCHAR2 DEFAULT NULL,
+                         x_attribute6              VARCHAR2 DEFAULT NULL,
+                         x_attribute7              VARCHAR2 DEFAULT NULL,
+                         x_attribute8              VARCHAR2 DEFAULT NULL,
+                         x_attribute9              VARCHAR2 DEFAULT NULL,
+                         x_attribute10             VARCHAR2 DEFAULT NULL,
+                         x_attribute11             VARCHAR2 DEFAULT NULL,
+                         x_attribute12             VARCHAR2 DEFAULT NULL,
+                         x_attribute13             VARCHAR2 DEFAULT NULL,
+                         x_attribute14             VARCHAR2 DEFAULT NULL,
+                         x_attribute15             VARCHAR2 DEFAULT NULL);
+END bom_resource_instances_pkg;
+/
+
+CREATE OR REPLACE PACKAGE BODY bom_resource_instances_pkg
+AS
+   /* =============================================================== */
+   /* Procedure:                                                      */
+   /*   insert_row                                                    */
+   /*                                                                 */
+   /* DESCRIPTION:                                                    */
+   /*                                                                 */
+   /* The following Procedure Insert Resource employee                */
+   /* Successfully                                                    */
+   /*                                                                 */
+   /* History :                                                       */
+   /* aibrahim 01/05/2023                                             */
+   /* =============================================================== */
+   PROCEDURE insert_row (x_resource_id             NUMBER,
+                         x_organization_id         NUMBER,
+                         x_person_id               NUMBER,
+                         x_inventory_item_id       NUMBER,
+                         x_instance_id             NUMBER DEFAULT NULL,
+                         x_effective_start_date    DATE,
+                         x_effective_end_date      DATE,
+                         x_interleave              NUMBER,
+                         x_last_update_date        DATE,
+                         x_last_updated_by         NUMBER,
+                         x_creation_date           DATE,
+                         x_created_by              NUMBER,
+                         x_last_update_login       NUMBER DEFAULT NULL,
+                         x_attribute_category      VARCHAR2 DEFAULT NULL,
+                         x_attribute1              VARCHAR2 DEFAULT NULL,
+                         x_attribute2              VARCHAR2 DEFAULT NULL,
+                         x_attribute3              VARCHAR2 DEFAULT NULL,
+                         x_attribute4              VARCHAR2 DEFAULT NULL,
+                         x_attribute5              VARCHAR2 DEFAULT NULL,
+                         x_attribute6              VARCHAR2 DEFAULT NULL,
+                         x_attribute7              VARCHAR2 DEFAULT NULL,
+                         x_attribute8              VARCHAR2 DEFAULT NULL,
+                         x_attribute9              VARCHAR2 DEFAULT NULL,
+                         x_attribute10             VARCHAR2 DEFAULT NULL,
+                         x_attribute11             VARCHAR2 DEFAULT NULL,
+                         x_attribute12             VARCHAR2 DEFAULT NULL,
+                         x_attribute13             VARCHAR2 DEFAULT NULL,
+                         x_attribute14             VARCHAR2 DEFAULT NULL,
+                         x_attribute15             VARCHAR2 DEFAULT NULL)
+   AS
+   BEGIN
+      IF x_person_id IS NOT NULL AND x_inventory_item_id IS NULL
+      THEN
+         INSERT INTO BOM_RESOURCE_EMPLOYEES (resource_id,
+                                             organization_id,
+                                             person_id,
+                                             instance_id,
+                                             effective_start_date,
+                                             effective_end_date,
+                                             interleave,
+                                             last_update_date,
+                                             last_updated_by,
+                                             creation_date,
+                                             created_by,
+                                             last_update_login,
+                                             attribute_category,
+                                             attribute1,
+                                             attribute2,
+                                             attribute3,
+                                             attribute4,
+                                             attribute5,
+                                             attribute6,
+                                             attribute7,
+                                             attribute8,
+                                             attribute9,
+                                             attribute10,
+                                             attribute11,
+                                             attribute12,
+                                             attribute13,
+                                             attribute14,
+                                             attribute15)
+              VALUES (X_resource_id,
+                      X_organization_id,
+                      X_person_id,
+                      X_instance_id,
+                      X_effective_start_date,
+                      X_effective_end_date,
+                      X_interleave,
+                      X_Last_Update_Date,
+                      X_Last_Updated_By,
+                      X_Creation_Date,
+                      X_Created_By,
+                      X_Last_Update_Login,
+                      X_Attribute_Category,
+                      X_Attribute1,
+                      X_Attribute2,
+                      X_Attribute3,
+                      X_Attribute4,
+                      X_Attribute5,
+                      X_Attribute6,
+                      X_Attribute7,
+                      X_Attribute8,
+                      X_Attribute9,
+                      X_Attribute10,
+                      X_Attribute11,
+                      X_Attribute12,
+                      X_Attribute13,
+                      X_Attribute14,
+                      X_Attribute15);
+      ELSIF x_person_id IS NULL AND x_inventory_item_id IS NOT NULL
+      THEN
+         INSERT INTO BOM_RESOURCE_EQUIPMENTS (resource_id,
+                                              organization_id,
+                                              inventory_item_id,
+                                              instance_id,
+                                              last_update_date,
+                                              last_updated_by,
+                                              creation_date,
+                                              created_by,
+                                              last_update_login,
+                                              attribute_category,
+                                              attribute1,
+                                              attribute2,
+                                              attribute3,
+                                              attribute4,
+                                              attribute5,
+                                              attribute6,
+                                              attribute7,
+                                              attribute8,
+                                              attribute9,
+                                              attribute10,
+                                              attribute11,
+                                              attribute12,
+                                              attribute13,
+                                              attribute14,
+                                              attribute15)
+              VALUES (X_resource_id,
+                      X_organization_id,
+                      X_person_id,
+                      X_instance_id,
+                      X_Last_Update_Date,
+                      X_Last_Updated_By,
+                      X_Creation_Date,
+                      X_Created_By,
+                      X_Last_Update_Login,
+                      X_Attribute_Category,
+                      X_Attribute1,
+                      X_Attribute2,
+                      X_Attribute3,
+                      X_Attribute4,
+                      X_Attribute5,
+                      X_Attribute6,
+                      X_Attribute7,
+                      X_Attribute8,
+                      X_Attribute9,
+                      X_Attribute10,
+                      X_Attribute11,
+                      X_Attribute12,
+                      X_Attribute13,
+                      X_Attribute14,
+                      X_Attribute15);
+      END IF;
+   END;
+END bom_resource_instances_pkg;
+/
+
+DECLARE
+   X_RETURN_STATUS   VARCHAR (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR (4000);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   BOM_RES_EMPLOYEES_PKG.INSERT_ROW (
+      X_RESOURCE_ID            => 1009,
+      X_ORGANIZATION_ID        => 292,
+      X_PERSON_ID              => 489,
+      X_INVENTORY_ITEM_ID      => NULL,
+      X_INSTANCE_ID            => 489,
+      X_EFFECTIVE_START_DATE   => SYSDATE,
+      X_EFFECTIVE_END_DATE     => '31-DEC-4712',
+      X_INTERLEAVE             => 2,
+      X_LAST_UPDATE_DATE       => SYSDATE,
+      X_LAST_UPDATED_BY        => 2887,
+      X_CREATION_DATE          => SYSDATE,
+      X_CREATED_BY             => 2887,
+      X_LAST_UPDATE_LOGIN      => NULL,
+      X_ATTRIBUTE_CATEGORY     => NULL,
+      X_ATTRIBUTE1             => NULL);
+   COMMIT;
+
+   DBMS_OUTPUT.PUT_LINE (
+         'Error: '
+      || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                          P_ENCODED     => FND_API.G_FALSE));
+END;

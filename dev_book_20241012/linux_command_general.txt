@@ -1,0 +1,299 @@
+##### misc command #####
+========================
+# cd dir		change location to the directory dir
+# clear			clean the screen
+# pwd			print current directory
+# who			print users used the system
+# w			print users used the system
+# whoami		print user name
+# which vim		print location of the program vim
+# whereis vim		print location of the program vim
+# su ai			swith user to ai user
+# sudo command		use root prev to run the command only if the user is sudoer
+# echo msg		print value of the msg
+# ls > file1		write result into file file1 (create new file or overwrite)
+# ls >> file1		write result into file file1 (apend data to current data)
+# ls > /dev/null	write result into null (do not show result)
+
+##### system info #####
+=======================
+# hostname		print machine name
+# free -mt		print memory status
+# uname -a		print many system information
+# uname -n		print machine name
+# uname -s		print system name
+# uname -o		print operiting system
+# uname -m		print system arch
+# uname -v		print kernel version
+# uname -r		print kernel release
+# hostnamectl		print system information
+# df -h			print disks and parts information include size
+# df -ah		print disks and parts and all file system information include size
+# df -ih		print inode file systeminformation include size
+# lsblk			list disks and parts with basic info
+# lsblk -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid		list disks and parts with specific info
+# lsblk -l -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid	list disks and parts with specific info in list format
+# lsblk -P -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid	list disks and parts with specific info in pairs (name=value) format
+# lsblk -J -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid	list disks and parts with specific info in json format
+# fdisk -l		list disks and parts with some info
+# fdisk -x		list disks and parts with more info
+
+##### files and directories #####
+=================================
+# file filename		print file info
+# file *		print all files info as list in the current directory
+# touch file1 file2	create empty files file1 file2 in the current directory
+# cp file1 dir/		copy file1 to the directory dir
+# cp * dir/		copy all files in the current directory to the directory dir
+# cp *.txt dir/		copy all text files in the current directory to the directory dir
+# cp -r dir1/ dir2/	copy directory dir1 to directory dir2
+# cp -r dir1/* dir2/	copy contents of the directory dir1 to directory dir2
+# mv file1 /dir		move file1 to the directory dir
+# mv *.txt /dir		move all text files to the directory dir
+# mv dir1/ dir2/	move directory dir1 to directory dir2
+# mv dir1/* dir2/	move contents of the directory dir1 to directory dir2
+# rm file1 file2	remove file1 and file2
+# rm *.txt		remove all text files in the current directory
+# rm -r dir1		remove directory dir1 with contents
+# ln -s file1 dir/	create sympolic link (shortcut) from file1 in directory dir
+# ln -s dir1 dir2/	create sympolic link (shortcut) from dir1 in directory dir2
+# mkdir	dir1 dir2	create new directories
+# rmdir dir1 dir2	remove empty directories
+# cat file1		print contents of the file file1
+# wc file1		print cont of lines,words and chars in the file file1
+# basename /dir/file	print file name only
+# dirname /dir/file	print dir name only
+# realpath file		print dir and file name
+# du -s -h			print summary files size in human readable
+# du -a -h			print all files size in human reavdable
+# du -d	1			print size in first level
+# du -h -t [-,+]n[k,M,G]	print size in human readable with size plus or minus
+# du -ch			print size in human readable and print total
+# mount /dev/device /mnt/dir	mount storage device in /mnt/dir
+# umount /mnt/dir		un mount /mnt/dir
+
+##### ls command #####
+======================
+#ls 			normal list dirs and files
+#ls -a 			normal list dirs and files with hidden files
+#ls -l			list dirs and file as lines sorted by name with info
+#ls -l -r		list dirs and file as lines sorted by name reversed with info
+#ls -S			list dirs and file as lines sorted by size
+#ls -t			list dirs and file as lines sorted by time
+#ls -l -R		list dirs and files in sub directories all
+#ls -l */		list dirs and files in sub directories one level
+#ls -d */		list only directory
+#ls -l -i		list dirs and files with info index number
+#ls -l -h		list dirs and files with readable file size
+#ls -l --author		list dirs and files with author
+#ls -m			list dirs and files with comma separated
+#ls -Q			list dirs and files with double quotes
+#ls -p			list dirs and files with / after directories
+#ls -1			list dirs and files file in every line
+#ls --color		list dirs and files with color
+
+##### grep sort head tail less more command #####
+=================================================
+# ls -l | grep txt		filter result like txt
+# ls -l | grep -i txt		filter result like txt ignore chars case
+# ls -l | grep -v txt		filter result not like txt
+# ls -l | grep -n txt		filter result like txt with match line number
+# ls -l | grep -c txt		filter result like txt get count lines only
+# cat file.txt | grep txt	filter result like txt
+# cat file.txt | grep -i txt	filter result like txt ignore chars case
+# cat file.txt | grep -v txt	filter result not like txt
+# cat file.txt | grep -n txt	filter result like txt with match line number
+# cat file.txt | grep -c txt	filter result like txt get count lines only
+# du | sort -n			sort result by number can sort by [d=dictionary alphanumeric,n=string number,g=general number,h human number 10k]
+# du | sort -n -r		sort result by number reverse
+# du | tail -n 10		get last 10 lines
+# du | head -n 10		get first 10 lines
+# du | sort -n | tail -n 10	sort result by number and get last 10 lines
+# du | sort -n -r | head -n 10	sort result by number reverse and get first 10 lines
+# cat file.txt | less		display result line by line
+# cat file.txt | more		display result page by page
+
+##### find command #####
+========================
+# find -type [f,d,l]		find dirs or files by type file,directory,link
+# find -name "*txt*"		fine dirs or files by name like txt
+# find -not -name "*txt*"	fine dirs or files by name not like txt
+# find -iname "*txt*"		fine dirs or files by name like txt ignore chars case
+# find -size [-,+]n[c,w,k,M,G]	fine dirs or files by size in byte,word,KB,MB,GB
+# find -user user-name		find dirs or files by owner user-name
+# find -group group-name	find dirs or files by group group-name
+# find -perm 0774		find dirs or files by mode u+rwx g+rwx o+rw (r=4,w=2,x=1)
+# find -mtime [-,+]30		find dirs or files by date modified in 30 dayes,after,before
+# find -atime [-,+]30		find dirs or files by date accessed in 30 dayes,after,before
+# find -mmin  [-,+]60		find dirs or files by time modified in 60 minutes,after,before
+# find -amin  [-,+]60		find dirs or files by time accessed in 60 minutes,after,before
+# find -cmin  [-,+]60		find dirs or files by time changed in 60 minutes,after,before
+# find -maxdepth n		find dirs or files in max level number
+# find -mindepth n		find dirs or files in min level number
+# find -name "*txt*" -exec chmod 0664 {} \;	find dirs or files by name like txt and excute command for every file like change mode to u+rw g+rw o+r
+# find -name "*txt*" -printf %f\\t%S	fine dirs or files by name like txt and print names with size
+printf formats [\\a bill,\\t tab,\\b back,\\n newline][%f filename,
+%B[D\ r,F\ r] create date,%A[D\ r,F\ r] access date,%T[D\ r,F\ r] modify date,
+%m-%M permission,%n hard links,%p-%P full file name,%s filesize]
+
+##### user commands #####
+=========================
+# id ahmed						print info of the user id,group and subscribed groups
+# groups ahmed						print subscribed groups of the user
+# getent passwd						list all users
+# getent group						list all groups
+# cat /etc/passwd					list all users
+# cat /etc/group					list all groups
+# useradd ahmed						create user ahmed and assign generated uid,gid,home directory,no password
+# useradd -m -c "comment" ahmed				create user ahmed with comment optionally and create home directory optionally
+# useradd -u 1011 -g 1012 ahmed				create user ahmed and assign uid 1011 to user optionally and assign user to old group with gid 1012 optionally
+# useradd -G g1,g2 ahmed				create user ahmed and join to groups g1,g2
+# useradd -d /home/test ahmed				create user ahmed with home directory /home/test
+# useradd -p P@ssw0rd ahmed				create user ahmed with password P@ssw0rd optionally
+# useradd -e 2030-12-31 ahmed				create user ahmed with expire date 31-dec-2030 optionally
+# useradd -f 10 ahmed					create user ahmed with password inactive in 10 days optionally
+# useradd -r ahmed					create system user ahmed
+# usermod -aG g1,g2 ahmed				modify user ahmed add to groups g1,g2
+# usermod -rG g1,g2 ahmed				modify user ahmed remove from groups g1,g2
+# usermod -u 1020 -g g3 ahmed				modify user ahmed change uid to 1020 and primary group to g3
+# usermod -m -d /home/test ahmed			modify user ahmed set home directory to /home/test and move old contents to the new home
+# usermod -p P@ssw0rd ahmed				modify user ahmed set password to P@ssw0rd
+# usermod -e 2030-12-31 ahmed				modify user ahmed set expire date 31-dec-2030
+# usermod -f 10 ahmed					modify user ahmed set password inactive in 10 days
+# usermod -L ahmed					modify user ahmed lock user
+# usermod -U ahmed					modify user ahmed unlock user
+# userdel -r ahmed					remove user ahmed and home directory
+# groupadd group1					create group group1 with generated gid
+# groupadd -g 2000 group1				create group group1 with gid 2000
+# groupadd -U ahmed group1				create group group1 and add user ahmed
+# groupadd -p P@ssw0rd group1				create group group1 with password P@ssw0rd
+# groupadd -r group1					create system group group1
+# groupmod -g 2020 group1				modify group group1 set gid to 2020
+# groupadd -aU ahmed group1				modify group group1 add user ahmed
+# groupadd -p P@ssw0rd group1				modify group group1 set password to P@ssw0rd
+# groupmod -n group2 group1				modify group group1 change name to group2
+# groupdel group1					remove group group1
+# passwd ahmed						change password for user ahmed
+
+##### permissions commands #####
+================================
+# chown user1:group1 file1	change owner user and group of the file file1 to user1 and group1
+# chown user1:group1 dir/	change owner user and group of the directory dir to user1 and group1
+# chown -R user1:group1 dir/	change owner user and group of the directory dir and all contents to user1 and group1
+# chgrp -R group1 dir/		change group of the directory dir and all contents to group1
+# chmod 777 file1		change file mode(permission) of the file file1 to full control
+# chmod 777 dir/		change file mode(permission) of the directory dir to full control
+# chmod -R 777 dir/		change file mode(permission) of the directory dir and all contents to full control
+# chmod a+rw file1		add read write to all users
+# chmod a-x file1		remove excute from all users
+# chmod u+rwx file1		add read write excute to owner user
+# chmod u-x file1		remove excute from owner user
+# chmod g+rw file1		add read write to owner group
+# chmod g-x file1		remove excute from owner group
+# chmod o+r file1		add read to other users
+# chmod o-wx file1		remove write excute from other users
+modes [4 = r = read,2 = w = write,x = 1 = excute]
+user types [u = user,g = group,o other,a = all]
+chmod 777 = chmod a+rwx = chmod u+rwx g+rwx o+rwx
+chmod 664 = chmod u+rw g+rw o+r
+# setfacl -R -m u:user1:rwx dir/	add user1 to dir/ acl with permission rwx
+# setfacl -R -m g:group1:rw dir/	add group1 to dir/ acl with permission rw
+# setfacl -R -m o:user2:r dir/		add user2 to dir/ acl with permission r
+# setfacl -R -x o:user2 dir/		remove user2 from dir/ acl
+# getfacl -a dir/			print dir/ acl
+
+##### services #####
+====================
+# service --status-all				list services with status
+# service apache2 start				start apache2 service, commands in [start,stop,restart]
+# systemctl daemon-reload			reload main system service
+# systemctl status apache2			print status and info about apache2 service
+# systemctl start apache2			start apache2 service and commands in [start,stop,restart,enable,disable,reload,status,show,edit,cat,clean]
+# systemctl cat apache2				show unit file as text
+# systemctl show apache2			show all unit properties
+# systemctl clean apache2			clean runtime, cache, state, logs or configuration of unit
+# systemctl kill apache2			kill apache2 service and its subcommands send signal 15
+# systemctl kill -s 9 apache2			kill apache2 service and its subcommands immediately send signal 9
+# systemctl list-units				list all units with type services and sockets
+# systemctl list-units -t service		list all units with type service types in [service,socket,timer]
+# systemctl list-units --state active		list all units with state active, states in [active,inactive,activating,deactivating,failed,not-found,dead,running,exited,wating]
+# systemctl list-socket				list all active sockets
+# systemctl list-timers				list all active timers
+# systemctl enable unit-file1			enable unit file commands in [enable,disable,edit,link,preset,revert,mask,unmask]
+# systemctl list-unit-files			list all unit-files
+# systemctl list-unit-files --state static	list all unit-files with static state states in [static,enabled,disabled,masked,generated,transient]
+# systemctl list-dependencies			list all services dependencies
+# systemctl list-jobs				list all services jobs
+# systemctl reboot				restart server
+# systemctl poweroff				stop server
+
+##### process commands #####
+============================
+# at -f test.sh 15:30				schedule job to run script at the 03:30 PM
+# atq						list schedule jobs
+# atrm 5					remove schedule job number 5
+# crontab -e					edit crontab to add schedule job
+# crontab -l					list crontab schedule jobs
+# crontab -r					remove crontab schedule jobs
+# nohup script.sh &				run script in background (press ENTER)
+# nohup script.sh				stop script in background (press CTRL+Z)
+# nohup script.sh > file.txt &			redirect result to file.txt
+# screen -S sname1				create new screen socket with name sname1, press (CTRL+A CTRL+D) to detach screen socket and return to main screen
+# screen -ls					print all screen sockets
+# screen -r sname1				attach screen socket sname1 again if state is DETACHED
+# screen -x sname1				attach screen socket sname1 again if state is ATTACHED
+# screen -R sname1				attach screen socket sname1 if exists or create new one
+# screen -X -S sname1 quit			remove screen socket sname1 or you can run "exit" command in the screen itself
+# jobs						print background jobs
+# fg 2						bring background job number 2 to foreground
+# bg 1						running stopped job 1 in background
+# ps aux					list all processes
+# kill 100					kill process with pid 100
+# pkill firefox					kill process with name firefox
+
+##### packages command #####
+============================
+# apt edit-sources				update list of package sources (repositories)
+# apt update					update list of packages metadata
+# apt upgrade					upgrade old packages with new version				
+# apt full-upgrade				upgrade old packages with new version and upgrade related dependencies
+# apt install pack-name				install package pack-name
+# apt reinstall pack-name			reinstall package pack-name
+# apt remove pack-name				remove package pack-name
+# apt purge pack-name				remove package pack-name and configuration files
+# apt download pack-name			download pack-name.deb
+# apt source pack-name				download source pack-name files unreleased
+# apt autoremove				remove unused dependencies
+# apt clean					clean apt repository cache
+# apt autoclean					clean apt repository cache	
+# apt list					list all packages can use [--installed,--upgradable]
+# apt search pack-name				search for package pack-name
+# apt show pack-name				show information for package pack-name
+# apt satisfy pack-name				check package and dependecies health
+# apt depends pack-name				list dependencies of package pack-name
+# apt rdepends pack-name			list all dependencies of package pack-name recursively
+# dpkg -i pack-name.dep				install debian package pack-name
+# dpkg -r pack-name				remove package pack-name
+# dpkg -P pack-name				purge package pack-name
+# dpkg -s pack-name				print status of package pack-name
+# dpkg -V pack-name				verify state of package pack-name
+# dpkg -C pack-name				check state of package pack-name
+# dpkg -p pack-name				print information of package pack-name
+# dpkg -l					list debian packages
+# dpkg -S pack-name				search for package pack-name
+# dpkg -L pack-name				list all directory and files installed with package pack-name
+
+##### update-alternatives #####
+===============================
+# update-alternatives --install /usr/bin/editor editor /usr/share/nano 10	
+create alternatives group named editor and create link named editor to nano program and add link to alternative group with priority 10
+you can swich between links to the editor link and you can call editor instead of the default program in the group editor
+# update-alternatives --remove editor /bin/nano		remove nano program from alternative editor group
+# update-alternatives --set editor /bin/nano		set nano program as default in alternative editor group
+# update-alternatives --config editor			update alternatives set default program to group editor
+# update-alternatives --auto editor			update alternatives set auto choice as default program to group editor
+# update-alternatives --list editor			print list of program links in group editor
+# update-alternatives --display editor			print list of program links in group editor
+
+#############################################
+=============================================

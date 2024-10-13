@@ -1,0 +1,51 @@
+DECLARE
+   REQUEST_ID   NUMBER;
+   P_PHASE      VARCHAR2 (80);
+   P_STATUS     VARCHAR2 (80);
+   DEV_PHASE    VARCHAR2 (30);
+   DEV_STATUS   VARCHAR2 (30);
+   MESSAGE      VARCHAR2 (240);
+   P_RESULT     BOOLEAN;
+   XML_LAYOUT   BOOLEAN;
+   X_REQ_URL    VARCHAR2 (2000);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (2887, 50757, 222);
+   XML_LAYOUT :=
+      FND_REQUEST.ADD_LAYOUT (TEMPLATE_APPL_NAME   => 'AR',
+                              TEMPLATE_CODE        => 'FRT_AR_BALANCE',
+                              TEMPLATE_LANGUAGE    => 'en',
+                              TEMPLATE_TERRITORY   => '',
+                              OUTPUT_FORMAT        => 'PDF');
+   REQUEST_ID :=
+      FND_REQUEST.SUBMIT_REQUEST (APPLICATION   => 'AR',
+                                  PROGRAM       => 'FRT_AR_BALANCE',
+                                  DESCRIPTION   => NULL,
+                                  START_TIME    => SYSDATE,
+                                  SUB_REQUEST   => FALSE,
+                                  ARGUMENT1     => 'ACS',
+                                  ARGUMENT2     => 'LG',
+                                  ARGUMENT3     => NULL,
+                                  ARGUMENT4     => NULL,
+                                  ARGUMENT5     => NULL,
+                                  ARGUMENT6     => SYSDATE - 30,
+                                  ARGUMENT7     => SYSDATE - 20,
+                                  ARGUMENT8     => 'AIBRAHIM');
+   COMMIT;
+   P_RESULT :=
+      FND_CONCURRENT.GET_REQUEST_STATUS (REQUEST_ID,
+                                         '',
+                                         '',
+                                         P_PHASE,
+                                         P_STATUS,
+                                         DEV_PHASE,
+                                         DEV_STATUS,
+                                         MESSAGE);
+
+   X_REQ_URL := APPS.GET_SUBMITTED_REQUEST (REQUEST_ID);
+
+   DBMS_OUTPUT.PUT_LINE ('REQUEST ID= ' || REQUEST_ID);
+   DBMS_OUTPUT.PUT_LINE ('PHASE= ' || P_PHASE);
+   DBMS_OUTPUT.PUT_LINE ('STATUS= ' || P_STATUS);
+   DBMS_OUTPUT.PUT_LINE ('X_REQ_URL= ' || X_REQ_URL);
+END;

@@ -1,0 +1,135 @@
+DECLARE
+   V_TRX_TYPE_ID        NUMBER := 40;                   --40 receipt , 1 issue
+   V_TRX_MODE           NUMBER := 3;
+   V_PROC_FLAG          NUMBER := 1;
+   V_LOCK_FLAG          NUMBER := 2;
+   V_TRX_ACTION_ID      NUMBER := 27;
+   V_TRX_SRC_TYPE_ID    NUMBER := 3;
+   V_ORG_ID             NUMBER := 112;
+   V_ITEM_ID            NUMBER;
+   V_QUANTITY           NUMBER;
+   V_UOM                VARCHAR2 (30);
+   V_TRX_DATE           DATE := SYSDATE;
+   V_LOT_NUM            VARCHAR2 (30);
+   V_EXP_DATE           DATE := SYSDATE + 730;
+   V_TRX_COST           NUMBER;
+   V_SUBINV_CODE        VARCHAR2 (30);
+   V_LOCATOR_ID         NUMBER;
+   V_ACCOUNT_ID         NUMBER;
+   V_TRX_HEADER_ID      NUMBER := 100;
+   V_SRC_HEADER_ID      NUMBER := 1;
+   V_SRC_LINE_ID        NUMBER := 1;
+   V_TRX_INTERFACE_ID   NUMBER;
+BEGIN
+   FOR ITM IN (SELECT *
+                 FROM FRT_EAM_ITEMS_INTERFACE
+                WHERE ID > 0 AND ID < 10000)
+   LOOP
+      BEGIN
+         SELECT MTL_MATERIAL_TRANSACTIONS_S.NEXTVAL
+           INTO V_TRX_INTERFACE_ID
+           FROM DUAL;
+
+         V_ITEM_ID := ITM.C1;
+         V_UOM := ITM.C2;
+         V_QUANTITY := ITM.C3;
+         V_TRX_COST := ITM.C4;
+         V_ACCOUNT_ID := ITM.C5;
+         V_SUBINV_CODE := 'SPARTS';
+         V_ORG_ID := ITM.C8;
+
+         IF V_ORG_ID = 292
+         THEN
+            V_LOCATOR_ID := 5962;
+         ELSE
+            V_LOCATOR_ID := 5964;
+         END IF;
+
+         --V_LOCATOR_ID := ITM.C7;
+         --V_LOT_NUM := 'LOT01';
+
+
+         INSERT INTO MTL_TRANSACTIONS_INTERFACE (SOURCE_CODE,
+                                                 TRANSACTION_INTERFACE_ID,
+                                                 SOURCE_LINE_ID,
+                                                 SOURCE_HEADER_ID,
+                                                 PROCESS_FLAG,
+                                                 TRANSACTION_MODE,
+                                                 TRANSACTION_TYPE_ID,
+                                                 TRANSACTION_ACTION_ID,
+                                                 ORGANIZATION_ID,
+                                                 INVENTORY_ITEM_ID,
+                                                 TRANSACTION_QUANTITY,
+                                                 TRANSACTION_UOM,
+                                                 TRANSACTION_DATE,
+                                                 TRANSACTION_COST,
+                                                 SUBINVENTORY_CODE,
+                                                 LOCATOR_ID,
+                                                 DISTRIBUTION_ACCOUNT_ID,
+                                                 TRANSACTION_SOURCE_ID,
+                                                 TRANSACTION_SOURCE_TYPE_ID,
+                                                 TRANSACTION_HEADER_ID,
+                                                 LOCK_FLAG,
+                                                 LAST_UPDATE_DATE,
+                                                 LAST_UPDATED_BY,
+                                                 CREATION_DATE,
+                                                 CREATED_BY,
+                                                 TRANSACTION_REFERENCE)
+              VALUES ('AI_TRX',
+                      V_TRX_INTERFACE_ID,
+                      V_SRC_LINE_ID,
+                      V_SRC_HEADER_ID,
+                      V_PROC_FLAG,
+                      V_TRX_MODE,
+                      V_TRX_TYPE_ID,
+                      V_TRX_ACTION_ID,
+                      V_ORG_ID,
+                      V_ITEM_ID,
+                      V_QUANTITY,
+                      V_UOM,
+                      V_TRX_DATE,
+                      V_TRX_COST,
+                      V_SUBINV_CODE,
+                      V_LOCATOR_ID,
+                      V_ACCOUNT_ID,
+                      V_ACCOUNT_ID,
+                      V_TRX_SRC_TYPE_ID,
+                      V_TRX_HEADER_ID,
+                      V_LOCK_FLAG,
+                      SYSDATE,
+                      2887,
+                      SYSDATE,
+                      2887,
+                      'AI_REF');
+
+         --         INSERT
+         --           INTO MTL_TRANSACTION_LOTS_INTERFACE (TRANSACTION_INTERFACE_ID,
+         --                                                LOT_NUMBER,
+         --                                                TRANSACTION_QUANTITY,
+         --                                                LOT_EXPIRATION_DATE,
+         --                                                LAST_UPDATE_DATE,
+         --                                                LAST_UPDATED_BY,
+         --                                                CREATION_DATE,
+         --                                                CREATED_BY)
+         --         VALUES (V_TRX_INTERFACE_ID,
+         --                 V_LOT_NUM,
+         --                 V_QUANTITY,
+         --                 V_EXP_DATE,
+         --                 SYSDATE,
+         --                 2887,
+         --                 SYSDATE,
+         --                 2887);
+
+         V_SRC_LINE_ID := V_SRC_LINE_ID + 1;
+         COMMIT;
+         DBMS_OUTPUT.PUT_LINE ('Done => ' || V_ITEM_ID);
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('Error => ' || V_ITEM_ID);
+      END;
+   END LOOP;
+
+   COMMIT;
+END;
+/

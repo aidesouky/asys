@@ -1,0 +1,292 @@
+-- Add ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE (
+      HOST         => 'httpbin.org',
+      LOWER_PORT   => 80,
+      UPPER_PORT   => 443,
+      ACE          => XS$ACE_TYPE (
+                        PRIVILEGE_LIST   => XS$NAME_LIST (
+                                              'http','connect'),
+                        PRINCIPAL_NAME   => 'SYS',
+                        PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Remove ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.REMOVE_HOST_ACE (
+      HOST               => 'httpbin.org',
+      LOWER_PORT         => 80,
+      UPPER_PORT         => 443,
+      ACE                => XS$ACE_TYPE (
+                              PRIVILEGE_LIST   => XS$NAME_LIST (
+                                                    'http','connect'),
+                              PRINCIPAL_NAME   => 'SYS',
+                              PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB),
+      REMOVE_EMPTY_ACL   => TRUE);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Assign wallet to ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_WALLET_ACE (
+      WALLET_PATH   => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet',
+      ACE           => XS$ACE_TYPE (
+                         PRIVILEGE_LIST   => XS$NAME_LIST (
+                                               'use_client_certificates'),
+                         PRINCIPAL_NAME   => 'SYS',
+                         PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Remove wallet from ACE
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.REMOVE_WALLET_ACE (
+      WALLET_PATH        => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet',
+      ACE                => XS$ACE_TYPE (
+                              PRIVILEGE_LIST   => XS$NAME_LIST (
+                                                    'use_client_certificates'),
+                              PRINCIPAL_NAME   => 'SYS',
+                              PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB),
+      REMOVE_EMPTY_ACL   => TRUE);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Create ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.CREATE_ACL (ACL           => 'telegram_acl.xml',
+                                      DESCRIPTION   => 'Allow telegram ntf',
+                                      PRINCIPAL     => 'SYS',
+                                      IS_GRANT      => TRUE,
+                                      PRIVILEGE     => 'connect',
+                                      START_DATE    => SYSTIMESTAMP,
+                                      END_DATE      => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Drop ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.DROP_ACL (ACL => 'telegram_acl.xml');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Assign network from ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL (ACL          => 'telegram_acl.xml',
+                                      HOST         => 'api.telegram.org',
+                                      LOWER_PORT   => 80,
+                                      UPPER_PORT   => 80);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Un-assign network from ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.UNASSIGN_ACL (ACL          => 'telegram_acl.xml',
+                                        HOST         => 'api.telegram.org',
+                                        LOWER_PORT   => 80,
+                                        UPPER_PORT   => 80);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Set host to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.SET_HOST_ACL (ACL          => 'telegram_acl.xml',
+                                        HOST         => 'api.telegram.org',
+                                        LOWER_PORT   => 80,
+                                        UPPER_PORT   => 80);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Append host to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACL (ACL          => 'telegram_acl.xml',
+                                           HOST         => 'api.telegram.org',
+                                           LOWER_PORT   => 80,
+                                           UPPER_PORT   => 80);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Assign wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ASSIGN_WALLET_ACL (
+      ACL           => 'telegram_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Un-assign wallet from ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.UNASSIGN_WALLET_ACL (
+      ACL           => 'telegram_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Set wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.SET_WALLET_ACL (
+      ACL           => 'telegram_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Add wallet to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_WALLET_ACL (
+      ACL           => 'telegram_acl.xml',
+      WALLET_PATH   => 'file:C:\app\AIBRAHIM\product\21c\ora_wallet');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Add privilege to user
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE (ACL          => 'NETWORK_ACL_31824324071D46ECAE8EEF9B8980FDB2',
+                                         PRINCIPAL    => 'SYS',
+                                         IS_GRANT     => TRUE,
+                                         PRIVILEGE    => 'connect',
+                                         POSITION     => NULL,
+                                         START_DATE   => NULL,
+                                         END_DATE     => NULL);
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Remove privilege from user
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.DELETE_PRIVILEGE (ACL         => 'telegram_acl.xml',
+                                            PRINCIPAL   => 'SYS',
+                                            IS_GRANT    => TRUE,
+                                            PRIVILEGE   => 'connect');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Check privilege on user
+
+DECLARE
+   RESULT   NUMBER;
+BEGIN
+   RESULT :=
+      DBMS_NETWORK_ACL_ADMIN.CHECK_PRIVILEGE (ACL         => 'telegram_acl.xml',
+                                              USER        => 'SYS',
+                                              PRIVILEGE   => 'use-passwords');
+   DBMS_OUTPUT.PUT_LINE ('RESULT=' || RESULT);
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+
+SELECT * FROM DBA_NETWORK_ACLS;
+/
+
+SELECT * FROM DBA_NETWORK_ACL_PRIVILEGES;
+/
+-- Test https request
+DECLARE
+  l_url            VARCHAR2(100) := 'https://api.telegram.org/bot6288940054:AAH_f3_vSz0gxEHPfO8bxxZuW9KBWdYL3Kc/getMe';
+  l_http_request   UTL_HTTP.req;
+  l_http_response  UTL_HTTP.resp;
+BEGIN
+  -- Make a HTTP request and get the response.
+  l_http_request  := UTL_HTTP.begin_request(l_url,'GET');
+  l_http_response := UTL_HTTP.get_response(l_http_request);
+  UTL_HTTP.end_response(l_http_response);
+END;

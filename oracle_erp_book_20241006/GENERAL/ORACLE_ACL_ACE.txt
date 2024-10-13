@@ -1,0 +1,189 @@
+-- Add Ace To Acl If Host Exists Or Create New Acl With The Host And Add Ace 
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACE (
+      HOST         => '*',
+      LOWER_PORT   => NULL,
+      UPPER_PORT   => NULL,
+      ACE          => XS$ACE_TYPE (
+                        PRIVILEGE_LIST   => XS$NAME_LIST (
+                                              'http','connect'),
+                        PRINCIPAL_NAME   => 'AI',
+                        PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Remove Ace From Acl And Remove Host If No Other Aces With It
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.REMOVE_HOST_ACE (
+      HOST               => '*',
+      LOWER_PORT         => NULL,
+      UPPER_PORT         => NULL,
+      ACE                => XS$ACE_TYPE (
+                              PRIVILEGE_LIST   => XS$NAME_LIST (
+                                                    'http','connect'),
+                              PRINCIPAL_NAME   => 'AI',
+                              PRINCIPAL_TYPE   => XS_ACL.PTYPE_DB),
+      REMOVE_EMPTY_ACL   => TRUE);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Create ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.CREATE_ACL (ACL           => 'test_acl.xml',
+                                      DESCRIPTION   => 'test acl',
+                                      PRINCIPAL     => 'AI',
+                                      IS_GRANT      => TRUE,
+                                      PRIVILEGE     => 'connect',
+                                      START_DATE    => SYSTIMESTAMP,
+                                      END_DATE      => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Drop ACL and all related objects
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.DROP_ACL (ACL => 'test_acl.xml');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Add privilege on acl to user
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE (ACL          => 'test_acl.xml',
+                                         PRINCIPAL    => 'AI',
+                                         IS_GRANT     => TRUE,
+                                         PRIVILEGE    => 'connect',
+                                         POSITION     => NULL,
+                                         START_DATE   => NULL,
+                                         END_DATE     => NULL);
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Remove privilege on acl from user
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.DELETE_PRIVILEGE (ACL         => 'test_acl.xml',
+                                            PRINCIPAL   => 'AI',
+                                            IS_GRANT    => TRUE,
+                                            PRIVILEGE   => 'connect');
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+-- Check user privilege on acl
+
+DECLARE
+   RESULT   NUMBER;
+BEGIN
+   RESULT :=
+      DBMS_NETWORK_ACL_ADMIN.CHECK_PRIVILEGE (ACL         => 'test_acl.xml',
+                                              USER        => 'AI',
+                                              PRIVILEGE   => 'http');
+   DBMS_OUTPUT.PUT_LINE ('RESULT=' || RESULT);
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Set host to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.SET_HOST_ACL (ACL          => 'test_acl.xml',
+                                        HOST         => '*',
+                                        LOWER_PORT   => NULL,
+                                        UPPER_PORT   => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Assign host to ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL (ACL          => 'test_acl.xml',
+                                      HOST         => '*',
+                                      LOWER_PORT   => NULL,
+                                      UPPER_PORT   => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Un-assign host from ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.UNASSIGN_ACL (ACL          => 'test_acl.xml',
+                                        HOST         => '*',
+                                        LOWER_PORT   => NULL,
+                                        UPPER_PORT   => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+--Append host to new ACL
+
+BEGIN
+   DBMS_NETWORK_ACL_ADMIN.APPEND_HOST_ACL (ACL          => 'test_acl.xml',
+                                           HOST         => '*',
+                                           LOWER_PORT   => NULL,
+                                           UPPER_PORT   => NULL);
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+
+
+SELECT * FROM DBA_XS_OBJECTS;
+SELECT * FROM NACL$_NAME_MAP;
+SELECT * FROM DBA_XS_ACES;
+SELECT * FROM NACL$_HOST;
+SELECT * FROM DBA_NETWORK_ACLS;
+SELECT * FROM DBA_NETWORK_ACL_PRIVILEGES;

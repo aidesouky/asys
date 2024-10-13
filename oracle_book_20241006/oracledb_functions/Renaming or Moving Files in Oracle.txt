@@ -1,0 +1,344 @@
+Renaming or Moving Files in Oracle
+
+In many situations, a datafile or logfile must be renamed inside Oracle. Whereas the contents of the file remain valid, you need to define a new physical name or location for it. For example:
+
+- You want to move a database file to a different disk for performance or maintenance reasons.
+- You have restored a datafile from backup, but the disk where it should normally be placed has crashed and you need to relocate it to a different disk.
+- You have moved or renamed a datafile at operating system level but forgot to rename it within Oracle. At startup, you get ORA-01157 and ORA-01110. If the database is up and you try to shut it down normal or immediate, you get ORA-01116 ad ORA-01110.
+- You have multiple databases on the same machine and you need to rename certain database files to prevent collision and confusion.
+Managing Tablespaces and Datafiles
+Managing TEMP Datafiles
+Managing UNDO Datafiles
+Managing Control Files
+Managing Log Files
+
+Managing Tablespaces and DataFiles
+
+RENAME OR MOVE A DATAFILE FOR A SINGLE TABLESPACE
+If you are using 12c or later, this process has been improved, there is no need to take it offline or copy the files using the ALTER DATABASE MOVE DATAFILE statement:
+ALTER DATABASE MOVE DATAFILE 'U:\ORADATA\FMS\SYSTEM01.DBF' TO 'S:\ORADATA\FMS\SYSTEM01.DBF';
+ALTER DATABASE MOVE DATAFILE 'U:\ORADATA\FMS\SYSAUX01.DBF' TO 'S:\ORADATA\FMS\SYSAUX01.DBF';
+ALTER DATABASE MOVE DATAFILE 'U:\ORADATA\FMS\UNDOTBS01.DBF' TO 'S:\ORADATA\FMS\UNDOTBS01.DBF';
+
+In previous Versions:
+1. Make the tablespace offline.
+ALTER TABLESPACE <TABLESPACE_NAME> OFFLINE;
+
+2. Copy the datafile(s) to the new location using the operating system copy command.
+3. Rename the datafile to the new location. This updates the entry for the datafile(s) in the controlfile.
+ALTER TABLESPACE <TABLESPACE_NAME> RENAME DATAFILE '/old_path/name.dbf' TO '/old_path/name.dbf';
+4. Once the alter database statement has been processed for the datafile(s) you can bring the tablespace online.
+ALTER TABLESPACE <TABLESPACE_NAME> ONLINE;
+
+
+Another method is to have the database in mount state:
+1. SHUTDOWN IMMEDIATE
+2. STARTUP MOUNT
+3. Copy the datafile(s) to the new location using the operating system copy command
+4. ALTER DATABASE RENAME FILE '/old_path/name.dbf'' TO '/new_path/name.dbf';
+5. ALTER DATABASE OPEN;
+6. Query v$dbfile to confirm that the changes made were correct.
+SELECT * FROM V$DBFILE;
+7. Remove the datafile(s) from the old location at the operating system level.
+
+ADD A DATAFILE
+Adding a File is very simple:
+ALTER TABLESPACE <TABLESPACE_NAME> ADD DATAFILE '<file specific> SIZE xxxM;
+ALTER TABLESPACE tbs_03 ADD DATAFILE 'tbs_f04.dbf' SIZE 100M AUTOEXTEND ON NEXT 30m MAXSIZE UNLIMITED;
+
+
+DROP A TABLESPACE
+Dropping a Tablespace is very simple:
+DROP TABLESPACE <TABLESPACE_NAME> INCLUDING CONTENTS AND DATAFILES CASCADE;
+
+You can use just DROP TABLESPACE <tablespace name>, but the data files won’t be dropped and the tablespace must be empty (no objects exist in the tablespace); otherwise, Oracle will return an error. Further, the DROP TABLESPACE <tablespace name> INCLUDING CONTENTS command drops all the objects, if they exist in the tablespace. Next, by including the CASCADE option you can drop foreign key references from objects in the other tablespaces to the one you’re dropping. The DATAFILES option, which is available in Oracle9i, will physically delete the related data files as well.
+
+CREATE A TABLESPACE
+CREATE TABLESPACE <TABLESPACE_NAME>
+DATAFILE '/opt/oracle/oradata/FGUARD/fg_data01.dbf' Size 800M AutoExtend On Next 100M  Maxsize 2000M,
+               '/opt/oracle/oradata/FGUARD/fg_data02.dbf' Size 800M AutoExtend On Next 100M  Maxsize 2000M
+EXTENT MANAGEMENT LOCAL
+SEGMENT SPACE MANAGEMENT AUTO;
+
+INCREASE THE TABLESPACE SIZE
+If you get a message like:
+ORA-1654: unable to extend index IFSSYS.SYS_C002067 by 64 in tablespace  FG_DATA
+Then you will need to increase the datafile size associated to that Tablespace, so perform the following steps:
+1- First, see how filled up the current datafile(s) are:
+select FILE_NAME, BYTES/1024/1024 "Size MB", BLOCKS, MAXBLOCKS from dba_data_files where tablespace_name = 'PPP_DATA';
+
+FILE_NAME                                       Size MB   BLOCKS    MAXBLOCKS
+----------------------------------------------  --------- --------- ------------------
+/usr/local/oracle/oradata/webct/fg_data01.dbf   400       524284    524228
+
+Notice that the BLOCKS 524284 = MAXBLOCKS 524288, that means that the tablespace is maxed out.
+
+Now we can add another datafile to that tablespace:
+alter tablespace FG_DATA add datafile '/usr/local/oracle/oradata/webct/fg_data02.dbf' size 1024M autoextend on next 100M maxsize 4096M;
+or increase the existing one:
+alter database datafile '/usr/local/oracle/oradata/webct/fg_data02.dbf' resize 800m;
+
+REDUCE TABLESPACE SIZE
+This is probably one of the most complicated tasks to perform because you may have free space, but the last portion of the datafile associated to the tablespace may be used by an object, so the datafile will not reduce its size easily.
+
+-- First Purge the Recycle bin
+PURGE RECYCLEBIN;
+
+-- You can use below script to find out how much you can resize your datafiles.
+SET VERIFY OFF
+COLUMN SMALLEST FORMAT 999,990
+COLUMN CURRSIZE FORMAT 999,990
+COLUMN SAVINGS FORMAT 999,990
+COLUMN FILE_NAME FORMAT A50 WORD_WRAPPED
+SET PAGES 60
+BREAK ON REPORT
+COMPUTE SUM OF SAVINGS ON REPORT
+COLUMN VALUE NEW_VAL BLKSIZE
+SELECT FILE_NAME, CEIL( (NVL(HWM,1)*&&BLKSIZE)/1024/1024 ) SMALLEST, CEIL( BLOCKS*&&BLKSIZE/1024/1024) CURRSIZE,
+       CEIL( BLOCKS*&&BLKSIZE/1024/1024) - CEIL( (NVL(HWM,1)*&&BLKSIZE)/1024/1024 ) SAVINGS
+FROM DBA_DATA_FILES DBADF,
+     (SELECT FILE_ID, MAX(BLOCK_ID+BLOCKS-1) HWM FROM DBA_EXTENTS GROUP BY FILE_ID ) DBAFS
+WHERE DBADF.FILE_ID = DBAFS.FILE_ID(+)
+/
+
+FILE_NAME                                          SMALLEST CURRSIZE  SAVINGS
+-------------------------------------------------- -------- -------- --------
+C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\SYSTEM01.DBF       562      562        0
+C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\UNDOTBS01.DBF      305      305        0
+C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\USERS01.DBF         78       80        2
+C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\FG_DATA.DBF      1,751    1,751        0
+C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\SYSAUX01.DBF       420      420        0
+                                                                     --------
+sum                                                                         2
+
+
+-- You can Use below script to shrink datafiles to the smallest size that is possible.
+COLUMN SHRINK_DATAFILES FORMAT A75 WORD_WRAPPED
+COLUMN VALUE NEW_VAL BLKSIZE
+SELECT VALUE FROM V$PARAMETER WHERE NAME = 'db_block_size';
+
+SELECT 'ALTER DATABASE DATAFILE ''' || FILE_NAME || ''' RESIZE ' || CEIL( (NVL(HWM,1)*&&BLKSIZE)/1024/1024 ) || 'M;' SHRINK_DATAFILES
+FROM DBA_DATA_FILES DBADF,
+    (SELECT FILE_ID, MAX(BLOCK_ID+BLOCKS-1) HWM FROM DBA_EXTENTS GROUP BY FILE_ID ) DBAFS
+WHERE DBADF.FILE_ID = DBAFS.FILE_ID(+)
+  AND CEIL(BLOCKS*&&BLKSIZE/1024/1024)- CEIL((NVL(HWM,1)* &&BLKSIZE)/1024/1024 ) > 0 ;
+
+SHRINK_DATAFILES
+------------------------------------------------------------------------------------------
+ALTER DATABASE DATAFILE 'C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\SYSTEM01.DBF' RESIZE 562M;
+ALTER DATABASE DATAFILE 'C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\USERS01.DBF' RESIZE 78M;
+ALTER DATABASE DATAFILE 'C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\FG_DATA.DBF' RESIZE 1751M;
+
+Now you can execute the results of this query.
+If you get ORA-03297, it means that some of those files are not able to being reduce.
+
+
+-- Finding Objects that have Extents at the end of Datafile for the one that you got ORA-03297
+SELECT substr(owner,1,15) OWNER, substr(SEGMENT_NAME,1,20) SEGMENT_NAME , substr(SEGMENT_TYPE,1,20) SEGMENT_TYPE, BLOCK_ID
+FROM ( SELECT OWNER, SEGMENT_NAME, SEGMENT_TYPE, BLOCK_ID
+         FROM DBA_EXTENTS
+         WHERE FILE_ID = ( SELECT FILE_ID FROM DBA_DATA_FILES WHERE FILE_NAME = &&FILE_NAME)
+         ORDER BY BLOCK_ID DESC
+     )
+WHERE ROWNUM <= 10;
+
+
+
+-- Rebuild the 1st Object (Using the biggest blobk) from that list and try to reduce the Tablespace Size.
+--Try to brebuild it again:
+alter database datafile 'C:\ORACLE\PRODUCT\10.2.0\ORADATA\DIE\USERS01.DBF' RESIZE 78M;
+
+
+
+Managing Temp Datafiles
+We can’t move the temp tablespace during mount stage like other datafiles using “ALTER DATABASE RENAME FILE..”,  so a workaround this issue is to create a new temp tablespace.
+
+SQL> drop tablespace temp;
+drop tablespace temp
+*
+ERROR at line 1:
+ORA-12906: cannot drop default temporary tablespace
+
+--Try to resize it First
+ALTER DATABASE TEMPFILE '/u02/oracle/data/lmtemp02.dbf' RESIZE 1000M;
+
+– Create a new temporary temp tablespace
+SQL> CREATE TEMPORARY TABLESPACE TEMP2 TEMPFILE '/u01/oradata/TESTDB/temp2_01.dbf' SIZE 100M AUTOEXTEND ON NEXT 100M MAXSIZE 5000M
+EXTENT MANAGEMENT LOCAL UNIFORM SIZE 1024K
+SEGMENT SPACE MANAGEMENT MANUAL;
+
+– Change default temporary tablespace
+SQL> ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp2;
+
+– Drop old temp tablespace
+SQL> drop tablespace temp including contents and datafiles;
+
+– Recreate the FINAL TEMP with new file location
+SQL> CREATE TEMPORARY TABLESPACE TEMP TEMPFILE '/u03/oradata/TESTDB/temp_01.dbf' SIZE 1000M AUTOEXTEND ON NEXT 100M MAXSIZE 5000M
+EXTENT MANAGEMENT LOCAL UNIFORM SIZE 1024K
+SEGMENT SPACE MANAGEMENT MANUAL;
+
+– Make the temp default again
+SQL> ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp;
+
+– Drop temp2 tablespace
+SQL> drop tablespace temp2 including contents and datafiles;
+
+If the Drop Process takes too long, the following queries may assist you on that:
+--Who is using TEMP ?
+SELECT b.tablespace,b.segfile#,b.segblk#,b.blocks,a.sid,a.serial#,
+a.username,a.osuser, a.status
+FROM v$session a,v$sort_usage b
+WHERE a.saddr = b.session_addr;
+
+--Identify users on a specific Tablespace
+set lnesize 120
+select  tu.username,s.sid,s.serial# , s.logon_time, s.TERMINAL
+from v$tempseg_usage tu, v$session s
+where tu.session_addr=s.saddr
+and tu.tablespace='TEMP';
+
+USERNAME                              SID    SERIAL# LOGON_TIME         TERMINAL
+------------------------------ ---------- ---------- ------------------ ----------------
+CCI_DKEETH                            720      15277 15/OCT/18 11:05:14 CLDV-TS1
+CCI_DKEETH                            720      15277 15/OCT/18 11:05:14 CLDV-TS1
+CCI_EOGAN                             723       5171 15/OCT/18 11:00:43 CLDV-TS2
+CCI_DFISHER                           727      53931 15/OCT/18 11:00:16 CLDV-TS3
+INVENTORY_SERVER                      735      16400 14/OCT/18 00:47:51 CLDV-SWRMS1
+INVENTORY_SERVER                      735      16400 14/OCT/18 00:47:51 CLDV-SWRMS1
+CCI_NSANDY                            736      56939 15/OCT/18 09:00:07 CLDV-TS3
+CCI_NSANDY                            736      56939 15/OCT/18 09:00:07 CLDV-TS3
+
+
+ALTER SYSTEM KILL SESSION '&sid,&SERIAL';
+
+
+select * from v$tempseg_usage where tablespace='TEMP'
+
+
+
+--Detect Sessions and what they are doing
+SELECT a.username, a.sid, a.serial#, a.osuser, b.tablespace, b.blocks, c.sql_text
+FROM v$session a, v$tempseg_usage b, v$sqlarea c
+WHERE a.saddr = b.session_addr
+AND c.address= a.sql_address
+AND c.hash_value = a.sql_hash_value
+--AND tablespace = 'TEMP'
+ORDER BY b.tablespace, b.blocks;
+
+
+
+
+Managing UNDO Datafile
+In order to reduce the size of the UNDO Tablespace, we need to perform the following (assuming UNDOTBS1 is the tablespace name):
+create undo tablespace UNDOTBS2 datafile '/u03/oradata/TESTDB/UNDOTBS02.DBF' size 100M AUTOEXTEND ON NEXT 20M MAXSIZE 5000M;
+alter system set UNDO_TABLESPACE=UNDOTBS2;
+drop tablespace UNDOTBS1 including contents and datafiles;
+
+
+Managing Control Files
+The current location of the controlfiles can be queried from the V$CONTROLFILE view, as shown below.
+select name from v$controlfile;
+NAME
+---------------------------------------------------------------
+/u01/app/oracle/product/9.2.0/oradata/DEVSOL/control01.ctl
+/u01/app/oracle/product/9.2.0/oradata/DEVSOL/control02.ctl
+/u01/app/oracle/product/9.2.0/oradata/DEVSOL/control03.ctl
+
+In order to rename or move these files we must alter the value of the control_files instance parameter.
+show parameter control_files
+
+ALTER SYSTEM SET control_files='C:\ORACLE\ORADATA\FMS\CONTROL01.CTL','R:\ORACLE\ORADATA\FMS\CONTROL02.CTL','S:\oradata\fms\CONTROL03.CTL' SCOPE=SPFILE;
+ 
+To move or rename a controlfile do the following:
+    * Alter the control_files parameter using the ALTER SYSTEM comamnd.
+    * Shutdown the database.
+    * Rename the physical file on the OS.
+    * Start the database.
+
+The following SQL*Plus output shows how this is done for an instance using an spfile. For instances using a pfile replace the spfile manipulation steps with an amendment of the parameter in the init.ora file.
+ALTER SYSTEM SET control_files='/new_path/control01.ctl',  '/new_path/control02.ctl', '/new_path/control03.ctl' SCOPE=SPFILE;
+SHUTDOWN IMMEDIATE
+!mv /old_path/control01.ctl /new_path/control01.ctl
+!mv /old_path/control02.ctl /new_path/control02.ctl
+!mv /old_path/control03.ctl /new_path/control03.ctl
+STARTUP
+Repeating the initial query shows that the the CONTROLFILES has been renamed in the data dictionary.
+select name from v$controlfile;
+
+
+Managing Logfiles
+--The current status of the logfiles can be queried from the V$LOG view with:
+
+select status, bytes/1024/1024, group# from v$log;
+
+
+STATUS           BYTES/1024/1024     GROUP#
+---------------- --------------- ----------
+CURRENT                       50          1
+ACTIVE                        50          2
+INACTIVE                      50          3
+The current location of the logfiles can be queried from the V$LOGFILE view, as shown below.
+select group#, member from v$logfile;
+    GROUP#  MEMBER
+----------  ----------------------------------------------------------
+         1  C:\ORACLE\PRODUCT\10.2.0\ORADATA\DEV10G2\REDO01.LOG
+         2  C:\ORACLE\PRODUCT\10.2.0\ORADATA\DEV10G2\REDO02.LOG
+         3  C:\ORACLE\PRODUCT\10.2.0\ORADATA\DEV10G2\REDO03.LOG
+
+To move or rename a logfile do the following:
+    * Shutdown the database.
+    * Rename the physical file on the OS.
+    * Start the database in mount mode.
+    * Issue the ALTER DATABASE RENAME FILE command to rename the file within the Oracle dictionary.
+    * Open the database.
+
+The following SQL*Plus output shows how this is done.
+SHUTDOWN IMMEDIATE
+!mv /old_path/redo01.log /new_path/redo01.log
+!mv /old_path/redo02.log /new_path/redo02.log
+!mv /old_path/redo03.log /new_path/redo03.log
+STARTUP MOUNT
+ALTER DATABASE RENAME FILE '/old_path/redo01.log'' TO '/new_path/redo01.log';
+ALTER DATABASE RENAME FILE '/old_path/redo02.log'' TO '/new_path/redo02.log';
+ALTER DATABASE RENAME FILE '/old_path/redo03.log'' TO '/new_path/redo03.log';
+ALTER DATABASE OPEN;
+
+Repeating the initial query shows that the the logfile has been renamed in the data dictionary.
+select group#, member from v$logfile;
+Simple Log Management
+--Status of the Archiver
+select * from v$instance;
+--Restart the Archiver
+alter system archive log start;
+
+--Switch Online Log
+alter system switch logfile;
+alter system checkpoint;
+
+--Add Logfile Group
+alter database add logfile group 4 ('&logfilename1', '&logfilename2') size 500M;
+
+--Drop logfile group and all members in it
+alter database drop logfile group &Number;
+
+--Add Logfile Member
+alter database add logfile member '&logfilename' reuse to group 4;
+
+--Drop Logfile Member
+alter database drop logfile member '&logfilename';
+--Checking archivelog mode
+select dbid, name, resetlogs_time, log_mode from v$database;
+-- Archiver Destinations
+select * from v$archive_dest;
+--Altering destination
+alter system set log_archive_dest_1='location=&path';
+alter system set log_archive_dest_state_1='enable';
+--The sequence# of last backed up log
+select thread#, max(sequence#) from v$archived_log
+where BACKUP_COUNT>0 group by thread#;
+--Redo size (MB) per day, last 30 days
+select trunc(first_time) arc_date, sum(blocks * block_size)/1048576 arc_size
+from v$archived_log
+where first_time >= (trunc(sysdate)-30)
+group by trunc(first_time);

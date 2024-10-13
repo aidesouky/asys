@@ -1,0 +1,30 @@
+DECLARE
+   V_EVENT_NAME             VARCHAR2 (240) := 'oracle.apps.app.entity.create';
+   V_PARAMETER_LIST   WF_PARAMETER_LIST_T := WF_PARAMETER_LIST_T ();
+BEGIN
+   WF_EVENT.ADDPARAMETERTOLIST (P_NAME            => 'USER_ID',
+                                P_VALUE           => '123',
+                                P_PARAMETERLIST   => V_PARAMETER_LIST);
+   WF_EVENT.ADDPARAMETERTOLIST (P_NAME            => 'USER_NAME',
+                                P_VALUE           => 'AI',
+                                P_PARAMETERLIST   => V_PARAMETER_LIST);
+
+   BEGIN
+      WF_EVENT.RAISE (P_EVENT_NAME   => V_EVENT_NAME,
+                      P_EVENT_KEY    => SYS_GUID (),
+                      P_PARAMETERS   => V_PARAMETER_LIST);
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         DBMS_OUTPUT.PUT_LINE (
+            ' Error in the Order Update ' || SUBSTR (SQLERRM, 1, 250));
+   END;
+
+   COMMIT;
+   V_PARAMETER_LIST.DELETE;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+         '  Error in the Order Update  : ' || SUBSTR (SQLERRM, 1, 250));
+END;

@@ -1,0 +1,33 @@
+DECLARE
+   X_RETURN_STATUS        VARCHAR2 (20);
+   X_MSG_COUNT            NUMBER;
+   X_MSG_DATA             VARCHAR2 (4000);
+   X_NEW_ASSOCIATION_ID   NUMBER;
+BEGIN
+   EAM_ASSETATTR_GRP_PUB.INSERT_ASSETATTR_GRP (
+      P_API_VERSION                  => 1.0,
+      P_INIT_MSG_LIST                => 'F',
+      P_COMMIT                       => 'F',
+      P_VALIDATION_LEVEL             => FND_API.G_VALID_LEVEL_FULL,
+      X_RETURN_STATUS                => X_RETURN_STATUS,
+      X_MSG_COUNT                    => X_MSG_COUNT,
+      X_MSG_DATA                     => X_MSG_DATA,
+      P_APPLICATION_ID               => 401,
+      P_DESCRIPTIVE_FLEXFIELD_NAME   => 'MTL_EAM_ASSET_ATTR_VALUES',
+      P_DESC_FLEX_CONTEXT_CODE       => 'Test Attr Group',
+      P_ORGANIZATION_ID              => 292,
+      P_INVENTORY_ITEM_ID            => 329747,
+      P_ENABLED_FLAG                 => 'Y',
+      P_CREATION_ORGANIZATION_ID     => 292,
+      X_NEW_ASSOCIATION_ID           => X_NEW_ASSOCIATION_ID);
+   COMMIT;
+
+   DBMS_OUTPUT.PUT_LINE ('X_RETURN_STATUS : ' || X_RETURN_STATUS);
+
+   IF (X_RETURN_STATUS = 'S')
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA : ' || X_MSG_DATA);
+   END IF;
+END;

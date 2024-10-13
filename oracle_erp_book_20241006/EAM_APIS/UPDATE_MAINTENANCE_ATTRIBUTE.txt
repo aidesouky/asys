@@ -1,0 +1,56 @@
+DECLARE
+   X_RETURN_STATUS   VARCHAR2 (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+   X_MESSAGE_LIST    ERROR_HANDLER.ERROR_TBL_TYPE;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   FOR Z IN (SELECT *
+               FROM FRT_EAM_INTERFACE
+              WHERE C03 IN ('General'))
+   LOOP
+      BEGIN
+
+ERROR_HANDLER.INITIALIZE;
+
+         EAM_MAINT_ATTRIBUTES_PUB.UPDATE_MAINT_ATTRIBUTES (
+            P_API_VERSION             => 1.0,
+            P_INIT_MSG_LIST           => 'F',
+            P_COMMIT                  => 'F',
+            P_VALIDATION_LEVEL        => FND_API.G_VALID_LEVEL_FULL,
+            P_INSTANCE_ID             => Z.C02,
+            P_OWNING_DEPARTMENT_ID    => NULL,
+            P_ACCOUNTING_CLASS_CODE   => Z.C03,
+            P_AREA_ID                 => NULL,
+            X_RETURN_STATUS           => X_RETURN_STATUS,
+            X_MSG_COUNT               => X_MSG_COUNT,
+            X_MSG_DATA                => X_MSG_DATA);
+
+         DBMS_OUTPUT.PUT_LINE ('X_RETURN_STATUS : ' || X_RETURN_STATUS);
+
+         IF (X_RETURN_STATUS = 'S')
+         THEN
+            DBMS_OUTPUT.PUT_LINE (
+               'Done ' || Z.C01 || ' => ' || X_RETURN_STATUS);
+         ELSE
+            DBMS_OUTPUT.PUT_LINE ('ERR ' || Z.C01 || ' => ' || X_MSG_DATA);
+            ERROR_HANDLER.GET_MESSAGE_LIST (X_MESSAGE_LIST);
+
+            FOR I IN 1 .. X_MESSAGE_LIST.COUNT
+            LOOP
+               DBMS_OUTPUT.PUT_LINE (X_MESSAGE_LIST (I).MESSAGE_TEXT);
+            END LOOP;
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('SQLERR ' || Z.C01 || ' => ' || SQLERRM);
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,131 @@
+DECLARE
+   V_SEG1            VARCHAR2 (50);
+   V_SEG2            VARCHAR2 (50);
+   V_SEG3            VARCHAR2 (50);
+   V_SEG4            VARCHAR2 (50);
+   V_SEG5            VARCHAR2 (50);
+   V_SEG6            VARCHAR2 (50);
+   V_SEG7            VARCHAR2 (50);
+   V_SEG8            VARCHAR2 (50);
+   V_SEG9            VARCHAR2 (50);
+   V_VALID_RES       BOOLEAN;
+   V_CREATE_RES      BOOLEAN;
+   V_CCID            NUMBER;
+   V_STRUCTURE_NUM   VARCHAR2(240);
+   V_CONC_SEGS       VARCHAR2(240);
+   V_ERR_MSG1        VARCHAR2 (500);
+   V_ERR_MSG2        VARCHAR2 (500);
+   V_ERROR_FLAG      BOOLEAN;
+   V_ERROR_MSG       VARCHAR2 (3000) := NULL;
+   V_COMBS           NUMBER;
+   V_STRUCT          NUMBER;
+   
+BEGIN
+   V_ERROR_FLAG := FALSE;
+   V_ERROR_MSG := NULL;
+   V_SEG1 := '01';
+   V_SEG2 := '00';
+   V_SEG3 := '1407';
+   V_SEG4 := '31111000';
+   V_SEG5 := '8300';
+   V_SEG6 := '00';
+   V_SEG7 := '00000';
+   V_SEG8 := '00000';
+   V_SEG9 := '00000';
+   V_CONC_SEGS :=
+         V_SEG1
+      || '.'
+      || V_SEG2
+      || '.'
+      || V_SEG3
+      || '.'
+      || V_SEG4
+      || '.'
+      || V_SEG5
+      || '.'
+      || V_SEG6
+      || '.'
+      || V_SEG7
+      || '.'
+      || V_SEG8
+      || '.'
+      || V_SEG9;
+
+
+   --Check if CCID exits with the above Concatenated Segments
+   SELECT COUNT (*)
+     INTO V_COMBS
+     FROM GL_CODE_COMBINATIONS_KFV
+    WHERE CONCATENATED_SEGMENTS = V_CONC_SEGS;
+
+   IF V_COMBS > 0
+   THEN
+      SELECT CODE_COMBINATION_ID
+        INTO V_CCID
+        FROM GL_CODE_COMBINATIONS_KFV
+       WHERE CONCATENATED_SEGMENTS = V_CONC_SEGS;
+   ELSE
+      SELECT COUNT (*)
+        INTO V_STRUCT
+        FROM FND_ID_FLEX_STRUCTURES
+       WHERE     ID_FLEX_CODE = 'GL#'
+             AND ID_FLEX_STRUCTURE_CODE = 'FURAT_HOLDING_COA';
+
+      IF V_STRUCT > 0
+      THEN
+         SELECT ID_FLEX_NUM
+           INTO V_STRUCTURE_NUM
+           FROM FND_ID_FLEX_STRUCTURES
+          WHERE     ID_FLEX_CODE = 'GL#'
+                AND ID_FLEX_STRUCTURE_CODE = 'FURAT_HOLDING_COA';
+      ELSE
+         V_STRUCTURE_NUM := NULL;
+      END IF;
+
+      -----Validate the New Combination
+      V_VALID_RES :=
+         FND_FLEX_KEYVAL.VALIDATE_SEGS (
+            OPERATION          => 'CHECK_COMBINATION',
+            APPL_SHORT_NAME    => 'SQLGL',
+            KEY_FLEX_CODE      => 'GL#',
+            STRUCTURE_NUMBER   => V_STRUCTURE_NUM,
+            CONCAT_SEGMENTS    => V_CONC_SEGS);
+      V_ERR_MSG1 := FND_FLEX_KEYVAL.ERROR_MESSAGE;
+
+      IF V_VALID_RES
+      THEN
+         DBMS_OUTPUT.PUT_LINE ('VALIDATE CCID: ' || V_CONC_SEGS);
+         ----Create the New CCID
+         V_CREATE_RES :=
+            APPS.FND_FLEX_KEYVAL.VALIDATE_SEGS (
+               OPERATION          => 'CREATE_COMBINATION',
+               APPL_SHORT_NAME    => 'SQLGL',
+               KEY_FLEX_CODE      => 'GL#',
+               STRUCTURE_NUMBER   => V_STRUCTURE_NUM,
+               CONCAT_SEGMENTS    => V_CONC_SEGS);
+         V_ERR_MSG2 := FND_FLEX_KEYVAL.ERROR_MESSAGE;
+
+         IF V_CREATE_RES
+         THEN
+            -----Fetch the New CCID
+            SELECT CODE_COMBINATION_ID
+              INTO V_CCID
+              FROM GL_CODE_COMBINATIONS_KFV
+             WHERE CONCATENATED_SEGMENTS = V_CONC_SEGS;
+
+            DBMS_OUTPUT.PUT_LINE (
+               'CREATE CCID: '|| V_CCID || ' ' || V_CONC_SEGS);
+         ELSE
+            ---Error in creating a combination
+            DBMS_OUTPUT.PUT_LINE ('Error2: ' || V_ERR_MSG2);
+         END IF;
+      ELSE
+         ----The segments in the account string are not defined in gl value set
+         DBMS_OUTPUT.PUT_LINE ('Error1: ' || V_ERR_MSG1);
+      END IF;
+   END IF;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;

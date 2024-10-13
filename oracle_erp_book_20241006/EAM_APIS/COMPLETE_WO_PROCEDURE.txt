@@ -1,0 +1,314 @@
+CREATE OR REPLACE PROCEDURE APPS.AI_WO_STATUS_UPDATE (
+   ERRBUF      OUT VARCHAR2,
+   RETCODE     OUT VARCHAR2,
+   P_SDATE         DATE,
+   P_EDATE         DATE,
+   P_ORG_ID        NUMBER,
+   P_AGROUP        VARCHAR2,
+   P_ANUMBER       VARCHAR2,
+   P_USER          VARCHAR2,
+   P_LINE          VARCHAR2,
+   P_STATUS        NUMBER,
+   P_TRXTYPE       NUMBER)
+AS
+   X_RETURN_STATUS              VARCHAR2 (50);
+   X_MSG_COUNT                  NUMBER;
+
+   V_EAM_WO_REC                 EAM_PROCESS_WO_PUB.EAM_WO_REC_TYPE;
+   V_EAM_OP_TBL                 EAM_PROCESS_WO_PUB.EAM_OP_TBL_TYPE;
+   V_EAM_OP_NETWORK_TBL         EAM_PROCESS_WO_PUB.EAM_OP_NETWORK_TBL_TYPE;
+   V_EAM_RES_TBL                EAM_PROCESS_WO_PUB.EAM_RES_TBL_TYPE;
+   V_EAM_RES_INST_TBL           EAM_PROCESS_WO_PUB.EAM_RES_INST_TBL_TYPE;
+   V_EAM_SUB_RES_TBL            EAM_PROCESS_WO_PUB.EAM_SUB_RES_TBL_TYPE;
+   V_EAM_RES_USAGE_TBL          EAM_PROCESS_WO_PUB.EAM_RES_USAGE_TBL_TYPE;
+   V_EAM_MAT_REQ_TBL            EAM_PROCESS_WO_PUB.EAM_MAT_REQ_TBL_TYPE;
+   V_EAM_DIRECT_ITEMS_TBL       EAM_PROCESS_WO_PUB.EAM_DIRECT_ITEMS_TBL_TYPE;
+   V_EAM_WO_COMP_REC            EAM_PROCESS_WO_PUB.EAM_WO_COMP_REC_TYPE;
+   V_EAM_WO_QUALITY_TBL         EAM_PROCESS_WO_PUB.EAM_WO_QUALITY_TBL_TYPE;
+   V_EAM_METER_READING_TBL      EAM_PROCESS_WO_PUB.EAM_METER_READING_TBL_TYPE;
+   V_EAM_COUNTER_PROP_TBL       EAM_PROCESS_WO_PUB.EAM_COUNTER_PROP_TBL_TYPE;
+   V_EAM_WO_COMP_REBUILD_TBL    EAM_PROCESS_WO_PUB.EAM_WO_COMP_REBUILD_TBL_TYPE;
+   V_EAM_WO_COMP_MR_READ_TBL    EAM_PROCESS_WO_PUB.EAM_WO_COMP_MR_READ_TBL_TYPE;
+   V_EAM_OP_COMP_TBL            EAM_PROCESS_WO_PUB.EAM_OP_COMP_TBL_TYPE;
+   V_EAM_REQUEST_TBL            EAM_PROCESS_WO_PUB.EAM_REQUEST_TBL_TYPE;
+   V_EAM_PERMIT_TBL             EAM_PROCESS_PERMIT_PUB.EAM_WP_TBL_TYPE;
+   V_EAM_PERMIT_WO_ASSOC_TBL    EAM_PROCESS_PERMIT_PUB.EAM_WP_ASSOCIATION_TBL_TYPE;
+   V_EAM_FAILURE_ENTRY_RECORD   EAM_PROCESS_FAILURE_ENTRY_PUB.EAM_FAILURE_ENTRY_RECORD_TYP;
+   V_EAM_FAILURE_CODES_TBL      EAM_PROCESS_FAILURE_ENTRY_PUB.EAM_FAILURE_CODES_TBL_TYP;
+   X_EAM_WO_REC                 EAM_PROCESS_WO_PUB.EAM_WO_REC_TYPE;
+   X_EAM_OP_TBL                 EAM_PROCESS_WO_PUB.EAM_OP_TBL_TYPE;
+   X_EAM_OP_NETWORK_TBL         EAM_PROCESS_WO_PUB.EAM_OP_NETWORK_TBL_TYPE;
+   X_EAM_RES_TBL                EAM_PROCESS_WO_PUB.EAM_RES_TBL_TYPE;
+   X_EAM_RES_INST_TBL           EAM_PROCESS_WO_PUB.EAM_RES_INST_TBL_TYPE;
+   X_EAM_SUB_RES_TBL            EAM_PROCESS_WO_PUB.EAM_SUB_RES_TBL_TYPE;
+   X_EAM_RES_USAGE_TBL          EAM_PROCESS_WO_PUB.EAM_RES_USAGE_TBL_TYPE;
+   X_EAM_MAT_REQ_TBL            EAM_PROCESS_WO_PUB.EAM_MAT_REQ_TBL_TYPE;
+   X_EAM_DIRECT_ITEMS_TBL       EAM_PROCESS_WO_PUB.EAM_DIRECT_ITEMS_TBL_TYPE;
+   X_EAM_WO_COMP_REC            EAM_PROCESS_WO_PUB.EAM_WO_COMP_REC_TYPE;
+   X_EAM_WO_QUALITY_TBL         EAM_PROCESS_WO_PUB.EAM_WO_QUALITY_TBL_TYPE;
+   X_EAM_METER_READING_TBL      EAM_PROCESS_WO_PUB.EAM_METER_READING_TBL_TYPE;
+   X_EAM_COUNTER_PROP_TBLOUT    EAM_PROCESS_WO_PUB.EAM_COUNTER_PROP_TBL_TYPE;
+   X_EAM_WO_COMP_REBUILD_TBL    EAM_PROCESS_WO_PUB.EAM_WO_COMP_REBUILD_TBL_TYPE;
+   X_EAM_WO_COMP_MR_READ_TBL    EAM_PROCESS_WO_PUB.EAM_WO_COMP_MR_READ_TBL_TYPE;
+   X_EAM_OP_COMP_TBL            EAM_PROCESS_WO_PUB.EAM_OP_COMP_TBL_TYPE;
+   X_EAM_REQUEST_TBL            EAM_PROCESS_WO_PUB.EAM_REQUEST_TBL_TYPE;
+   V_TRX_TYPE                   NUMBER := 4; ---1:Create, 2:Update, 3:Delete,4:Complete, 5:UnComplete
+   V_STATUS1                    NUMBER := 3; ---17:Draft, 1:Unreleased, 3:Release, 4:Complete,5:complete-No charge,6:On Hold, 7:Cancelled
+   V_STATUS2                    NUMBER := 6; ---17:Draft, 1:Unreleased, 3:Release, 4:Complete,5:complete-No charge,6:On Hold, 7:Cancelled
+   V_WO_STATUS                  NUMBER; ---17:Draft, 1:Unreleased, 3:Release, 4:Complete,5:complete-No charge,6:On Hold, 7:Cancelled
+   O_INDEX                      NUMBER := 1;
+   V_USER_ID                    NUMBER := 2887;
+   V_RESP_ID                    NUMBER := 23118;
+   V_RESP_APPL_ID               NUMBER := 426;
+   V_GROUP_ID                   NUMBER;
+   V_ASSET_ID                   NUMBER;
+   V_CUSER_ID                   NUMBER;
+   V_COUNTS                     NUMBER;
+   V_STATUS                     VARCHAR2 (50);
+BEGIN
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                               RESP_ID        => V_RESP_ID,
+                               RESP_APPL_ID   => V_RESP_APPL_ID);
+
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                      'Start AI_WO_STATUS_UPDATE at ' || SYSDATE);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'Parameters:');
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_SDATE: ' || P_SDATE);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_EDATE: ' || P_EDATE);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_ORG_ID: ' || P_ORG_ID);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_AGROUP: ' || P_AGROUP);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_ANUMBER: ' || P_ANUMBER);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_LINE: ' || P_LINE);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'P_USER: ' || P_USER);
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, '============================');
+
+   IF P_AGROUP IS NOT NULL
+   THEN
+      SELECT COUNT (*)
+        INTO V_COUNTS
+        FROM MTL_SYSTEM_ITEMS
+       WHERE     ORGANIZATION_ID = P_ORG_ID
+             AND UPPER (SEGMENT1) = UPPER (P_AGROUP);
+
+      IF V_COUNTS > 0
+      THEN
+         SELECT INVENTORY_ITEM_ID
+           INTO V_GROUP_ID
+           FROM MTL_SYSTEM_ITEMS
+          WHERE     ORGANIZATION_ID = P_ORG_ID
+                AND UPPER (SEGMENT1) = UPPER (P_AGROUP);
+      ELSE
+         V_GROUP_ID := 0;
+      END IF;
+   END IF;
+
+   IF P_ANUMBER IS NOT NULL
+   THEN
+      SELECT COUNT (*)
+        INTO V_COUNTS
+        FROM CSI_ITEM_INSTANCES
+       WHERE UPPER (INSTANCE_NUMBER) = UPPER (P_ANUMBER);
+
+      IF V_COUNTS > 0
+      THEN
+         SELECT INSTANCE_ID
+           INTO V_ASSET_ID
+           FROM CSI_ITEM_INSTANCES
+          WHERE UPPER (INSTANCE_NUMBER) = UPPER (P_ANUMBER);
+      ELSE
+         V_ASSET_ID := 0;
+      END IF;
+   END IF;
+
+   IF P_USER IS NOT NULL
+   THEN
+      SELECT COUNT (*)
+        INTO V_COUNTS
+        FROM FND_USER
+       WHERE UPPER (USER_NAME) = UPPER (P_USER);
+
+      IF V_COUNTS > 0
+      THEN
+         SELECT USER_ID
+           INTO V_CUSER_ID
+           FROM FND_USER
+          WHERE UPPER (USER_NAME) = UPPER (P_USER);
+      ELSE
+         V_CUSER_ID := 0;
+      END IF;
+   END IF;
+
+   V_TRX_TYPE := P_TRXTYPE;
+   V_WO_STATUS := P_STATUS;
+
+   IF P_STATUS = 3
+   THEN
+      V_STATUS1 := 4;
+      V_STATUS2 := 4;
+      V_STATUS := ' COMPLETE => RELEASE ';
+   ELSIF P_STATUS = 4
+   THEN
+      IF P_TRXTYPE = 4
+      THEN
+         V_STATUS1 := 3;
+         V_STATUS2 := 3;
+         V_STATUS := ' RELEASE => COMPLETE ';
+      ELSIF P_TRXTYPE = 5
+      THEN
+         V_STATUS1 := 5;
+         V_STATUS2 := 5;
+         V_STATUS := ' NOCHARGE => COMPLETE ';
+      END IF;
+   ELSIF P_STATUS = 5
+   THEN
+      V_STATUS1 := 4;
+      V_STATUS2 := 4;
+      V_STATUS := ' COMPLETE => NOCHARGE ';
+   ELSIF P_STATUS = 7
+   THEN
+      V_STATUS1 := 3;
+      V_STATUS2 := 3;
+      V_STATUS := ' RELEASE => CANCEL ';
+   END IF;
+
+   FOR Z
+      IN (SELECT WDJ.*, WES.WIP_ENTITY_NAME
+            FROM WIP_DISCRETE_JOBS WDJ, WIP_ENTITIES WES
+           WHERE     WDJ.WIP_ENTITY_ID = WES.WIP_ENTITY_ID
+                 AND WDJ.CREATION_DATE BETWEEN P_SDATE AND P_EDATE
+                 AND WDJ.ORGANIZATION_ID = P_ORG_ID
+                 AND (   V_ASSET_ID IS NULL
+                      OR WDJ.MAINTENANCE_OBJECT_ID = V_ASSET_ID)
+                 AND (   V_GROUP_ID IS NULL
+                      OR WDJ.ASSET_GROUP_ID = V_GROUP_ID
+                      OR WDJ.REBUILD_ITEM_ID = V_GROUP_ID)
+                 AND (V_CUSER_ID IS NULL OR WDJ.CREATED_BY = V_CUSER_ID)
+                 AND (   P_LINE IS NULL
+                      OR UPPER (WDJ.ATTRIBUTE1) = UPPER (P_LINE))
+                 AND (   WDJ.STATUS_TYPE = V_STATUS1
+                      OR WDJ.STATUS_TYPE = V_STATUS2))
+   LOOP
+      BEGIN
+         V_EAM_WO_COMP_REC.BATCH_ID := 1;
+         V_EAM_WO_COMP_REC.HEADER_ID := 1;
+         V_EAM_WO_COMP_REC.ORGANIZATION_ID := Z.ORGANIZATION_ID;
+         V_EAM_WO_COMP_REC.WIP_ENTITY_ID := Z.WIP_ENTITY_ID;
+         V_EAM_WO_COMP_REC.TRANSACTION_TYPE := V_TRX_TYPE;
+         V_EAM_WO_COMP_REC.USER_STATUS_ID := V_WO_STATUS;
+         V_EAM_WO_COMP_REC.ACTUAL_START_DATE := Z.DATE_RELEASED;
+         V_EAM_WO_COMP_REC.ACTUAL_END_DATE := Z.SCHEDULED_COMPLETION_DATE;
+         V_EAM_WO_COMP_REC.SHUTDOWN_START_DATE := Z.DATE_RELEASED;
+         V_EAM_WO_COMP_REC.SHUTDOWN_END_DATE := Z.SCHEDULED_COMPLETION_DATE;
+         V_EAM_WO_COMP_REC.ACTUAL_DURATION :=
+            (Z.SCHEDULED_COMPLETION_DATE - Z.DATE_RELEASED) * 24;
+         V_EAM_WO_COMP_REC.TRANSACTION_DATE := SYSDATE;
+         V_EAM_WO_COMP_REC.REBUILD_JOB := 'N';
+         V_EAM_WO_COMP_REC.EAM_FAILURE_ENTRY_RECORD :=
+            V_EAM_FAILURE_ENTRY_RECORD;
+         V_EAM_WO_COMP_REC.EAM_FAILURE_CODES_TBL := V_EAM_FAILURE_CODES_TBL;
+
+         IF V_WO_STATUS = 4 OR V_WO_STATUS = 5 OR (V_WO_STATUS = 3 AND V_TRX_TYPE = 5)
+         THEN
+            O_INDEX := 1;
+
+            FOR Y IN (SELECT *
+                        FROM WIP_OPERATIONS
+                       WHERE WIP_ENTITY_ID = Z.WIP_ENTITY_ID)
+            LOOP
+               V_EAM_OP_COMP_TBL (O_INDEX).BATCH_ID := 1;
+               V_EAM_OP_COMP_TBL (O_INDEX).HEADER_ID := 1;
+               V_EAM_OP_COMP_TBL (O_INDEX).TRANSACTION_DATE := SYSDATE;
+               V_EAM_OP_COMP_TBL (O_INDEX).TRANSACTION_TYPE := V_TRX_TYPE;
+               V_EAM_OP_COMP_TBL (O_INDEX).WIP_ENTITY_ID := Y.WIP_ENTITY_ID;
+               V_EAM_OP_COMP_TBL (O_INDEX).ORGANIZATION_ID :=
+                  Y.ORGANIZATION_ID;
+               V_EAM_OP_COMP_TBL (O_INDEX).OPERATION_SEQ_NUM :=
+                  Y.OPERATION_SEQ_NUM;
+               V_EAM_OP_COMP_TBL (O_INDEX).DEPARTMENT_ID := Y.DEPARTMENT_ID;
+               V_EAM_OP_COMP_TBL (O_INDEX).ACTUAL_START_DATE :=
+                  Y.LAST_UNIT_START_DATE;
+               V_EAM_OP_COMP_TBL (O_INDEX).ACTUAL_END_DATE :=
+                  Y.LAST_UNIT_COMPLETION_DATE;
+               V_EAM_OP_COMP_TBL (O_INDEX).ACTUAL_DURATION :=
+                  (Y.LAST_UNIT_COMPLETION_DATE - Y.LAST_UNIT_START_DATE) * 24;
+               V_EAM_OP_COMP_TBL (O_INDEX).SHUTDOWN_START_DATE :=
+                  Y.LAST_UNIT_START_DATE;
+               V_EAM_OP_COMP_TBL (O_INDEX).SHUTDOWN_END_DATE :=
+                  Y.LAST_UNIT_COMPLETION_DATE;
+               O_INDEX := O_INDEX + 1;
+            END LOOP;
+         END IF;
+
+         EAM_PROCESS_WO_PUB.PROCESS_WO (
+            P_BO_IDENTIFIER             => 'EAM',
+            P_API_VERSION_NUMBER        => 1.0,
+            P_INIT_MSG_LIST             => TRUE,
+            P_COMMIT                    => 'Y',
+            P_EAM_WO_REC                => V_EAM_WO_REC,
+            P_EAM_OP_TBL                => V_EAM_OP_TBL,
+            P_EAM_OP_NETWORK_TBL        => V_EAM_OP_NETWORK_TBL,
+            P_EAM_RES_TBL               => V_EAM_RES_TBL,
+            P_EAM_RES_INST_TBL          => V_EAM_RES_INST_TBL,
+            P_EAM_SUB_RES_TBL           => V_EAM_SUB_RES_TBL,
+            P_EAM_RES_USAGE_TBL         => V_EAM_RES_USAGE_TBL,
+            P_EAM_MAT_REQ_TBL           => V_EAM_MAT_REQ_TBL,
+            P_EAM_DIRECT_ITEMS_TBL      => V_EAM_DIRECT_ITEMS_TBL,
+            P_EAM_WO_COMP_REC           => V_EAM_WO_COMP_REC,
+            P_EAM_WO_QUALITY_TBL        => V_EAM_WO_QUALITY_TBL,
+            P_EAM_METER_READING_TBL     => V_EAM_METER_READING_TBL,
+            P_EAM_COUNTER_PROP_TBL      => V_EAM_COUNTER_PROP_TBL,
+            P_EAM_WO_COMP_REBUILD_TBL   => V_EAM_WO_COMP_REBUILD_TBL,
+            P_EAM_WO_COMP_MR_READ_TBL   => V_EAM_WO_COMP_MR_READ_TBL,
+            P_EAM_OP_COMP_TBL           => V_EAM_OP_COMP_TBL,
+            P_EAM_REQUEST_TBL           => V_EAM_REQUEST_TBL,
+            P_EAM_PERMIT_TBL            => V_EAM_PERMIT_TBL,
+            P_EAM_PERMIT_WO_ASSOC_TBL   => V_EAM_PERMIT_WO_ASSOC_TBL,
+            X_EAM_WO_REC                => X_EAM_WO_REC,
+            X_EAM_OP_TBL                => X_EAM_OP_TBL,
+            X_EAM_OP_NETWORK_TBL        => X_EAM_OP_NETWORK_TBL,
+            X_EAM_RES_TBL               => X_EAM_RES_TBL,
+            X_EAM_RES_INST_TBL          => X_EAM_RES_INST_TBL,
+            X_EAM_SUB_RES_TBL           => X_EAM_SUB_RES_TBL,
+            X_EAM_RES_USAGE_TBL         => X_EAM_RES_USAGE_TBL,
+            X_EAM_MAT_REQ_TBL           => X_EAM_MAT_REQ_TBL,
+            X_EAM_DIRECT_ITEMS_TBL      => X_EAM_DIRECT_ITEMS_TBL,
+            X_EAM_WO_COMP_REC           => X_EAM_WO_COMP_REC,
+            X_EAM_WO_QUALITY_TBL        => X_EAM_WO_QUALITY_TBL,
+            X_EAM_METER_READING_TBL     => X_EAM_METER_READING_TBL,
+            X_EAM_COUNTER_PROP_TBL      => X_EAM_COUNTER_PROP_TBLOUT,
+            X_EAM_WO_COMP_REBUILD_TBL   => X_EAM_WO_COMP_REBUILD_TBL,
+            X_EAM_WO_COMP_MR_READ_TBL   => X_EAM_WO_COMP_MR_READ_TBL,
+            X_EAM_OP_COMP_TBL           => X_EAM_OP_COMP_TBL,
+            X_EAM_REQUEST_TBL           => X_EAM_REQUEST_TBL,
+            X_RETURN_STATUS             => X_RETURN_STATUS,
+            X_MSG_COUNT                 => X_MSG_COUNT);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                               Z.WIP_ENTITY_NAME || V_STATUS || 'VALID');
+         ELSE
+            FND_FILE.PUT_LINE (
+               FND_FILE.OUTPUT,
+                  Z.WIP_ENTITY_NAME
+               || V_STATUS
+               || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                                   P_ENCODED     => FND_API.G_FALSE));
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            FND_FILE.PUT_LINE (FND_FILE.OUTPUT,
+                               Z.WIP_ENTITY_NAME || V_STATUS || SQLERRM);
+      END;
+   END LOOP;
+
+   FND_FILE.PUT_LINE (FND_FILE.OUTPUT, 'Done!');
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      FND_FILE.PUT_LINE (FND_FILE.OUTPUT, SQLERRM);
+END;
+/

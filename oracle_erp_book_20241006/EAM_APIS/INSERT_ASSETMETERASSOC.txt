@@ -1,0 +1,48 @@
+DECLARE
+   X_RETURN_STATUS   VARCHAR2 (100);
+   X_MSG_COUNT       NUMBER;
+   X_MSG_DATA        VARCHAR2 (4000);
+   X_MESSAGE_LIST    ERROR_HANDLER.ERROR_TBL_TYPE;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+ERROR_HANDLER.INITIALIZE;
+
+   EAM_METERASSOC_PUB.INSERT_ASSETMETERASSOC (
+      P_API_VERSION               => 1.0,
+      P_INIT_MSG_LIST             => 'F',
+      P_COMMIT                    => 'F',
+      P_VALIDATION_LEVEL          => FND_API.G_VALID_LEVEL_FULL,
+      P_METER_ID                  => 8,
+      P_ORGANIZATION_ID           => 292,
+      P_ASSET_GROUP_ID            => 329725,
+      P_ASSET_NUMBER              => 'PU-PRE-FLA-001',
+      P_MAINTENANCE_OBJECT_TYPE   => NULL,
+      P_MAINTENANCE_OBJECT_ID     => NULL,
+      P_PRIMARY_FAILURE_FLAG      => 'N',
+      P_ATTRIBUTE1                => 'RUN2',
+      P_START_DATE_ACTIVE         => SYSDATE,
+      P_END_DATE_ACTIVE           => NULL,
+      X_RETURN_STATUS             => X_RETURN_STATUS,
+      X_MSG_COUNT                 => X_MSG_COUNT,
+      X_MSG_DATA                  => X_MSG_DATA);
+
+   DBMS_OUTPUT.PUT_LINE ('X_RETURN_STATUS : ' || X_RETURN_STATUS);
+
+   IF (X_RETURN_STATUS = 'S')
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      ERROR_HANDLER.GET_MESSAGE_LIST (X_MESSAGE_LIST);
+
+      FOR I IN 1 .. X_MESSAGE_LIST.COUNT
+      LOOP
+         DBMS_OUTPUT.PUT_LINE (X_MESSAGE_LIST (I).MESSAGE_TEXT);
+      END LOOP;
+   END IF;
+
+   COMMIT;
+END;

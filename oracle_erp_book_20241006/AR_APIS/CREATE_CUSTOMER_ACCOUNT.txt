@@ -1,0 +1,178 @@
+DECLARE
+   V_ORG_REC                   HZ_PARTY_V2PUB.ORGANIZATION_REC_TYPE;
+   V_CUST_ACCOUNT_REC          HZ_CUST_ACCOUNT_V2PUB.CUST_ACCOUNT_REC_TYPE;
+   V_CUSTOMER_PROFILE_REC      HZ_CUSTOMER_PROFILE_V2PUB.CUSTOMER_PROFILE_REC_TYPE;
+   V_CUSTOMER_PROFILE_AMT      HZ_CUSTOMER_PROFILE_V2PUB.CUST_PROFILE_AMT_REC_TYPE;
+   V_CUST_ACCOUNT_PROFILE_ID   NUMBER;
+   V_PROFILE_CLASS_ID          NUMBER;
+   V_CUST_ACT_PROF_AMT_ID      NUMBER;
+   X_CUST_ACCOUNT_ID           NUMBER;
+   X_ACCOUNT_NUMBER            VARCHAR2 (2000);
+   X_PARTY_ID                  NUMBER;
+   X_PARTY_NUMBER              VARCHAR2 (2000);
+   X_PROFILE_ID                NUMBER;
+   V_ERROR_MSG                 VARCHAR2 (1000);
+   X_PARTY_EXIST               NUMBER;
+   X_CUST_EXISTS               NUMBER;
+   X_PROFILE_EXIST             NUMBER;
+   X_RETURN_STATUS             VARCHAR2 (30);
+   X_MSG_COUNT                 NUMBER;
+   X_MSG_DATA                  VARCHAR2 (2000);
+   V_PROFILE_CLASS             VARCHAR2 (10) := 'DEFAULT';
+   V_MODULE_NAME               VARCHAR (30) := 'HZ_CPUI';
+   V_USER_ID                   NUMBER := 1170; --FND_GLOBAL.USER_ID;            --1170
+   V_RESP_ID                   NUMBER := 51432; --FND_GLOBAL.RESP_ID;           --51432
+   V_APPL_ID                   NUMBER := 222; --FND_GLOBAL.RESP_APPL_ID;        --222
+   V_ORG_ID                    NUMBER := 81;
+BEGIN
+   MO_GLOBAL.INIT ('AR');
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+   FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,             --1170
+                               RESP_ID        => V_RESP_ID,            --51432
+                               RESP_APPL_ID   => V_APPL_ID);             --222
+
+
+   FOR Z IN (SELECT *
+               FROM FRT_TEMP_INTERFACE)
+   LOOP
+      BEGIN
+         V_ORG_REC.PARTY_REC.PARTY_ID := NULL;
+         V_ERROR_MSG := NULL;
+
+         V_PROFILE_CLASS_ID := 0; --DEFAULT PROFILE CLASS--HZ_CUST_PROFILE_CLASSES
+
+         SELECT COUNT (PARTY_ID)
+           INTO X_PARTY_EXIST
+           FROM HZ_PARTIES
+          WHERE     STATUS = 'A'
+                AND PARTY_TYPE = 'ORGANIZATION'
+                AND PARTY_NAME = Z.C15;
+
+         IF X_PARTY_EXIST > 0
+         THEN
+            SELECT DISTINCT PARTY_ID
+              INTO X_PARTY_ID
+              FROM HZ_PARTIES
+             WHERE     STATUS = 'A'
+                   AND PARTY_TYPE = 'ORGANIZATION'
+                   AND PARTY_NAME = Z.C15;
+
+            V_ORG_REC.PARTY_REC.PARTY_ID := X_PARTY_ID;
+         END IF;
+
+         SELECT COUNT (*)
+           INTO X_CUST_EXISTS
+           FROM HZ_CUST_ACCOUNTS
+          WHERE STATUS = 'A' AND ACCOUNT_NAME = Z.C20;
+
+         IF X_CUST_EXISTS = 0
+         THEN
+            V_ORG_REC.ORGANIZATION_NAME := Z.C15;
+            --V_ORG_REC.TAX_REFERENCE := Z.C04;
+            V_ORG_REC.JGZZ_FISCAL_CODE := Z.C04;
+            V_ORG_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+            V_ORG_REC.PARTY_REC.ATTRIBUTE5 := Z.C01;
+            V_ORG_REC.PARTY_REC.ATTRIBUTE6 := Z.C02;
+            --=====================
+            V_CUST_ACCOUNT_REC.ACCOUNT_NAME := Z.C20;
+            V_CUST_ACCOUNT_REC.SALES_CHANNEL_CODE := Z.C14;
+            V_CUST_ACCOUNT_REC.CUSTOMER_CLASS_CODE := Z.C16;
+            V_CUST_ACCOUNT_REC.STATUS := 'A';
+            V_CUST_ACCOUNT_REC.ATTRIBUTE5 := Z.C09;
+            V_CUST_ACCOUNT_REC.ATTRIBUTE6 := Z.C10;
+            V_CUST_ACCOUNT_REC.ATTRIBUTE7 := Z.C11;
+            V_CUST_ACCOUNT_REC.ATTRIBUTE10 := Z.C12;
+            V_CUST_ACCOUNT_REC.ATTRIBUTE11 := Z.C13;
+            V_CUST_ACCOUNT_REC.ATTRIBUTE12 := 'A';
+            V_CUST_ACCOUNT_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+            --====================
+            V_CUSTOMER_PROFILE_REC.PROFILE_CLASS_ID := V_PROFILE_CLASS_ID;
+            V_CUSTOMER_PROFILE_REC.CREDIT_CHECKING := 'Y';
+            V_CUSTOMER_PROFILE_REC.OVERRIDE_TERMS := 'Y';
+            V_CUSTOMER_PROFILE_REC.STANDARD_TERMS := Z.C18;
+            V_CUSTOMER_PROFILE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+            HZ_CUST_ACCOUNT_V2PUB.CREATE_CUST_ACCOUNT (
+               P_INIT_MSG_LIST          => 'T',
+               P_ORGANIZATION_REC       => V_ORG_REC,
+               P_CUST_ACCOUNT_REC       => V_CUST_ACCOUNT_REC,
+               P_CUSTOMER_PROFILE_REC   => V_CUSTOMER_PROFILE_REC,
+               P_CREATE_PROFILE_AMT     => 'F',
+               X_PARTY_ID               => X_PARTY_ID,
+               X_PARTY_NUMBER           => X_PARTY_NUMBER,
+               X_CUST_ACCOUNT_ID        => X_CUST_ACCOUNT_ID,
+               X_ACCOUNT_NUMBER         => X_ACCOUNT_NUMBER,
+               X_PROFILE_ID             => X_PROFILE_ID,
+               X_RETURN_STATUS          => X_RETURN_STATUS,
+               X_MSG_COUNT              => X_MSG_COUNT,
+               X_MSG_DATA               => X_MSG_DATA);
+
+            IF X_RETURN_STATUS = 'S'
+            THEN
+               DBMS_OUTPUT.PUT_LINE (Z.C20 || ' 01=> ' || X_RETURN_STATUS);
+            ELSE
+               V_ERROR_MSG :=
+                  FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                   P_ENCODED     => 'F');
+               DBMS_OUTPUT.PUT_LINE (Z.C20 || ' 01=> FALSE ' || V_ERROR_MSG);
+            END IF;
+
+            COMMIT;
+
+            --================= CREATE CUSTOMER PROFILE AMT ============[02]
+
+
+            SELECT COUNT (CUST_ACCOUNT_PROFILE_ID)
+              INTO X_PROFILE_EXIST
+              FROM HZ_CUSTOMER_PROFILES
+             WHERE CUST_ACCOUNT_ID = X_CUST_ACCOUNT_ID;
+
+            IF X_PROFILE_EXIST > 0
+            THEN
+               SELECT DISTINCT CUST_ACCOUNT_PROFILE_ID
+                 INTO V_CUST_ACCOUNT_PROFILE_ID
+                 FROM HZ_CUSTOMER_PROFILES
+                WHERE CUST_ACCOUNT_ID = X_CUST_ACCOUNT_ID;
+
+               V_CUSTOMER_PROFILE_AMT.CUST_ACCOUNT_ID := X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_PROFILE_AMT.CUST_ACCOUNT_PROFILE_ID :=
+                  V_CUST_ACCOUNT_PROFILE_ID;
+               V_CUSTOMER_PROFILE_AMT.CURRENCY_CODE := Z.C19;
+               V_CUSTOMER_PROFILE_AMT.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUST_PROFILE_AMT (
+                  P_INIT_MSG_LIST              => 'T',
+                  P_CHECK_FOREIGN_KEY          => FND_API.G_TRUE,
+                  P_CUST_PROFILE_AMT_REC       => V_CUSTOMER_PROFILE_AMT,
+                  X_CUST_ACCT_PROFILE_AMT_ID   => V_CUST_ACT_PROF_AMT_ID,
+                  X_RETURN_STATUS              => X_RETURN_STATUS,
+                  X_MSG_COUNT                  => X_MSG_COUNT,
+                  X_MSG_DATA                   => X_MSG_DATA);
+
+               IF X_RETURN_STATUS = 'S'
+               THEN
+                  DBMS_OUTPUT.PUT_LINE (
+                     Z.C17 || ' 02 => ' || X_RETURN_STATUS);
+               ELSE
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+                  DBMS_OUTPUT.PUT_LINE (
+                     Z.C17 || ' 01=> FALSE ' || V_ERROR_MSG);
+               END IF;
+            END IF;
+
+            COMMIT;
+         END IF;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            COMMIT;
+            V_ERROR_MSG := SQLERRM;
+            DBMS_OUTPUT.PUT_LINE (Z.C20 || ' => ERR ' || V_ERROR_MSG);
+      END;
+   END LOOP;
+END;

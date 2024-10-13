@@ -1,0 +1,10 @@
+PROCEDURE FUNC_CALL_BY_WF (ITEMTYPE    IN            VARCHAR2,
+                           ITEMKEY     IN            VARCHAR2,
+                           ACTID       IN            NUMBER,
+                           FUNCMODE    IN            VARCHAR2,
+                           RESULT      OUT NOCOPY VARCHAR2)
+IS
+BEGIN
+   --LOGIC
+   NULL;
+END;

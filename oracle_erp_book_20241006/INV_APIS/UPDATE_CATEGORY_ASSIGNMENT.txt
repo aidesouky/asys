@@ -1,0 +1,71 @@
+DECLARE
+   V_CATEGORY_ID         NUMBER;
+   V_OLD_CATEGORY_ID     NUMBER;
+   V_CATEGORY_SET_ID     NUMBER;
+   V_INVENTORY_ITEM_ID   NUMBER;
+   V_ORGANIZATION_ID     NUMBER;
+   X_RETURN_STATUS       VARCHAR2 (10);
+   X_ERRORCODE           NUMBER;
+   X_MSG_COUNT           NUMBER;
+   X_MSG_DATA            VARCHAR2 (500);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 50779,
+                               RESP_APPL_ID   => 401);
+
+   FOR ITM
+      IN (SELECT *
+            FROM MTL_SYSTEM_ITEMS
+           WHERE     ORGANIZATION_ID = 293
+                 AND ITEM_TYPE = 'P'
+                 AND INVENTORY_ITEM_ID IN (SELECT INVENTORY_ITEM_ID
+                                             FROM MTL_ITEM_CATEGORIES
+                                            WHERE     CATEGORY_SET_ID =
+                                                         1100000041
+                                                  AND CATEGORY_ID = 3133))
+   LOOP
+      BEGIN
+         V_ORGANIZATION_ID := 82;
+         V_CATEGORY_SET_ID := 1100000041;
+         V_CATEGORY_ID := 7141;
+         V_OLD_CATEGORY_ID := 3133;
+         V_INVENTORY_ITEM_ID := ITM.INVENTORY_ITEM_ID;
+
+         INV_ITEM_CATEGORY_PUB.UPDATE_CATEGORY_ASSIGNMENT (
+            P_API_VERSION         => 1.0,
+            P_INIT_MSG_LIST       => 'T',
+            P_COMMIT              => 'F',
+            P_CATEGORY_ID         => V_CATEGORY_ID,
+            P_OLD_CATEGORY_ID     => V_OLD_CATEGORY_ID,
+            P_CATEGORY_SET_ID     => V_CATEGORY_SET_ID,
+            P_INVENTORY_ITEM_ID   => V_INVENTORY_ITEM_ID,
+            P_ORGANIZATION_ID     => V_ORGANIZATION_ID,
+            X_RETURN_STATUS       => X_RETURN_STATUS,
+            X_ERRORCODE           => X_ERRORCODE,
+            X_MSG_COUNT           => X_MSG_COUNT,
+            X_MSG_DATA            => X_MSG_DATA);
+
+         DBMS_OUTPUT.PUT_LINE (
+               'RESULT: '
+            || ITM.INVENTORY_ITEM_ID
+            || ' =>'
+            || X_RETURN_STATUS
+            || ' '
+            || X_MSG_DATA);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('Done!');
+         ELSE
+            DBMS_OUTPUT.PUT_LINE ('Error2 ' || X_MSG_DATA);
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,115 @@
+DECLARE
+   V_RTG_CODE          VARCHAR2 (30);
+   V_RES_CODE          VARCHAR2 (30);
+   V_ORG_ID            NUMBER;
+   V_DEPT_ID           NUMBER;
+   V_ASSEMBLY_ID       NUMBER;
+   V_RTG_SEQ_ID        NUMBER;
+   V_OP_SEQ_ID         NUMBER;
+   V_OP_SEQ_NUM        NUMBER;
+   V_RES_SEQ_NUM       NUMBER;
+   V_RES_ID            NUMBER;
+   --------------------------
+   V_ASSIGNED_UNITS    NUMBER := 1;
+   V_USAGE             NUMBER := 1;
+   V_USAGE_INVERSE     NUMBER := 1;
+   V_SCHEDULE_FLAG     NUMBER := 1;
+   V_AUTOCHARGE_TYPE   NUMBER := 2;
+   V_USER_ID           NUMBER := 2887;
+   V_DATE              DATE := SYSDATE;
+BEGIN
+   V_ORG_ID := 292;
+   V_RTG_CODE := 'AA006';
+   V_OP_SEQ_NUM := 30;
+   V_RES_CODE := 'Ref Tech';
+   V_ASSIGNED_UNITS := 1;
+   V_USAGE := 1;
+   V_USAGE_INVERSE := 1;
+   V_SCHEDULE_FLAG := 1;
+   V_AUTOCHARGE_TYPE := 2;
+   V_USER_ID := 2887;
+   V_DATE := SYSDATE;
+
+   SELECT INVENTORY_ITEM_ID
+     INTO V_ASSEMBLY_ID
+     FROM MTL_SYSTEM_ITEMS
+    WHERE SEGMENT1 = V_RTG_CODE AND ORGANIZATION_ID = V_ORG_ID;
+
+   SELECT ROUTING_SEQUENCE_ID
+     INTO V_RTG_SEQ_ID
+     FROM BOM_OPERATIONAL_ROUTINGS
+    WHERE ASSEMBLY_ITEM_ID = V_ASSEMBLY_ID AND ORGANIZATION_ID = V_ORG_ID;
+
+   SELECT OPERATION_SEQUENCE_ID, DEPARTMENT_ID
+     INTO V_OP_SEQ_ID, V_DEPT_ID
+     FROM BOM_OPERATION_SEQUENCES
+    WHERE     ROUTING_SEQUENCE_ID = V_RTG_SEQ_ID
+          AND OPERATION_SEQ_NUM = V_OP_SEQ_NUM;
+
+   SELECT MAX (RESOURCE_SEQ_NUM)
+     INTO V_RES_SEQ_NUM
+     FROM BOM_OPERATION_RESOURCES
+    WHERE OPERATION_SEQUENCE_ID = V_OP_SEQ_ID;
+
+   IF V_RES_SEQ_NUM IS NULL
+   THEN
+      V_RES_SEQ_NUM := 10;
+   ELSE
+      V_RES_SEQ_NUM := V_RES_SEQ_NUM + 10;
+   END IF;
+
+   SELECT RES.RESOURCE_ID
+     INTO V_RES_ID
+     FROM BOM_RESOURCES RES, BOM_DEPARTMENT_RESOURCES BDR
+    WHERE     RES.RESOURCE_ID = BDR.RESOURCE_ID
+          AND RES.ORGANIZATION_ID = V_ORG_ID
+          AND BDR.DEPARTMENT_ID = V_DEPT_ID
+          AND RESOURCE_CODE = V_RES_CODE;
+
+   INSERT INTO BOM_OPERATION_RESOURCES (OPERATION_SEQUENCE_ID,
+                                        RESOURCE_SEQ_NUM,
+                                        RESOURCE_ID,
+                                        STANDARD_RATE_FLAG,                --2
+                                        ASSIGNED_UNITS,
+                                        USAGE_RATE_OR_AMOUNT,
+                                        USAGE_RATE_OR_AMOUNT_INVERSE,
+                                        BASIS_TYPE,                        --1
+                                        SCHEDULE_FLAG,                     --1
+                                        AUTOCHARGE_TYPE,                   --2
+                                        LAST_UPDATE_DATE,
+                                        LAST_UPDATED_BY,
+                                        CREATION_DATE,
+                                        CREATED_BY,
+                                        LAST_UPDATE_LOGIN,               -- -1
+                                        REQUEST_ID,                      -- -1
+                                        PROGRAM_APPLICATION_ID,          -- -1
+                                        PROGRAM_UPDATE_DATE)
+        VALUES (V_OP_SEQ_ID,
+                V_RES_SEQ_NUM,
+                V_RES_ID,
+                2,
+                V_ASSIGNED_UNITS,
+                V_USAGE,
+                V_USAGE_INVERSE,
+                1,
+                V_SCHEDULE_FLAG,
+                V_AUTOCHARGE_TYPE,
+                V_DATE,
+                V_USER_ID,
+                V_DATE,
+                V_USER_ID,
+                -1,
+                -1,
+                -1,
+                V_DATE);
+
+   COMMIT;
+   DBMS_OUTPUT.PUT_LINE (
+      V_RTG_CODE || '=>' || V_OP_SEQ_NUM || '=>' || V_RES_CODE || ' Done!');
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (
+         V_RTG_CODE || '=>' || V_OP_SEQ_NUM || '=>' || V_RES_CODE || SQLERRM);
+      ROLLBACK;
+END;

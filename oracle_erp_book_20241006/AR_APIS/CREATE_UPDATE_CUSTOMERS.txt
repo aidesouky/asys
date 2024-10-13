@@ -1,0 +1,1889 @@
+CREATE SEQUENCE FRTCUSTINTOPESEQ
+START WITH 1
+INCREMENT BY 1
+MINVALUE 1
+MAXVALUE 999999999
+GLOBAL
+NOCACHE
+NOCYCLE;
+/
+CREATE TABLE APPS.FRT_CUSTOMER_INTERFACE_ALL
+(
+   OPERATION_ID          NUMBER,
+   LINE_NUMBER           NUMBER,
+   PARTY_ID              NUMBER,
+   ACCOUNT_ID            NUMBER,
+   PARTY_SITE_ID         NUMBER,
+   ACCOUNT_SITE_ID       NUMBER,
+   SHIP_SITE_USE_ID      NUMBER,
+   BILL_SITE_USE_ID      NUMBER,
+   LOCATION_ID           NUMBER,
+   TERRITORY_ID          NUMBER,
+   RECEIPT_METHOD_ID     NUMBER,
+   ORDER_TYPE_ID         NUMBER,
+   PRICE_LIST_ID         NUMBER,
+   PAYMENT_TERM_ID       NUMBER,
+   PRIMARY_SALESREP_ID   NUMBER,
+   CUSTOMER_NAME         VARCHAR2 (200 BYTE),
+   CUSTOMER_NUMBER       VARCHAR2 (200 BYTE),
+   ACCOUNT_NAME          VARCHAR2 (200 BYTE),
+   ACCOUNT_NUMBER        VARCHAR2 (200 BYTE),
+   CUSTOMER_CLASS_CODE   VARCHAR2 (200 BYTE),
+   SALES_CHANNEL_CODE    VARCHAR2 (200 BYTE),
+   TAXPAYER_ID           VARCHAR2 (200 BYTE),
+   TRADE_REG_NUMBER      VARCHAR2 (200 BYTE),
+   NATIONAL_ID           VARCHAR2 (200 BYTE),
+   ACCOUNT_BRANCH        VARCHAR2 (200 BYTE),
+   ACCOUNT_BRAND         VARCHAR2 (200 BYTE),
+   PARTY_SITE_NAME       VARCHAR2 (200 BYTE),
+   PARTY_SITE_NUMBER     VARCHAR2 (200 BYTE),
+   ACCT_SITE_BRANCH      VARCHAR2 (200 BYTE),
+   ACCT_SITE_BRAND       VARCHAR2 (200 BYTE),
+   SITE_USE_CODE         VARCHAR2 (200 BYTE),
+   STATUS                VARCHAR2 (200 BYTE),
+   CURRENCY_CODE         VARCHAR2 (200 BYTE),
+   PAY_MACHINE           VARCHAR2 (200 BYTE),
+   SITE_PRIMARY_FLAG     VARCHAR2 (50 BYTE),
+   CONTACT_NAME          VARCHAR2 (200 BYTE),
+   TERRITORY_NAME        VARCHAR2 (200 BYTE),
+   COUNTRY               VARCHAR2 (200 BYTE),
+   CITY                  VARCHAR2 (200 BYTE),
+   ADDRESS               VARCHAR2 (250 BYTE),
+   GEO_CODE              VARCHAR2 (200 BYTE),
+   PHONE_NUMBER          VARCHAR2 (200 BYTE),
+   EMAIL_ADDRESS         VARCHAR2 (200 BYTE),
+   SUPERVISOR            VARCHAR2 (200 BYTE),
+   PARTY_FLAG            VARCHAR2 (5 BYTE),
+   ACCOUNT_FLAG          VARCHAR2 (5 BYTE),
+   PARTY_SITE_FLAG       VARCHAR2 (5 BYTE),
+   ACCOUNT_SITE_FLAG     VARCHAR2 (5 BYTE),
+   SHIP_SITE_USE_FLAG    VARCHAR2 (5 BYTE),
+   BILL_SITE_USE_FLAG    VARCHAR2 (5 BYTE),
+   LOCATION_FLAG         VARCHAR2 (5 BYTE),
+   FLAG                  VARCHAR2 (5 BYTE),
+   OPERATION             VARCHAR2 (10 BYTE),
+   USER_ID               NUMBER,
+   CREATION_DATE         DATE,
+   RESULT             VARCHAR2 (2000 BYTE)
+)
+/
+CREATE TABLE APPS.FRT_CUSTOMER_INTERFACE_TL
+(
+  OPERATION_ID     NUMBER,
+  LINE_NUMBER      NUMBER,
+  SITE_USE_ID      NUMBER,
+  SITE_BRAND       VARCHAR2(200 BYTE),
+  ACCOUNT_BRAND    VARCHAR2(200 BYTE),
+  ACCOUNT_BRANCH   VARCHAR2(200 BYTE),
+  SITE_NUMBER      VARCHAR2(200 BYTE),
+  CUSTOMER_NUMBER  VARCHAR2(200 BYTE),
+  CUSTOMER_NAME    VARCHAR2(200 BYTE),
+  ACCOUNT_NUMBER   VARCHAR2(200 BYTE),
+  ACCOUNT_NAME     VARCHAR2(200 BYTE),
+  SITE_NAME        VARCHAR2(200 BYTE),
+  ADDRESS          VARCHAR2(250 BYTE),
+  TERRITORY_NAME   VARCHAR2(200 BYTE),
+  ACCOUNT_CLASS    VARCHAR2(200 BYTE),
+  CITY             VARCHAR2(200 BYTE),
+  SALESREP_NAME    VARCHAR2(200 BYTE),
+  SALESREP_NUMBER  VARCHAR2(200 BYTE),
+  PHONE_NUMBER     VARCHAR2(200 BYTE),
+  CONTACT_NAME     VARCHAR2(200 BYTE),
+  TAXPAYER_ID      VARCHAR2(200 BYTE),
+  NATIONAL_ID      VARCHAR2(200 BYTE),
+  EMAIL_ADDRESS    VARCHAR2(200 BYTE),
+  PAY_MACHINE      VARCHAR2(200 BYTE),
+  SUPERVISOR       VARCHAR2(200 BYTE),
+  FLAG             VARCHAR2(5 BYTE),
+  USER_ID          NUMBER,
+  CREATION_DATE    DATE,
+  RESULT           VARCHAR2(2000 BYTE)
+)
+/
+CREATE OR REPLACE PACKAGE APPS.FRT_AI_CUSTOMER_PKG
+AS
+   PROCEDURE AI_IMPORT_CUSTOMERS (P_PARTY_ID               NUMBER,
+                                  P_ACCOUNT_ID             NUMBER,
+                                  P_PARTY_SITE_ID          NUMBER,
+                                  P_CUST_SITE_ID           NUMBER,
+                                  P_SHIP_SITE_USE_ID       NUMBER,
+                                  P_BILL_SITE_USE_ID       NUMBER,
+                                  P_LOCATION_ID            NUMBER,
+                                  P_TERRITORY_ID           NUMBER,
+                                  P_RECEIPT_METHOD_ID      NUMBER,
+                                  P_ORDER_TYPE_ID          NUMBER,
+                                  P_PRICE_LIST_ID          NUMBER,
+                                  P_PAYMENT_TERM_ID        NUMBER,
+                                  P_PRIMARY_SALESREP_ID    NUMBER,
+                                  P_CUSTOMER_NAME          VARCHAR2,
+                                  P_CUSTOMER_NUMBER        VARCHAR2,
+                                  P_ACCOUNT_NAME           VARCHAR2,
+                                  P_ACCOUNT_NUMBER         VARCHAR2,
+                                  P_CUSTOMER_CLASS_CODE    VARCHAR2,
+                                  P_SALES_CHANNEL_CODE     VARCHAR2,
+                                  P_TAXPAYER_ID            VARCHAR2,
+                                  P_TRADE_REG_NUMBER       VARCHAR2,
+                                  P_NATIONAL_ID            VARCHAR2,
+                                  P_ACCOUNT_BRANCH         VARCHAR2,
+                                  P_ACCOUNT_BRAND          VARCHAR2,
+                                  P_PARTY_SITE_NAME        VARCHAR2,
+                                  P_PARTY_SITE_NUMBER      VARCHAR2,
+                                  P_CUST_SITE_BRANCH       VARCHAR2,
+                                  P_CUST_SITE_BRAND        VARCHAR2,
+                                  P_SITE_USE_CODE          VARCHAR2,
+                                  P_STATUS                 VARCHAR2,
+                                  P_CURRENCY_CODE          VARCHAR2,
+                                  P_PAY_MACHINE            VARCHAR2,
+                                  P_SITE_PRIMARY_FLAG      VARCHAR2,
+                                  P_CONTACT_NAME           VARCHAR2,
+                                  P_TERRITORY_NAME         VARCHAR2,
+                                  P_COUNTRY                VARCHAR2,
+                                  P_CITY                   VARCHAR2,
+                                  P_ADDRESS                VARCHAR2,
+                                  P_GEO_CODE               VARCHAR2,
+                                  P_PHONE_NUMBER           VARCHAR2,
+                                  P_EMAIL_ADDRESS          VARCHAR2,
+                                  P_SUPERVISOR             VARCHAR2,
+                                  P_OPERATION              VARCHAR2);
+
+   PROCEDURE AI_IMPORT_CUSTOMERS_TL (P_SITE_USE_ID        NUMBER,
+                                     P_SITE_BRAND         VARCHAR2,
+                                     P_ACCOUNT_BRAND      VARCHAR2,
+                                     P_ACCOUNT_BRANCH     VARCHAR2,
+                                     P_SITE_NUMBER        VARCHAR2,
+                                     P_CUSTOMER_NUMBER    VARCHAR2,
+                                     P_CUSTOMER_NAME      VARCHAR2,
+                                     P_ACCOUNT_NUMBER     VARCHAR2,
+                                     P_ACCOUNT_NAME       VARCHAR2,
+                                     P_SITE_NAME          VARCHAR2,
+                                     P_ADDRESS            VARCHAR2,
+                                     P_TERRITORY_NAME     VARCHAR2,
+                                     P_ACCOUNT_CLASS      VARCHAR2,
+                                     P_CITY               VARCHAR2,
+                                     P_SALESREP_NAME      VARCHAR2,
+                                     P_SALESREP_NUMBER    VARCHAR2,
+                                     P_PHONE_NUMBER       VARCHAR2,
+                                     P_CONTACT_NAME       VARCHAR2,
+                                     P_TAXPAYER_ID        VARCHAR2,
+                                     P_NATIONAL_ID        VARCHAR2,
+                                     P_EMAIL_ADDRESS      VARCHAR2,
+                                     P_PAY_MACHINE        VARCHAR2,
+                                     P_SUPERVISOR         VARCHAR2);
+
+   PROCEDURE AI_TRANSLATE_DATA;
+
+   PROCEDURE AI_CREATE_CUSTOMER;
+
+   PROCEDURE AI_UPDATE_CUSTOMER;
+END FRT_AI_CUSTOMER_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY APPS.FRT_AI_CUSTOMER_PKG
+AS
+   PROCEDURE AI_IMPORT_CUSTOMERS (P_PARTY_ID               NUMBER,
+                                  P_ACCOUNT_ID             NUMBER,
+                                  P_PARTY_SITE_ID          NUMBER,
+                                  P_CUST_SITE_ID           NUMBER,
+                                  P_SHIP_SITE_USE_ID       NUMBER,
+                                  P_BILL_SITE_USE_ID       NUMBER,
+                                  P_LOCATION_ID            NUMBER,
+                                  P_TERRITORY_ID           NUMBER,
+                                  P_RECEIPT_METHOD_ID      NUMBER,
+                                  P_ORDER_TYPE_ID          NUMBER,
+                                  P_PRICE_LIST_ID          NUMBER,
+                                  P_PAYMENT_TERM_ID        NUMBER,
+                                  P_PRIMARY_SALESREP_ID    NUMBER,
+                                  P_CUSTOMER_NAME          VARCHAR2,
+                                  P_CUSTOMER_NUMBER        VARCHAR2,
+                                  P_ACCOUNT_NAME           VARCHAR2,
+                                  P_ACCOUNT_NUMBER         VARCHAR2,
+                                  P_CUSTOMER_CLASS_CODE    VARCHAR2,
+                                  P_SALES_CHANNEL_CODE     VARCHAR2,
+                                  P_TAXPAYER_ID            VARCHAR2,
+                                  P_TRADE_REG_NUMBER       VARCHAR2,
+                                  P_NATIONAL_ID            VARCHAR2,
+                                  P_ACCOUNT_BRANCH         VARCHAR2,
+                                  P_ACCOUNT_BRAND          VARCHAR2,
+                                  P_PARTY_SITE_NAME        VARCHAR2,
+                                  P_PARTY_SITE_NUMBER      VARCHAR2,
+                                  P_CUST_SITE_BRANCH       VARCHAR2,
+                                  P_CUST_SITE_BRAND        VARCHAR2,
+                                  P_SITE_USE_CODE          VARCHAR2,
+                                  P_STATUS                 VARCHAR2,
+                                  P_CURRENCY_CODE          VARCHAR2,
+                                  P_PAY_MACHINE            VARCHAR2,
+                                  P_SITE_PRIMARY_FLAG      VARCHAR2,
+                                  P_CONTACT_NAME           VARCHAR2,
+                                  P_TERRITORY_NAME         VARCHAR2,
+                                  P_COUNTRY                VARCHAR2,
+                                  P_CITY                   VARCHAR2,
+                                  P_ADDRESS                VARCHAR2,
+                                  P_GEO_CODE               VARCHAR2,
+                                  P_PHONE_NUMBER           VARCHAR2,
+                                  P_EMAIL_ADDRESS          VARCHAR2,
+                                  P_SUPERVISOR             VARCHAR2,
+                                  P_OPERATION              VARCHAR2)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID   NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID   NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_COUNT     NUMBER;
+   BEGIN
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,          --1170
+                                  RESP_ID        => V_RESP_ID,         --51432
+                                  RESP_APPL_ID   => V_APPL_ID);          --222
+
+      INSERT INTO FRT_CUSTOMER_INTERFACE_ALL (PARTY_ID,
+                                              ACCOUNT_ID,
+                                              PARTY_SITE_ID,
+                                              ACCOUNT_SITE_ID,
+                                              SHIP_SITE_USE_ID,
+                                              BILL_SITE_USE_ID,
+                                              LOCATION_ID,
+                                              TERRITORY_ID,
+                                              RECEIPT_METHOD_ID,
+                                              ORDER_TYPE_ID,
+                                              PRICE_LIST_ID,
+                                              PAYMENT_TERM_ID,
+                                              PRIMARY_SALESREP_ID,
+                                              CUSTOMER_NAME,
+                                              CUSTOMER_NUMBER,
+                                              ACCOUNT_NAME,
+                                              ACCOUNT_NUMBER,
+                                              CUSTOMER_CLASS_CODE,
+                                              SALES_CHANNEL_CODE,
+                                              TAXPAYER_ID,
+                                              TRADE_REG_NUMBER,
+                                              NATIONAL_ID,
+                                              ACCOUNT_BRANCH,
+                                              ACCOUNT_BRAND,
+                                              PARTY_SITE_NAME,
+                                              PARTY_SITE_NUMBER,
+                                              ACCT_SITE_BRANCH,
+                                              ACCT_SITE_BRAND,
+                                              SITE_USE_CODE,
+                                              STATUS,
+                                              CURRENCY_CODE,
+                                              PAY_MACHINE,
+                                              SITE_PRIMARY_FLAG,
+                                              CONTACT_NAME,
+                                              TERRITORY_NAME,
+                                              COUNTRY,
+                                              CITY,
+                                              ADDRESS,
+                                              GEO_CODE,
+                                              PHONE_NUMBER,
+                                              EMAIL_ADDRESS,
+                                              SUPERVISOR,
+                                              PARTY_FLAG,
+                                              ACCOUNT_FLAG,
+                                              PARTY_SITE_FLAG,
+                                              ACCOUNT_SITE_FLAG,
+                                              SHIP_SITE_USE_FLAG,
+                                              BILL_SITE_USE_FLAG,
+                                              LOCATION_FLAG,
+                                              FLAG,
+                                              OPERATION,
+                                              USER_ID,
+                                              CREATION_DATE)
+           VALUES (P_PARTY_ID,
+                   P_ACCOUNT_ID,
+                   P_PARTY_SITE_ID,
+                   P_CUST_SITE_ID,
+                   P_SHIP_SITE_USE_ID,
+                   P_BILL_SITE_USE_ID,
+                   P_LOCATION_ID,
+                   P_TERRITORY_ID,
+                   P_RECEIPT_METHOD_ID,
+                   P_ORDER_TYPE_ID,
+                   P_PRICE_LIST_ID,
+                   P_PAYMENT_TERM_ID,
+                   P_PRIMARY_SALESREP_ID,
+                   P_CUSTOMER_NAME,
+                   P_CUSTOMER_NUMBER,
+                   P_ACCOUNT_NAME,
+                   P_ACCOUNT_NUMBER,
+                   P_CUSTOMER_CLASS_CODE,
+                   P_SALES_CHANNEL_CODE,
+                   P_TAXPAYER_ID,
+                   P_TRADE_REG_NUMBER,
+                   P_NATIONAL_ID,
+                   P_ACCOUNT_BRANCH,
+                   P_ACCOUNT_BRAND,
+                   P_PARTY_SITE_NAME,
+                   P_PARTY_SITE_NUMBER,
+                   P_CUST_SITE_BRANCH,
+                   P_CUST_SITE_BRAND,
+                   P_SITE_USE_CODE,
+                   P_STATUS,
+                   P_CURRENCY_CODE,
+                   P_PAY_MACHINE,
+                   P_SITE_PRIMARY_FLAG,
+                   P_CONTACT_NAME,
+                   P_TERRITORY_NAME,
+                   P_COUNTRY,
+                   P_CITY,
+                   P_ADDRESS,
+                   P_GEO_CODE,
+                   P_PHONE_NUMBER,
+                   P_EMAIL_ADDRESS,
+                   P_SUPERVISOR,
+                   'N',
+                   'N',
+                   'N',
+                   'N',
+                   'N',
+                   'N',
+                   'N',
+                   'N',
+                   P_OPERATION,
+                   V_USER_ID,
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_IMPORT_CUSTOMERS_TL (P_SITE_USE_ID        NUMBER,
+                                     P_SITE_BRAND         VARCHAR2,
+                                     P_ACCOUNT_BRAND      VARCHAR2,
+                                     P_ACCOUNT_BRANCH     VARCHAR2,
+                                     P_SITE_NUMBER        VARCHAR2,
+                                     P_CUSTOMER_NUMBER    VARCHAR2,
+                                     P_CUSTOMER_NAME      VARCHAR2,
+                                     P_ACCOUNT_NUMBER     VARCHAR2,
+                                     P_ACCOUNT_NAME       VARCHAR2,
+                                     P_SITE_NAME          VARCHAR2,
+                                     P_ADDRESS            VARCHAR2,
+                                     P_TERRITORY_NAME     VARCHAR2,
+                                     P_ACCOUNT_CLASS      VARCHAR2,
+                                     P_CITY               VARCHAR2,
+                                     P_SALESREP_NAME      VARCHAR2,
+                                     P_SALESREP_NUMBER    VARCHAR2,
+                                     P_PHONE_NUMBER       VARCHAR2,
+                                     P_CONTACT_NAME       VARCHAR2,
+                                     P_TAXPAYER_ID        VARCHAR2,
+                                     P_NATIONAL_ID        VARCHAR2,
+                                     P_EMAIL_ADDRESS      VARCHAR2,
+                                     P_PAY_MACHINE        VARCHAR2,
+                                     P_SUPERVISOR         VARCHAR2)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID   NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID   NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_COUNT     NUMBER;
+   BEGIN
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,          --1170
+                                  RESP_ID        => V_RESP_ID,         --51432
+                                  RESP_APPL_ID   => V_APPL_ID);          --222
+
+      INSERT INTO FRT_CUSTOMER_INTERFACE_TL (SITE_USE_ID,
+                                             SITE_BRAND,
+                                             ACCOUNT_BRAND,
+                                             ACCOUNT_BRANCH,
+                                             SITE_NUMBER,
+                                             CUSTOMER_NUMBER,
+                                             CUSTOMER_NAME,
+                                             ACCOUNT_NUMBER,
+                                             ACCOUNT_NAME,
+                                             SITE_NAME,
+                                             ADDRESS,
+                                             TERRITORY_NAME,
+                                             ACCOUNT_CLASS,
+                                             CITY,
+                                             SALESREP_NAME,
+                                             SALESREP_NUMBER,
+                                             PHONE_NUMBER,
+                                             CONTACT_NAME,
+                                             TAXPAYER_ID,
+                                             NATIONAL_ID,
+                                             EMAIL_ADDRESS,
+                                             PAY_MACHINE,
+                                             SUPERVISOR,
+                                             FLAG,
+                                             USER_ID,
+                                             CREATION_DATE)
+           VALUES (P_SITE_USE_ID,
+                   P_SITE_BRAND,
+                   P_ACCOUNT_BRAND,
+                   P_ACCOUNT_BRANCH,
+                   P_SITE_NUMBER,
+                   P_CUSTOMER_NUMBER,
+                   P_CUSTOMER_NAME,
+                   P_ACCOUNT_NUMBER,
+                   P_ACCOUNT_NAME,
+                   P_SITE_NAME,
+                   P_ADDRESS,
+                   P_TERRITORY_NAME,
+                   P_ACCOUNT_CLASS,
+                   P_CITY,
+                   P_SALESREP_NAME,
+                   P_SALESREP_NUMBER,
+                   P_PHONE_NUMBER,
+                   P_CONTACT_NAME,
+                   P_TAXPAYER_ID,
+                   P_NATIONAL_ID,
+                   P_EMAIL_ADDRESS,
+                   P_PAY_MACHINE,
+                   P_SUPERVISOR,
+                   'N',
+                   V_USER_ID,
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_TRANSLATE_DATA
+   AS
+      V_PARTY_ID              NUMBER;
+      V_ACCOUNT_ID            NUMBER;
+      V_PARTY_SITE_ID         NUMBER;
+      V_CUST_SITE_ID          NUMBER;
+      V_SHIP_SITE_USE_ID      NUMBER;
+      V_BILL_SITE_USE_ID      NUMBER;
+      V_LOCATION_ID           NUMBER;
+      V_TERRITORY_ID          NUMBER;
+      V_RECEIPT_METHOD_ID     NUMBER;
+      V_ORDER_TYPE_ID         NUMBER;
+      V_PRICE_LIST_ID         NUMBER;
+      V_PAYMENT_TERM_ID       NUMBER;
+      V_PRIMARY_SALESREP_ID   NUMBER;
+      V_TAXPAYER_ID           VARCHAR (30);
+      V_TRADE_NUMBER          VARCHAR (30);
+      V_SITE_USE_CODE         VARCHAR (10);
+      V_STATUS                VARCHAR (5);
+      V_CURRENCY_CODE         VARCHAR (10);
+      V_SITE_PRIMARY_FLAG     VARCHAR (5);
+      V_COUNTRY               VARCHAR (30);
+      V_GEO_CODE              VARCHAR (30);
+      V_USER_ID               NUMBER := FND_GLOBAL.USER_ID;            --2887;
+      FAIL_COUNT              NUMBER;
+      FAIL_MSG                VARCHAR (2000);
+      V_OPERATION_ID          NUMBER;
+      V_LINE_NUMBER           NUMBER := 1;
+      ERR                     EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR CUST_DATA (P_USER_ID NUMBER)
+      IS
+           SELECT *
+             FROM FRT_CUSTOMER_INTERFACE_TL
+            WHERE USER_ID = P_USER_ID AND FLAG = 'N'
+         ORDER BY CUSTOMER_NUMBER, CUSTOMER_NAME;
+   BEGIN
+      V_CURRENCY_CODE := 'EGP';
+      V_STATUS := 'A';
+      V_COUNTRY := 'EG';
+      V_GEO_CODE := ' ';
+      V_SITE_PRIMARY_FLAG := 'Y';
+      V_OPERATION_ID := FRTCUSTINTOPESEQ.NEXTVAL;
+      FAIL_COUNT := 0;
+
+      FOR REC IN CUST_DATA (V_USER_ID)
+      LOOP
+         BEGIN
+            FAIL_MSG := NULL;
+
+            IF REC.TAXPAYER_ID IS NULL
+            THEN
+               V_TAXPAYER_ID := REC.NATIONAL_ID;
+               V_TRADE_NUMBER := REC.NATIONAL_ID;
+            ELSE
+               V_TAXPAYER_ID := REC.TAXPAYER_ID;
+               V_TRADE_NUMBER := REC.TAXPAYER_ID;
+            END IF;
+
+            V_SHIP_SITE_USE_ID := REC.SITE_USE_ID;
+
+            BEGIN
+               SELECT CUST_ACCT_SITE_ID,
+                      ORDER_TYPE_ID,
+                      PAYMENT_TERM_ID,
+                      PRICE_LIST_ID,
+                      PRIMARY_SALESREP_ID
+                 INTO V_CUST_SITE_ID,
+                      V_ORDER_TYPE_ID,
+                      V_PAYMENT_TERM_ID,
+                      V_PRICE_LIST_ID,
+                      V_PRIMARY_SALESREP_ID
+                 FROM HZ_CUST_SITE_USES_ALL
+                WHERE SITE_USE_ID = REC.SITE_USE_ID;
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  RAISE_APPLICATION_ERROR (
+                     -20011,
+                        ' Ship_to Site Data From <Hz_cust_site_uses_all> With Site_use_id: '
+                     || REC.SITE_USE_ID);
+            END;
+
+            BEGIN
+               SELECT SITE_USE_ID
+                 INTO V_BILL_SITE_USE_ID
+                 FROM HZ_CUST_SITE_USES_ALL
+                WHERE     CUST_ACCT_SITE_ID = V_CUST_SITE_ID
+                      AND SITE_USE_CODE = 'BILL_TO';
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  RAISE_APPLICATION_ERROR (
+                     -20011,
+                        ' Bill_to Site Data From <Hz_cust_site_uses_all> With  Cust_site_id: '
+                     || REC.SITE_USE_ID);
+            END;
+
+            BEGIN
+               SELECT CUST_ACCOUNT_ID, PARTY_SITE_ID, TERRITORY_ID
+                 INTO V_ACCOUNT_ID, V_PARTY_SITE_ID, V_TERRITORY_ID
+                 FROM HZ_CUST_ACCT_SITES_ALL
+                WHERE CUST_ACCT_SITE_ID = V_CUST_SITE_ID;
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  RAISE_APPLICATION_ERROR (
+                     -20011,
+                        ' Site Data From <Hz_cust_acct_sites_all> With Cust_site_id: '
+                     || V_CUST_SITE_ID);
+            END;
+
+            BEGIN
+               SELECT PARTY_ID, LOCATION_ID
+                 INTO V_PARTY_ID, V_LOCATION_ID
+                 FROM HZ_PARTY_SITES
+                WHERE PARTY_SITE_ID = V_PARTY_SITE_ID;
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  RAISE_APPLICATION_ERROR (
+                     -20011,
+                        ' Party Siate Data From <Hz_party_sites> With Party_site_id: '
+                     || V_PARTY_SITE_ID);
+            END;
+
+
+            INSERT INTO FRT_CUSTOMER_INTERFACE_ALL (OPERATION_ID,
+                                                    LINE_NUMBER,
+                                                    PARTY_ID,
+                                                    ACCOUNT_ID,
+                                                    PARTY_SITE_ID,
+                                                    ACCOUNT_SITE_ID,
+                                                    SHIP_SITE_USE_ID,
+                                                    BILL_SITE_USE_ID,
+                                                    LOCATION_ID,
+                                                    TERRITORY_ID,
+                                                    RECEIPT_METHOD_ID,
+                                                    ORDER_TYPE_ID,
+                                                    PRICE_LIST_ID,
+                                                    PAYMENT_TERM_ID,
+                                                    PRIMARY_SALESREP_ID,
+                                                    CUSTOMER_NAME,
+                                                    CUSTOMER_NUMBER,
+                                                    ACCOUNT_NAME,
+                                                    ACCOUNT_NUMBER,
+                                                    CUSTOMER_CLASS_CODE,
+                                                    SALES_CHANNEL_CODE,
+                                                    TAXPAYER_ID,
+                                                    TRADE_REG_NUMBER,
+                                                    NATIONAL_ID,
+                                                    ACCOUNT_BRANCH,
+                                                    ACCOUNT_BRAND,
+                                                    PARTY_SITE_NAME,
+                                                    PARTY_SITE_NUMBER,
+                                                    ACCT_SITE_BRANCH,
+                                                    ACCT_SITE_BRAND,
+                                                    SITE_USE_CODE,
+                                                    STATUS,
+                                                    CURRENCY_CODE,
+                                                    PAY_MACHINE,
+                                                    SITE_PRIMARY_FLAG,
+                                                    CONTACT_NAME,
+                                                    TERRITORY_NAME,
+                                                    COUNTRY,
+                                                    CITY,
+                                                    ADDRESS,
+                                                    GEO_CODE,
+                                                    PHONE_NUMBER,
+                                                    EMAIL_ADDRESS,
+                                                    SUPERVISOR,
+                                                    PARTY_FLAG,
+                                                    ACCOUNT_FLAG,
+                                                    PARTY_SITE_FLAG,
+                                                    ACCOUNT_SITE_FLAG,
+                                                    SHIP_SITE_USE_FLAG,
+                                                    BILL_SITE_USE_FLAG,
+                                                    LOCATION_FLAG,
+                                                    FLAG,
+                                                    OPERATION,
+                                                    USER_ID,
+                                                    CREATION_DATE)
+                 VALUES (V_OPERATION_ID,
+                         V_LINE_NUMBER,
+                         V_PARTY_ID,
+                         V_ACCOUNT_ID,
+                         V_PARTY_SITE_ID,
+                         V_CUST_SITE_ID,
+                         V_SHIP_SITE_USE_ID,
+                         V_BILL_SITE_USE_ID,
+                         V_LOCATION_ID,
+                         V_TERRITORY_ID,
+                         V_RECEIPT_METHOD_ID,
+                         V_ORDER_TYPE_ID,
+                         V_PRICE_LIST_ID,
+                         V_PAYMENT_TERM_ID,
+                         V_PRIMARY_SALESREP_ID,
+                         REC.CUSTOMER_NAME,
+                         REC.CUSTOMER_NUMBER,
+                         REC.ACCOUNT_NAME,
+                         REC.ACCOUNT_NUMBER,
+                         REC.ACCOUNT_CLASS,
+                         REC.ACCOUNT_CLASS,
+                         V_TAXPAYER_ID,
+                         V_TRADE_NUMBER,
+                         REC.NATIONAL_ID,
+                         REC.ACCOUNT_BRANCH,
+                         REC.ACCOUNT_BRAND,
+                         REC.SITE_NAME,
+                         REC.SITE_NUMBER,
+                         REC.ACCOUNT_BRANCH,
+                         REC.SITE_BRAND,
+                         V_SITE_USE_CODE,
+                         V_STATUS,
+                         V_CURRENCY_CODE,
+                         REC.PAY_MACHINE,
+                         V_SITE_PRIMARY_FLAG,
+                         REC.CONTACT_NAME,
+                         REC.TERRITORY_NAME,
+                         V_COUNTRY,
+                         REC.CITY,
+                         REC.ADDRESS,
+                         V_GEO_CODE,
+                         REC.PHONE_NUMBER,
+                         REC.EMAIL_ADDRESS,
+                         REC.SUPERVISOR,
+                         'N',
+                         'N',
+                         'N',
+                         'N',
+                         'N',
+                         'N',
+                         'N',
+                         'N',
+                         'UPDATE',
+                         V_USER_ID,
+                         SYSDATE);
+
+            UPDATE FRT_CUSTOMER_INTERFACE_TL
+               SET OPERATION_ID = V_OPERATION_ID,
+                   LINE_NUMBER = V_LINE_NUMBER,
+                   FLAG = 'T'
+             WHERE SITE_USE_ID = REC.SITE_USE_ID;
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               FAIL_COUNT := FAIL_COUNT + 1;
+               FAIL_MSG := SQLERRM;
+
+               UPDATE FRT_CUSTOMER_INTERFACE_TL
+                  SET OPERATION_ID = V_OPERATION_ID,
+                      LINE_NUMBER = V_LINE_NUMBER,
+                      FLAG = 'F',
+                      RESULT = 'ERROR ' || FAIL_MSG
+                WHERE SITE_USE_ID = REC.SITE_USE_ID;
+         END;
+
+         V_LINE_NUMBER := V_LINE_NUMBER + 1;
+         COMMIT;
+      END LOOP;
+   END;
+
+
+   PROCEDURE AI_CREATE_CUSTOMER
+   AS
+      V_ORG_REC                     HZ_PARTY_V2PUB.ORGANIZATION_REC_TYPE;
+      V_CUST_ACCOUNT_REC            HZ_CUST_ACCOUNT_V2PUB.CUST_ACCOUNT_REC_TYPE;
+      V_CUSTOMER_PROFILE_REC        HZ_CUSTOMER_PROFILE_V2PUB.CUSTOMER_PROFILE_REC_TYPE;
+      V_CUSTOMER_PROFILE_AMT        HZ_CUSTOMER_PROFILE_V2PUB.CUST_PROFILE_AMT_REC_TYPE;
+      V_PAY_METHOD_REC              HZ_PAYMENT_METHOD_PUB.PAYMENT_METHOD_REC_TYPE;
+      V_CUSTOMER_SITE_PROFILE_REC   HZ_CUSTOMER_PROFILE_V2PUB.CUSTOMER_PROFILE_REC_TYPE;
+      V_CUSTOMER_SITE_PROFILE_AMT   HZ_CUSTOMER_PROFILE_V2PUB.CUST_PROFILE_AMT_REC_TYPE;
+      V_CUST_SHIP_SITE_USE_REC      HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+      V_CUST_BILL_SITE_USE_REC      HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+      V_CUST_ACCT_SITE_REC          HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_ACCT_SITE_REC_TYPE;
+      V_PARTY_SITE_REC              HZ_PARTY_SITE_V2PUB.PARTY_SITE_REC_TYPE;
+      V_LOCATION_REC                HZ_LOCATION_V2PUB.LOCATION_REC_TYPE;
+      V_CUST_ACCOUNT_PROFILE_ID     NUMBER;
+      V_CUST_ACT_PROF_AMT_ID        NUMBER;
+      X_CUST_ACCOUNT_ID             NUMBER;
+      X_ACCOUNT_NUMBER              VARCHAR2 (2000);
+      X_PARTY_ID                    NUMBER;
+      X_PARTY_NUMBER                VARCHAR2 (2000);
+      X_PROFILE_ID                  NUMBER;
+      V_ERROR_MSG                   VARCHAR2 (1000);
+      X_PARTY_EXIST                 NUMBER;
+      X_CUST_EXIST                  NUMBER;
+      X_CUST_RECEIPT_METHOD_ID      NUMBER;
+      V_TERRITORY_ID                NUMBER;
+      V_CUST_SIT_PROF_AMT_ID        NUMBER;
+      X_LOCATION_ID                 NUMBER;
+      X_PARTY_SITE_ID               NUMBER;
+      X_PARTY_SITE_NUMBER           NUMBER;
+      X_CUST_ACCT_SITE_ID           NUMBER;
+      X_SHIP_SITE_USE_ID            NUMBER;
+      X_BILL_SITE_USE_ID            NUMBER;
+      X_SHIP_SITE_PROFILE_ID        NUMBER;
+      X_BILL_SITE_PROFILE_ID        NUMBER;
+      X_RETURN_STATUS               VARCHAR2 (30);
+      X_MSG_COUNT                   NUMBER;
+      X_MSG_DATA                    VARCHAR2 (2000);
+      V_PROFILE_CLASS               VARCHAR2 (10) := 'DEFAULT';
+      V_MODULE_NAME                 VARCHAR (30) := 'HZ_CPUI';
+      V_USER_ID                     NUMBER := FND_GLOBAL.USER_ID;       --1170
+      V_RESP_ID                     NUMBER := FND_GLOBAL.RESP_ID;      --51432
+      V_APPL_ID                     NUMBER := FND_GLOBAL.RESP_APPL_ID;   --222
+      V_ORG_ID                      NUMBER := 81;
+      FAIL_MSG                      VARCHAR2 (2000);
+      FAIL_ACCOUNT                  BOOLEAN;
+      FAIL_COUNT                    NUMBER;
+      V_PARTY_FLAG                  VARCHAR2 (5) := 'N';
+      V_ACCOUNT_FLAG                VARCHAR2 (5) := 'N';
+      V_PARTY_SITE_FLAG             VARCHAR2 (5) := 'N';
+      V_ACCOUNT_SITE_FLAG           VARCHAR2 (5) := 'N';
+      V_SHIP_SITE_USE_FLAG          VARCHAR2 (5) := 'N';
+      V_BILL_SITE_USE_FLAG          VARCHAR2 (5) := 'N';
+      V_LOCATION_FLAG               VARCHAR2 (5) := 'N';
+      V_FLAG                        VARCHAR2 (5) := 'N';
+      V_OPERATION_ID                NUMBER;
+      ERR                           EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR CUST_DATA (P_USER_ID NUMBER)
+      IS
+           SELECT *
+             FROM APPS.FRT_CUSTOMER_INTERFACE_ALL
+            WHERE OPERATION = 'CREATE' AND FLAG = 'N' AND USER_ID = P_USER_ID
+         ORDER BY ACCOUNT_NUMBER;
+   BEGIN
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,          --1170
+                                  RESP_ID        => V_RESP_ID,         --51432
+                                  RESP_APPL_ID   => V_APPL_ID);          --222
+
+      V_OPERATION_ID := FRTCUSTINTOPESEQ.NEXTVAL;
+      FAIL_COUNT := 0;
+
+      FOR REC IN CUST_DATA (V_USER_ID)
+      LOOP
+         BEGIN
+            FAIL_MSG := 'AI';
+            FAIL_ACCOUNT := FALSE;
+            V_ORG_REC.PARTY_REC.PARTY_ID := NULL;
+            V_ERROR_MSG := NULL;
+
+            --========= CREATE CUSTOMER ACCOUNT =============[01]
+
+
+            BEGIN
+               SELECT DISTINCT CUSTOMER_PROFILE_CLASS_ID
+                 INTO V_CUST_ACCOUNT_PROFILE_ID
+                 FROM AR_CUSTOMER_PROFILE_CLASSES_V
+                WHERE UPPER (PROFILE_CLASS_NAME) = V_PROFILE_CLASS;
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  V_FLAG := 'F';
+                  V_ERROR_MSG := 'INVALID CUSTOMER_PROFILE_CLASS';
+                  RAISE_APPLICATION_ERROR (-20011, V_ERROR_MSG);
+            END;
+
+            SELECT COUNT (PARTY_ID)
+              INTO X_PARTY_EXIST
+              FROM HZ_PARTIES
+             WHERE PARTY_NAME = REC.CUSTOMER_NAME;
+
+            IF X_PARTY_EXIST > 0
+            THEN
+               SELECT DISTINCT PARTY_ID
+                 INTO X_PARTY_ID
+                 FROM HZ_PARTIES
+                WHERE PARTY_NAME = REC.CUSTOMER_NAME;
+
+               V_ORG_REC.PARTY_REC.PARTY_ID := X_PARTY_ID;
+            END IF;
+
+            SELECT COUNT (CUST_ACCOUNT_ID)
+              INTO X_CUST_EXIST
+              FROM HZ_CUST_ACCOUNTS
+             WHERE ACCOUNT_NAME = REC.ACCOUNT_NAME;
+
+            IF X_CUST_EXIST > 0
+            THEN
+               SELECT DISTINCT CUST_ACCOUNT_ID
+                 INTO X_CUST_ACCOUNT_ID
+                 FROM HZ_CUST_ACCOUNTS
+                WHERE ACCOUNT_NAME = REC.ACCOUNT_NAME;
+            ELSE
+               V_ORG_REC.ORGANIZATION_NAME := REC.CUSTOMER_NAME;
+               V_ORG_REC.TAX_REFERENCE := REC.TRADE_REG_NUMBER;
+               V_ORG_REC.JGZZ_FISCAL_CODE := REC.TAXPAYER_ID;
+               V_ORG_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+               V_CUST_ACCOUNT_REC.ACCOUNT_NAME := REC.ACCOUNT_NAME;
+               V_CUST_ACCOUNT_REC.SALES_CHANNEL_CODE := REC.SALES_CHANNEL_CODE;
+               V_CUST_ACCOUNT_REC.CUSTOMER_CLASS_CODE :=
+                  REC.CUSTOMER_CLASS_CODE;
+               V_CUST_ACCOUNT_REC.STATUS := 'A';
+               V_CUST_ACCOUNT_REC.ATTRIBUTE10 := REC.ACCOUNT_BRANCH;
+               V_CUST_ACCOUNT_REC.ATTRIBUTE11 := REC.ACCOUNT_BRAND;
+               V_CUST_ACCOUNT_REC.ATTRIBUTE12 := 'A';
+               V_CUST_ACCOUNT_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+               V_CUSTOMER_PROFILE_REC.PROFILE_CLASS_ID :=
+                  V_CUST_ACCOUNT_PROFILE_ID;
+               V_CUSTOMER_PROFILE_REC.CREDIT_CHECKING := 'Y';
+               V_CUSTOMER_PROFILE_REC.OVERRIDE_TERMS := 'Y';
+               V_CUSTOMER_PROFILE_REC.STANDARD_TERMS := REC.PAYMENT_TERM_ID;
+               V_CUSTOMER_PROFILE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUST_ACCOUNT_V2PUB.CREATE_CUST_ACCOUNT (
+                  P_INIT_MSG_LIST          => 'T',
+                  P_ORGANIZATION_REC       => V_ORG_REC,
+                  P_CUST_ACCOUNT_REC       => V_CUST_ACCOUNT_REC,
+                  P_CUSTOMER_PROFILE_REC   => V_CUSTOMER_PROFILE_REC,
+                  P_CREATE_PROFILE_AMT     => 'F',
+                  X_PARTY_ID               => X_PARTY_ID,
+                  X_PARTY_NUMBER           => X_PARTY_NUMBER,
+                  X_CUST_ACCOUNT_ID        => X_CUST_ACCOUNT_ID,
+                  X_ACCOUNT_NUMBER         => X_ACCOUNT_NUMBER,
+                  X_PROFILE_ID             => X_PROFILE_ID,
+                  X_RETURN_STATUS          => X_RETURN_STATUS,
+                  X_MSG_COUNT              => X_MSG_COUNT,
+                  X_MSG_DATA               => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_PARTY_FLAG := 'F';
+                     V_ACCOUNT_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (
+                        -20011,
+                        ' PARTY_ACCOUNT:' || V_ERROR_MSG);
+                  ELSE
+                     V_PARTY_FLAG := 'T';
+                     V_ACCOUNT_FLAG := 'T';
+                  END IF;
+               END IF;
+
+               --================= CREATE CUSTOMER PROFILE AMT ============[02]
+
+               BEGIN
+                  SELECT CUST_ACCOUNT_PROFILE_ID
+                    INTO V_CUST_ACCOUNT_PROFILE_ID
+                    FROM HZ_CUSTOMER_PROFILES
+                   WHERE CUST_ACCOUNT_ID = X_CUST_ACCOUNT_ID;
+               EXCEPTION
+                  WHEN OTHERS
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG := 'INVALID CUST_ACCOUNT_PROFILE';
+                     RAISE_APPLICATION_ERROR (-20011, V_ERROR_MSG);
+               END;
+
+               V_CUSTOMER_PROFILE_AMT.CUST_ACCOUNT_ID := X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_PROFILE_AMT.CUST_ACCOUNT_PROFILE_ID :=
+                  V_CUST_ACCOUNT_PROFILE_ID;
+               V_CUSTOMER_PROFILE_AMT.CURRENCY_CODE := REC.CURRENCY_CODE;
+               V_CUSTOMER_PROFILE_AMT.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUST_PROFILE_AMT (
+                  P_INIT_MSG_LIST              => 'T',
+                  P_CHECK_FOREIGN_KEY          => FND_API.G_TRUE,
+                  P_CUST_PROFILE_AMT_REC       => V_CUSTOMER_PROFILE_AMT,
+                  X_CUST_ACCT_PROFILE_AMT_ID   => V_CUST_ACT_PROF_AMT_ID,
+                  X_RETURN_STATUS              => X_RETURN_STATUS,
+                  X_MSG_COUNT                  => X_MSG_COUNT,
+                  X_MSG_DATA                   => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+
+                     RAISE_APPLICATION_ERROR (
+                        -20011,
+                        ' CUST_ACCOUNT_PROFILE:' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+
+               --================ CREATE PAYMENT METHOD ======================[03]
+
+               V_PAY_METHOD_REC.CUST_ACCOUNT_ID := X_CUST_ACCOUNT_ID;
+               V_PAY_METHOD_REC.RECEIPT_METHOD_ID := REC.RECEIPT_METHOD_ID;
+               V_PAY_METHOD_REC.PRIMARY_FLAG := 'Y';
+               V_PAY_METHOD_REC.START_DATE := SYSDATE;
+               --P_PAY_METHOD_REC.END_DATE          := NULL;
+
+
+               HZ_PAYMENT_METHOD_PUB.CREATE_PAYMENT_METHOD (
+                  P_INIT_MSG_LIST            => 'T',
+                  P_PAYMENT_METHOD_REC       => V_PAY_METHOD_REC,
+                  X_CUST_RECEIPT_METHOD_ID   => X_CUST_RECEIPT_METHOD_ID,
+                  X_RETURN_STATUS            => X_RETURN_STATUS,
+                  X_MSG_COUNT                => X_MSG_COUNT,
+                  X_MSG_DATA                 => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (
+                        -20011,
+                        ' PAYMENT_METHOD:' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+            END IF;
+
+            UPDATE FRT_CUSTOMER_INTERFACE_ALL
+               SET PARTY_FLAG = V_PARTY_FLAG,
+                   ACCOUNT_FLAG = V_ACCOUNT_FLAG,
+                   LOCATION_FLAG = V_LOCATION_FLAG
+             WHERE ACCOUNT_NAME = REC.ACCOUNT_NAME;
+
+            COMMIT;
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               ROLLBACK;
+               FAIL_COUNT := FAIL_COUNT + 1;
+               FAIL_ACCOUNT := TRUE;
+               FAIL_MSG :=
+                     FAIL_MSG
+                  || ' ACCOUNT:'
+                  || REC.ACCOUNT_NAME
+                  || '- PARTY_SITE:ALL'
+                  || ':'
+                  || SQLERRM;
+
+               UPDATE FRT_CUSTOMER_INTERFACE_ALL
+                  SET RESULT = FAIL_MSG,
+                      PARTY_FLAG = V_PARTY_FLAG,
+                      ACCOUNT_FLAG = V_ACCOUNT_FLAG,
+                      LOCATION_FLAG = V_LOCATION_FLAG,
+                      FLAG = V_FLAG
+                WHERE ACCOUNT_NAME = REC.ACCOUNT_NAME;
+
+               COMMIT;
+         END;
+
+         IF NOT FAIL_ACCOUNT
+         THEN
+            BEGIN
+               --================= CREATE LOCATION ============[11]
+
+               V_TERRITORY_ID := NULL;
+
+               V_LOCATION_REC.COUNTRY := REC.COUNTRY;
+               V_LOCATION_REC.ADDRESS1 := REC.ADDRESS;
+               V_LOCATION_REC.CITY := REC.CITY;
+               V_LOCATION_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_LOCATION_V2PUB.CREATE_LOCATION (
+                  P_INIT_MSG_LIST   => 'T',
+                  P_LOCATION_REC    => V_LOCATION_REC,
+                  X_LOCATION_ID     => X_LOCATION_ID,
+                  X_RETURN_STATUS   => X_RETURN_STATUS,
+                  X_MSG_COUNT       => X_MSG_COUNT,
+                  X_MSG_DATA        => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_LOCATION_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '111' || V_ERROR_MSG);
+                  ELSE
+                     V_LOCATION_FLAG := 'T';
+                  END IF;
+               END IF;
+
+               --================= CREATE PARTY SITE ==================[12]
+
+               V_PARTY_SITE_REC.PARTY_ID := X_PARTY_ID;
+               V_PARTY_SITE_REC.LOCATION_ID := X_LOCATION_ID;
+               V_PARTY_SITE_REC.PARTY_SITE_NAME := REC.PARTY_SITE_NAME;
+               V_PARTY_SITE_REC.IDENTIFYING_ADDRESS_FLAG := 'Y';
+               V_PARTY_SITE_REC.STATUS := 'A';
+               V_PARTY_SITE_REC.ATTRIBUTE1 := REC.CONTACT_NAME;
+               V_PARTY_SITE_REC.ATTRIBUTE2 := REC.NATIONAL_ID;
+               V_PARTY_SITE_REC.ATTRIBUTE3 := REC.PHONE_NUMBER;
+               V_PARTY_SITE_REC.ATTRIBUTE4 := REC.EMAIL_ADDRESS;
+               V_PARTY_SITE_REC.ATTRIBUTE5 := REC.PAY_MACHINE;
+               V_PARTY_SITE_REC.ATTRIBUTE6 := REC.GEO_CODE;
+               V_PARTY_SITE_REC.ATTRIBUTE12 := 'A';
+               V_PARTY_SITE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_PARTY_SITE_V2PUB.CREATE_PARTY_SITE (
+                  P_INIT_MSG_LIST       => FND_API.G_FALSE,
+                  P_PARTY_SITE_REC      => V_PARTY_SITE_REC,
+                  X_PARTY_SITE_ID       => X_PARTY_SITE_ID,
+                  X_PARTY_SITE_NUMBER   => X_PARTY_SITE_NUMBER,
+                  X_RETURN_STATUS       => X_RETURN_STATUS,
+                  X_MSG_COUNT           => X_MSG_COUNT,
+                  X_MSG_DATA            => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_PARTY_SITE_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '121' || V_ERROR_MSG);
+                  ELSE
+                     V_PARTY_SITE_FLAG := 'T';
+                  END IF;
+               END IF;
+
+               --================= CREATE CUSTOMER SITE ============[13]
+
+               V_CUST_ACCT_SITE_REC.CUST_ACCOUNT_ID := X_CUST_ACCOUNT_ID;
+               V_CUST_ACCT_SITE_REC.PARTY_SITE_ID := X_PARTY_SITE_ID;
+               --V_CUST_ACCT_SITE_REC.RECEIPT_METHOD_ID := REC.RECEIPT_METHOD_ID;-----XXXXXXXXXXXXXXXXX
+               V_CUST_ACCT_SITE_REC.TERRITORY_ID := REC.TERRITORY_ID;
+               V_CUST_ACCT_SITE_REC.STATUS := 'A';
+               V_CUST_ACCT_SITE_REC.ATTRIBUTE10 := REC.ACCT_SITE_BRANCH;
+               V_CUST_ACCT_SITE_REC.ATTRIBUTE11 := REC.ACCT_SITE_BRAND;
+               V_CUST_ACCT_SITE_REC.ATTRIBUTE12 := 'A';
+               V_CUST_ACCT_SITE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUST_ACCOUNT_SITE_V2PUB.CREATE_CUST_ACCT_SITE (
+                  P_INIT_MSG_LIST        => 'T',
+                  P_CUST_ACCT_SITE_REC   => V_CUST_ACCT_SITE_REC,
+                  X_CUST_ACCT_SITE_ID    => X_CUST_ACCT_SITE_ID,
+                  X_RETURN_STATUS        => X_RETURN_STATUS,
+                  X_MSG_COUNT            => X_MSG_COUNT,
+                  X_MSG_DATA             => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_ACCOUNT_SITE_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '132' || V_ERROR_MSG);
+                  ELSE
+                     V_ACCOUNT_SITE_FLAG := 'T';
+                  END IF;
+               END IF;
+
+
+               --================= CREATE BILL_TO SITE USE ============ [141]
+
+               V_CUST_BILL_SITE_USE_REC.CUST_ACCT_SITE_ID :=
+                  X_CUST_ACCT_SITE_ID;
+               V_CUST_BILL_SITE_USE_REC.SITE_USE_CODE := 'BILL_TO';
+               V_CUST_BILL_SITE_USE_REC.ORDER_TYPE_ID := REC.ORDER_TYPE_ID;
+               V_CUST_BILL_SITE_USE_REC.PRICE_LIST_ID := REC.PRICE_LIST_ID;
+               V_CUST_BILL_SITE_USE_REC.PAYMENT_TERM_ID := REC.PAYMENT_TERM_ID;
+               V_CUST_BILL_SITE_USE_REC.PRIMARY_SALESREP_ID :=
+                  REC.PRIMARY_SALESREP_ID;
+               V_CUST_BILL_SITE_USE_REC.STATUS := 'A';
+               V_CUST_BILL_SITE_USE_REC.TERRITORY_ID := REC.TERRITORY_ID;
+               V_CUST_BILL_SITE_USE_REC.PRIMARY_FLAG := REC.SITE_PRIMARY_FLAG;
+               V_CUST_BILL_SITE_USE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+               V_CUST_BILL_SITE_USE_REC.ATTRIBUTE12 := 'A';
+
+
+               HZ_CUST_ACCOUNT_SITE_V2PUB.CREATE_CUST_SITE_USE (
+                  P_INIT_MSG_LIST          => 'T',
+                  P_CUST_SITE_USE_REC      => V_CUST_BILL_SITE_USE_REC,
+                  P_CUSTOMER_PROFILE_REC   => V_CUSTOMER_PROFILE_REC,
+                  P_CREATE_PROFILE         => '',
+                  P_CREATE_PROFILE_AMT     => '',
+                  X_SITE_USE_ID            => X_BILL_SITE_USE_ID,
+                  X_RETURN_STATUS          => X_RETURN_STATUS,
+                  X_MSG_COUNT              => X_MSG_COUNT,
+                  X_MSG_DATA               => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_BILL_SITE_USE_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '141' || V_ERROR_MSG);
+                  ELSE
+                     V_BILL_SITE_USE_FLAG := 'T';
+                  END IF;
+               END IF;
+
+               ---======================= CREATE BILL_TO SITE PROFILE ===================[151]
+
+               V_CUSTOMER_SITE_PROFILE_REC.CUST_ACCOUNT_ID :=
+                  X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.SITE_USE_ID := X_BILL_SITE_USE_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.CREDIT_CHECKING := 'Y';
+               V_CUSTOMER_SITE_PROFILE_REC.OVERRIDE_TERMS := 'Y';
+               V_CUSTOMER_SITE_PROFILE_REC.STANDARD_TERMS :=
+                  REC.PAYMENT_TERM_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUSTOMER_PROFILE (
+                  P_INIT_MSG_LIST             => 'T',
+                  P_CUSTOMER_PROFILE_REC      => V_CUSTOMER_SITE_PROFILE_REC,
+                  P_CREATE_PROFILE_AMT        => 'F',
+                  X_CUST_ACCOUNT_PROFILE_ID   => X_BILL_SITE_PROFILE_ID,
+                  X_RETURN_STATUS             => X_RETURN_STATUS,
+                  X_MSG_COUNT                 => X_MSG_COUNT,
+                  X_MSG_DATA                  => X_MSG_DATA);
+
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '151' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+
+               --================ CREATE BILL_TO SITE PROFILE AMT =================[161]
+
+               V_CUSTOMER_SITE_PROFILE_AMT.CUST_ACCOUNT_PROFILE_ID :=
+                  X_BILL_SITE_PROFILE_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CUST_ACCOUNT_ID :=
+                  X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CURRENCY_CODE := REC.CURRENCY_CODE;
+               V_CUSTOMER_SITE_PROFILE_AMT.SITE_USE_ID := X_BILL_SITE_USE_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUST_PROFILE_AMT (
+                  P_INIT_MSG_LIST              => 'T',
+                  P_CHECK_FOREIGN_KEY          => FND_API.G_TRUE,
+                  P_CUST_PROFILE_AMT_REC       => V_CUSTOMER_SITE_PROFILE_AMT,
+                  X_CUST_ACCT_PROFILE_AMT_ID   => V_CUST_SIT_PROF_AMT_ID,
+                  X_RETURN_STATUS              => X_RETURN_STATUS,
+                  X_MSG_COUNT                  => X_MSG_COUNT,
+                  X_MSG_DATA                   => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '161' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+
+               --================= CREATE SHIP_TO SITE USE ============ [171]
+
+               V_CUST_SHIP_SITE_USE_REC.CUST_ACCT_SITE_ID :=
+                  X_CUST_ACCT_SITE_ID;
+               V_CUST_SHIP_SITE_USE_REC.SITE_USE_CODE := 'SHIP_TO';
+               V_CUST_SHIP_SITE_USE_REC.BILL_TO_SITE_USE_ID :=
+                  X_BILL_SITE_USE_ID;
+               V_CUST_SHIP_SITE_USE_REC.ORDER_TYPE_ID := REC.ORDER_TYPE_ID;
+               V_CUST_SHIP_SITE_USE_REC.PRICE_LIST_ID := REC.PRICE_LIST_ID;
+               V_CUST_SHIP_SITE_USE_REC.PAYMENT_TERM_ID := REC.PAYMENT_TERM_ID;
+               V_CUST_SHIP_SITE_USE_REC.PRIMARY_SALESREP_ID :=
+                  REC.PRIMARY_SALESREP_ID;
+               V_CUST_SHIP_SITE_USE_REC.STATUS := 'A';
+               V_CUST_SHIP_SITE_USE_REC.TERRITORY_ID := V_TERRITORY_ID;
+               V_CUST_SHIP_SITE_USE_REC.PRIMARY_FLAG := REC.SITE_PRIMARY_FLAG;
+               V_CUST_SHIP_SITE_USE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+               V_CUST_SHIP_SITE_USE_REC.ATTRIBUTE12 := 'A';
+
+
+               HZ_CUST_ACCOUNT_SITE_V2PUB.CREATE_CUST_SITE_USE (
+                  P_INIT_MSG_LIST          => 'T',
+                  P_CUST_SITE_USE_REC      => V_CUST_SHIP_SITE_USE_REC,
+                  P_CUSTOMER_PROFILE_REC   => V_CUSTOMER_PROFILE_REC,
+                  P_CREATE_PROFILE         => '',
+                  P_CREATE_PROFILE_AMT     => '',
+                  X_SITE_USE_ID            => X_SHIP_SITE_USE_ID,
+                  X_RETURN_STATUS          => X_RETURN_STATUS,
+                  X_MSG_COUNT              => X_MSG_COUNT,
+                  X_MSG_DATA               => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_SHIP_SITE_USE_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '171' || V_ERROR_MSG);
+                  ELSE
+                     V_SHIP_SITE_USE_FLAG := 'T';
+                  END IF;
+               END IF;
+
+               ---======================= CREATE SHIP_TO SITE PROFILE ===================[181]
+
+               V_CUSTOMER_SITE_PROFILE_REC.CUST_ACCOUNT_ID :=
+                  X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.SITE_USE_ID := X_SHIP_SITE_USE_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.CREDIT_CHECKING := 'Y';
+               V_CUSTOMER_SITE_PROFILE_REC.OVERRIDE_TERMS := 'Y';
+               V_CUSTOMER_SITE_PROFILE_REC.STANDARD_TERMS :=
+                  REC.PAYMENT_TERM_ID;
+               V_CUSTOMER_SITE_PROFILE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUSTOMER_PROFILE (
+                  P_INIT_MSG_LIST             => 'T',
+                  P_CUSTOMER_PROFILE_REC      => V_CUSTOMER_SITE_PROFILE_REC,
+                  P_CREATE_PROFILE_AMT        => 'F',
+                  X_CUST_ACCOUNT_PROFILE_ID   => X_SHIP_SITE_PROFILE_ID,
+                  X_RETURN_STATUS             => X_RETURN_STATUS,
+                  X_MSG_COUNT                 => X_MSG_COUNT,
+                  X_MSG_DATA                  => X_MSG_DATA);
+
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '181' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+
+               --================ CREATE SHIP_TO SITE PROFILE AMT =================[191]
+
+               V_CUSTOMER_SITE_PROFILE_AMT.CUST_ACCOUNT_PROFILE_ID :=
+                  X_SHIP_SITE_PROFILE_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CUST_ACCOUNT_ID :=
+                  X_CUST_ACCOUNT_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CURRENCY_CODE := REC.CURRENCY_CODE;
+               V_CUSTOMER_SITE_PROFILE_AMT.SITE_USE_ID := X_SHIP_SITE_USE_ID;
+               V_CUSTOMER_SITE_PROFILE_AMT.CREATED_BY_MODULE := V_MODULE_NAME;
+
+
+
+               HZ_CUSTOMER_PROFILE_V2PUB.CREATE_CUST_PROFILE_AMT (
+                  P_INIT_MSG_LIST              => 'T',
+                  P_CHECK_FOREIGN_KEY          => FND_API.G_TRUE,
+                  P_CUST_PROFILE_AMT_REC       => V_CUSTOMER_SITE_PROFILE_AMT,
+                  X_CUST_ACCT_PROFILE_AMT_ID   => V_CUST_SIT_PROF_AMT_ID,
+                  X_RETURN_STATUS              => X_RETURN_STATUS,
+                  X_MSG_COUNT                  => X_MSG_COUNT,
+                  X_MSG_DATA                   => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_FLAG := 'F';
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     RAISE_APPLICATION_ERROR (-20011, '191' || V_ERROR_MSG);
+                  END IF;
+               END IF;
+
+               UPDATE FRT_CUSTOMER_INTERFACE_ALL
+                  SET RESULT = '-',
+                      OPERATION_ID = V_OPERATION_ID,
+                      PARTY_SITE_FLAG = V_PARTY_SITE_FLAG,
+                      ACCOUNT_SITE_FLAG = V_ACCOUNT_SITE_FLAG,
+                      SHIP_SITE_USE_FLAG = V_SHIP_SITE_USE_FLAG,
+                      BILL_SITE_USE_FLAG = V_BILL_SITE_USE_FLAG,
+                      FLAG = 'T'
+                WHERE     ACCOUNT_NAME = REC.ACCOUNT_NAME
+                      AND PARTY_SITE_NAME = REC.PARTY_SITE_NAME;
+
+               COMMIT;
+            EXCEPTION
+               WHEN OTHERS
+               THEN
+                  ROLLBACK;
+                  FAIL_COUNT := FAIL_COUNT + 1;
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' ACCOUNT:'
+                     || REC.ACCOUNT_NAME
+                     || '- PARTY_SITE:'
+                     || REC.PARTY_SITE_NUMBER
+                     || ':'
+                     || SQLERRM;
+
+                  UPDATE FRT_CUSTOMER_INTERFACE_ALL
+                     SET OPERATION_ID = V_OPERATION_ID,
+                         RESULT = FAIL_MSG,
+                         PARTY_SITE_FLAG = V_PARTY_SITE_FLAG,
+                         ACCOUNT_SITE_FLAG = V_ACCOUNT_SITE_FLAG,
+                         SHIP_SITE_USE_FLAG = V_SHIP_SITE_USE_FLAG,
+                         BILL_SITE_USE_FLAG = V_BILL_SITE_USE_FLAG,
+                         FLAG = 'F'
+                   WHERE     ACCOUNT_NAME = REC.ACCOUNT_NAME
+                         AND PARTY_SITE_NAME = REC.PARTY_SITE_NAME;
+
+                  COMMIT;
+            END;
+         END IF;
+
+         COMMIT;
+      END LOOP;
+
+      IF FAIL_COUNT > 0
+      THEN
+         FND_MESSAGE.SET_NAME ('AI', 'PROCESS ERRORS: ' || FAIL_COUNT);
+      END IF;
+   END;
+
+   PROCEDURE AI_UPDATE_CUSTOMER
+   AS
+      V_ORGANIZATION_REC         HZ_PARTY_V2PUB.ORGANIZATION_REC_TYPE;
+      V_CUST_ACCOUNT_REC         HZ_CUST_ACCOUNT_V2PUB.CUST_ACCOUNT_REC_TYPE;
+      V_CUST_ACCT_SITE_REC       HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_ACCT_SITE_REC_TYPE;
+      V_CUST_SHIP_SITE_USE_REC   HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+      V_CUST_BILL_SITE_USE_REC   HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_SITE_USE_REC_TYPE;
+      V_PARTY_SITE_REC           HZ_PARTY_SITE_V2PUB.PARTY_SITE_REC_TYPE;
+      V_LOCATION_REC             HZ_LOCATION_V2PUB.LOCATION_REC_TYPE;
+      V_PARTY_VERSION            NUMBER;
+      V_PARTY_SITE_VERSION       NUMBER;
+      V_ACCOUNT_VERSION          NUMBER;
+      V_ACCOUNT_SITE_VERSION     NUMBER;
+      V_SHIP_SITE_VERSION        NUMBER;
+      V_BILL_SITE_VERSION        NUMBER;
+      V_LOCATION_VERSION         NUMBER;
+      V_PARTY_FLAG               VARCHAR2 (5) := 'N';
+      V_ACCOUNT_FLAG             VARCHAR2 (5) := 'N';
+      V_PARTY_SITE_FLAG          VARCHAR2 (5) := 'N';
+      V_ACCOUNT_SITE_FLAG        VARCHAR2 (5) := 'N';
+      V_SHIP_SITE_USE_FLAG       VARCHAR2 (5) := 'N';
+      V_BILL_SITE_USE_FLAG       VARCHAR2 (5) := 'N';
+      V_LOCATION_FLAG            VARCHAR2 (5) := 'N';
+      V_FLAG                     VARCHAR2 (5) := 'N';
+      V_PREV_PARTY               NUMBER := 0;
+      V_PREV_ACCOUNT             NUMBER := 0;
+      X_PROFILE_ID               NUMBER;
+      X_RETURN_STATUS            VARCHAR2 (30);
+      X_MSG_COUNT                NUMBER;
+      X_MSG_DATA                 VARCHAR2 (2000);
+      V_ERROR_MSG                VARCHAR2 (2000);
+      V_USER_ID                  NUMBER := FND_GLOBAL.USER_ID;          --1170
+      V_RESP_ID                  NUMBER := FND_GLOBAL.RESP_ID;         --51432
+      V_APPL_ID                  NUMBER := FND_GLOBAL.RESP_APPL_ID;      --222
+      V_ORG_ID                   NUMBER := 81;
+      V_OPERATION_ID               NUMBER := 0;
+      FAIL_MSG                   VARCHAR2 (2000);
+      FAIL_COUNT                 NUMBER := 0;
+      TRANS_ERROR                NUMBER := 0;
+      ERR                        EXCEPTION;
+      PRAGMA EXCEPTION_INIT (ERR, -20011);
+
+      CURSOR CUST_DATA (P_USER_ID NUMBER)
+      IS
+           SELECT *
+             FROM FRT_CUSTOMER_INTERFACE_ALL
+            WHERE OPERATION = 'UPDATE' AND FLAG = 'N' AND USER_ID = P_USER_ID
+         ORDER BY PARTY_ID, ACCOUNT_ID;
+   BEGIN
+      MO_GLOBAL.INIT ('AR');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,          --1170
+                                  RESP_ID        => V_RESP_ID,         --51432
+                                  RESP_APPL_ID   => V_APPL_ID);          --222
+
+      FOR REC IN CUST_DATA (V_USER_ID)
+      LOOP
+         V_PARTY_SITE_FLAG := 'N';
+         V_ACCOUNT_SITE_FLAG := 'N';
+         V_SHIP_SITE_USE_FLAG := 'N';
+         V_BILL_SITE_USE_FLAG := 'N';
+         V_LOCATION_FLAG := 'N';
+         V_FLAG := 'N';
+         FAIL_MSG := '-';
+         V_ERROR_MSG := NULL;
+
+         IF V_OPERATION_ID = 0
+         THEN
+            V_OPERATION_ID := REC.OPERATION_ID;
+         END IF;
+
+         BEGIN
+            --================ UPDATE PARTY =================[20]
+
+            IF V_PREV_PARTY <> REC.PARTY_ID
+            THEN
+               V_PARTY_FLAG := 'N';
+               V_PREV_PARTY := REC.PARTY_ID;
+
+               SELECT OBJECT_VERSION_NUMBER
+                 INTO V_PARTY_VERSION
+                 FROM HZ_PARTIES
+                WHERE PARTY_ID = REC.PARTY_ID;
+
+               V_ORGANIZATION_REC.PARTY_REC.PARTY_ID := REC.PARTY_ID;
+               V_ORGANIZATION_REC.ORGANIZATION_NAME := REC.CUSTOMER_NAME;
+		   V_ORGANIZATION_REC.PARTY_REC.STATUS := 'A';
+      	   V_ORGANIZATION_REC.PARTY_REC.ATTRIBUTE12 := 'A';
+
+               HZ_PARTY_V2PUB.UPDATE_ORGANIZATION (
+                  P_INIT_MSG_LIST                 => FND_API.G_FALSE,
+                  P_ORGANIZATION_REC              => V_ORGANIZATION_REC,
+                  P_PARTY_OBJECT_VERSION_NUMBER   => V_PARTY_VERSION,
+                  X_PROFILE_ID                    => X_PROFILE_ID,
+                  X_RETURN_STATUS                 => X_RETURN_STATUS,
+                  X_MSG_COUNT                     => X_MSG_COUNT,
+                  X_MSG_DATA                      => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_PARTY_FLAG := 'F';
+                     FAIL_COUNT := FAIL_COUNT + 1;
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+                     FAIL_MSG :=
+                           FAIL_MSG
+                        || ' PARTY:'
+                        || REC.PARTY_ID
+                        || ' '
+                        || V_ERROR_MSG;
+                  END IF;
+               ELSE
+                  V_PARTY_FLAG := 'T';
+               END IF;
+            END IF;
+
+            --================ UPDATE CUST ACCOUNT =================[21]
+            IF V_PREV_ACCOUNT <> REC.ACCOUNT_ID
+            THEN
+               V_ACCOUNT_FLAG := 'N';
+               V_PREV_ACCOUNT := REC.ACCOUNT_ID;
+
+               SELECT OBJECT_VERSION_NUMBER
+                 INTO V_ACCOUNT_VERSION
+                 FROM HZ_CUST_ACCOUNTS
+                WHERE CUST_ACCOUNT_ID = REC.ACCOUNT_ID;
+
+               V_CUST_ACCOUNT_REC.CUST_ACCOUNT_ID := REC.ACCOUNT_ID;
+               V_CUST_ACCOUNT_REC.ACCOUNT_NAME := REC.ACCOUNT_NAME;
+               V_CUST_ACCOUNT_REC.SALES_CHANNEL_CODE := REC.SALES_CHANNEL_CODE;
+               V_CUST_ACCOUNT_REC.CUSTOMER_CLASS_CODE :=
+                  REC.CUSTOMER_CLASS_CODE;
+               V_CUST_ACCOUNT_REC.STATUS := 'A';
+               V_CUST_ACCOUNT_REC.ATTRIBUTE10 := REC.ACCOUNT_BRANCH;
+               V_CUST_ACCOUNT_REC.ATTRIBUTE11 := UPPER (REC.ACCOUNT_BRAND);
+               V_CUST_ACCOUNT_REC.ATTRIBUTE12 := 'A';
+
+               HZ_CUST_ACCOUNT_V2PUB.UPDATE_CUST_ACCOUNT (
+                  P_INIT_MSG_LIST           => FND_API.G_FALSE,
+                  P_CUST_ACCOUNT_REC        => V_CUST_ACCOUNT_REC,
+                  P_OBJECT_VERSION_NUMBER   => V_ACCOUNT_VERSION,
+                  X_RETURN_STATUS           => X_RETURN_STATUS,
+                  X_MSG_COUNT               => X_MSG_COUNT,
+                  X_MSG_DATA                => X_MSG_DATA);
+
+               IF X_RETURN_STATUS IN ('E', 'U')
+               THEN
+                  IF X_MSG_COUNT > 0
+                  THEN
+                     V_ACCOUNT_FLAG := 'F';
+                     FAIL_COUNT := FAIL_COUNT + 1;
+                     V_ERROR_MSG :=
+                        FND_MSG_PUB.GET (
+                           P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                           P_ENCODED     => 'F');
+
+                     FAIL_MSG :=
+                           FAIL_MSG
+                        || ' ACCOUNT:'
+                        || REC.ACCOUNT_ID
+                        || ' '
+                        || V_ERROR_MSG;
+                  END IF;
+               ELSE
+                  V_ACCOUNT_FLAG := 'T';
+               END IF;
+            END IF;
+
+            --================ UPDATE LOCATION =================[22]
+
+            SELECT OBJECT_VERSION_NUMBER
+              INTO V_LOCATION_VERSION
+              FROM HZ_LOCATIONS
+             WHERE LOCATION_ID = REC.LOCATION_ID;
+
+            V_LOCATION_REC.LOCATION_ID := REC.LOCATION_ID;
+            V_LOCATION_REC.COUNTRY := REC.COUNTRY;
+            V_LOCATION_REC.CITY := REC.CITY;
+            V_LOCATION_REC.ADDRESS1 := REC.ADDRESS;
+
+            HZ_LOCATION_V2PUB.UPDATE_LOCATION (
+               P_INIT_MSG_LIST           => FND_API.G_FALSE,
+               P_LOCATION_REC            => V_LOCATION_REC,
+               P_OBJECT_VERSION_NUMBER   => V_LOCATION_VERSION,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_RETURN_STATUS IN ('E', 'U')
+            THEN
+               IF X_MSG_COUNT > 0
+               THEN
+                  V_LOCATION_FLAG := 'F';
+                  FAIL_COUNT := FAIL_COUNT + 1;
+
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' LOCATION:'
+                     || REC.LOCATION_ID
+                     || ' '
+                     || V_ERROR_MSG;
+               END IF;
+            ELSE
+               V_LOCATION_FLAG := 'T';
+            END IF;
+
+            --================ UPDATE PARTY SITE =================[23]
+
+            SELECT OBJECT_VERSION_NUMBER
+              INTO V_PARTY_SITE_VERSION
+              FROM HZ_PARTY_SITES
+             WHERE PARTY_SITE_ID = REC.PARTY_SITE_ID;
+
+            V_PARTY_SITE_REC.PARTY_SITE_ID := REC.PARTY_SITE_ID;
+            V_PARTY_SITE_REC.PARTY_ID := REC.PARTY_ID;
+            V_PARTY_SITE_REC.LOCATION_ID := REC.LOCATION_ID;
+            V_PARTY_SITE_REC.PARTY_SITE_NAME := REC.PARTY_SITE_NAME;
+            V_PARTY_SITE_REC.IDENTIFYING_ADDRESS_FLAG := 'Y';
+            V_PARTY_SITE_REC.STATUS := 'A';
+            V_PARTY_SITE_REC.ATTRIBUTE1 := REC.CONTACT_NAME;
+            V_PARTY_SITE_REC.ATTRIBUTE2 := REC.NATIONAL_ID;
+            V_PARTY_SITE_REC.ATTRIBUTE3 := REC.PHONE_NUMBER;
+            V_PARTY_SITE_REC.ATTRIBUTE4 := REC.EMAIL_ADDRESS;
+            V_PARTY_SITE_REC.ATTRIBUTE5 := REC.PAY_MACHINE;
+            V_PARTY_SITE_REC.ATTRIBUTE6 := REC.GEO_CODE;
+            V_PARTY_SITE_REC.ATTRIBUTE7 := REC.SUPERVISOR;
+            V_PARTY_SITE_REC.ATTRIBUTE12 := 'A';
+
+
+            HZ_PARTY_SITE_V2PUB.UPDATE_PARTY_SITE (
+               P_INIT_MSG_LIST           => FND_API.G_FALSE,
+               P_PARTY_SITE_REC          => V_PARTY_SITE_REC,
+               P_OBJECT_VERSION_NUMBER   => V_PARTY_SITE_VERSION,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_RETURN_STATUS IN ('E', 'U')
+            THEN
+               IF X_MSG_COUNT > 0
+               THEN
+                  V_PARTY_SITE_FLAG := 'F';
+                  FAIL_COUNT := FAIL_COUNT + 1;
+
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' PARTY SITE:'
+                     || REC.PARTY_SITE_ID
+                     || ' '
+                     || V_ERROR_MSG;
+               END IF;
+            ELSE
+               V_PARTY_SITE_FLAG := 'T';
+            END IF;
+
+            --================ UPDATE CUST ACCT SITE =================[24]
+
+            SELECT OBJECT_VERSION_NUMBER
+              INTO V_ACCOUNT_SITE_VERSION
+              FROM HZ_CUST_ACCT_SITES_ALL
+             WHERE CUST_ACCT_SITE_ID = REC.ACCOUNT_SITE_ID;
+
+            V_CUST_ACCT_SITE_REC.CUST_ACCT_SITE_ID := REC.ACCOUNT_SITE_ID;
+            V_CUST_ACCT_SITE_REC.CUST_ACCOUNT_ID := REC.ACCOUNT_ID;
+            V_CUST_ACCT_SITE_REC.PARTY_SITE_ID := REC.PARTY_SITE_ID;
+            V_CUST_ACCT_SITE_REC.TERRITORY_ID := REC.TERRITORY_ID;
+            V_CUST_ACCT_SITE_REC.STATUS := 'A';
+            V_CUST_ACCT_SITE_REC.ATTRIBUTE10 := REC.ACCT_SITE_BRANCH;
+            V_CUST_ACCT_SITE_REC.ATTRIBUTE11 := REC.ACCT_SITE_BRAND;
+            V_CUST_ACCT_SITE_REC.ATTRIBUTE12 := 'A';
+
+            HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_ACCT_SITE (
+               P_INIT_MSG_LIST           => FND_API.G_FALSE,
+               P_CUST_ACCT_SITE_REC      => V_CUST_ACCT_SITE_REC,
+               P_OBJECT_VERSION_NUMBER   => V_ACCOUNT_SITE_VERSION,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_RETURN_STATUS IN ('E', 'U')
+            THEN
+               IF X_MSG_COUNT > 0
+               THEN
+                  V_ACCOUNT_SITE_FLAG := 'F';
+                  FAIL_COUNT := FAIL_COUNT + 1;
+
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' ACCOUNT SITE:'
+                     || REC.ACCOUNT_SITE_ID
+                     || ' '
+                     || V_ERROR_MSG;
+               END IF;
+            ELSE
+               V_ACCOUNT_SITE_FLAG := 'T';
+            END IF;
+
+            --================ UPDATE SHIP_TO SITE USE =================[25]
+
+            SELECT OBJECT_VERSION_NUMBER
+              INTO V_SHIP_SITE_VERSION
+              FROM HZ_CUST_SITE_USES_ALL
+             WHERE SITE_USE_ID = REC.SHIP_SITE_USE_ID;
+
+            V_CUST_SHIP_SITE_USE_REC.SITE_USE_ID := REC.SHIP_SITE_USE_ID;
+            V_CUST_SHIP_SITE_USE_REC.CUST_ACCT_SITE_ID := REC.ACCOUNT_SITE_ID;
+            V_CUST_SHIP_SITE_USE_REC.SITE_USE_CODE := 'SHIP_TO';
+            V_CUST_SHIP_SITE_USE_REC.ORDER_TYPE_ID := REC.ORDER_TYPE_ID;
+            V_CUST_SHIP_SITE_USE_REC.PRICE_LIST_ID := REC.PRICE_LIST_ID;
+            V_CUST_SHIP_SITE_USE_REC.PAYMENT_TERM_ID := REC.PAYMENT_TERM_ID;
+            V_CUST_SHIP_SITE_USE_REC.PRIMARY_SALESREP_ID :=
+               REC.PRIMARY_SALESREP_ID;
+            V_CUST_SHIP_SITE_USE_REC.TERRITORY_ID := REC.TERRITORY_ID;
+            V_CUST_SHIP_SITE_USE_REC.STATUS := 'A';
+            V_CUST_SHIP_SITE_USE_REC.ATTRIBUTE12 := 'A';
+
+            HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_SITE_USE (
+               P_INIT_MSG_LIST           => FND_API.G_FALSE,
+               P_CUST_SITE_USE_REC       => V_CUST_SHIP_SITE_USE_REC,
+               P_OBJECT_VERSION_NUMBER   => V_SHIP_SITE_VERSION,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_RETURN_STATUS IN ('E', 'U')
+            THEN
+               IF X_MSG_COUNT > 0
+               THEN
+                  V_SHIP_SITE_USE_FLAG := 'F';
+                  FAIL_COUNT := FAIL_COUNT + 1;
+
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' SHIP SITE USE:'
+                     || REC.SHIP_SITE_USE_ID
+                     || ' '
+                     || V_ERROR_MSG;
+               END IF;
+            ELSE
+               V_SHIP_SITE_USE_FLAG := 'T';
+            END IF;
+
+
+            --================ UPDATE BILL_TO SITE USE =================[26]
+
+            SELECT OBJECT_VERSION_NUMBER
+              INTO V_BILL_SITE_VERSION
+              FROM HZ_CUST_SITE_USES_ALL
+             WHERE SITE_USE_ID = REC.BILL_SITE_USE_ID;
+
+            V_CUST_BILL_SITE_USE_REC.SITE_USE_ID := REC.BILL_SITE_USE_ID;
+            V_CUST_BILL_SITE_USE_REC.CUST_ACCT_SITE_ID := REC.ACCOUNT_SITE_ID;
+            V_CUST_BILL_SITE_USE_REC.SITE_USE_CODE := 'BILL_TO';
+            V_CUST_BILL_SITE_USE_REC.ORDER_TYPE_ID := REC.ORDER_TYPE_ID;
+            V_CUST_BILL_SITE_USE_REC.PRICE_LIST_ID := REC.PRICE_LIST_ID;
+            V_CUST_BILL_SITE_USE_REC.PAYMENT_TERM_ID := REC.PAYMENT_TERM_ID;
+            V_CUST_BILL_SITE_USE_REC.PRIMARY_SALESREP_ID :=
+               REC.PRIMARY_SALESREP_ID;
+            V_CUST_BILL_SITE_USE_REC.TERRITORY_ID := REC.TERRITORY_ID;
+            V_CUST_BILL_SITE_USE_REC.STATUS := 'A';
+            V_CUST_BILL_SITE_USE_REC.ATTRIBUTE12 := 'A';
+            HZ_CUST_ACCOUNT_SITE_V2PUB.UPDATE_CUST_SITE_USE (
+               P_INIT_MSG_LIST           => FND_API.G_FALSE,
+               P_CUST_SITE_USE_REC       => V_CUST_BILL_SITE_USE_REC,
+               P_OBJECT_VERSION_NUMBER   => V_BILL_SITE_VERSION,
+               X_RETURN_STATUS           => X_RETURN_STATUS,
+               X_MSG_COUNT               => X_MSG_COUNT,
+               X_MSG_DATA                => X_MSG_DATA);
+
+            IF X_RETURN_STATUS IN ('E', 'U')
+            THEN
+               IF X_MSG_COUNT > 0
+               THEN
+                  V_BILL_SITE_USE_FLAG := 'F';
+                  FAIL_COUNT := FAIL_COUNT + 1;
+
+                  V_ERROR_MSG :=
+                     FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                      P_ENCODED     => 'F');
+
+                  FAIL_MSG :=
+                        FAIL_MSG
+                     || ' BILL SITE USE:'
+                     || REC.BILL_SITE_USE_ID
+                     || ' '
+                     || V_ERROR_MSG;
+               END IF;
+            ELSE
+               V_BILL_SITE_USE_FLAG := 'T';
+            END IF;
+
+            IF FAIL_MSG = '-'
+            THEN
+               V_FLAG := 'T';
+            ELSE
+               V_FLAG := 'F';
+               FAIL_MSG := 'AI' || FAIL_MSG;
+            END IF;
+
+            UPDATE FRT_CUSTOMER_INTERFACE_ALL
+               SET RESULT = FAIL_MSG,
+                   PARTY_FLAG = V_PARTY_FLAG,
+                   ACCOUNT_FLAG = V_ACCOUNT_FLAG,
+                   PARTY_SITE_FLAG = V_PARTY_SITE_FLAG,
+                   ACCOUNT_SITE_FLAG = V_ACCOUNT_SITE_FLAG,
+                   SHIP_SITE_USE_FLAG = V_SHIP_SITE_USE_FLAG,
+                   BILL_SITE_USE_FLAG = V_BILL_SITE_USE_FLAG,
+                   LOCATION_FLAG = V_LOCATION_FLAG,
+                   FLAG = V_FLAG
+             WHERE SHIP_SITE_USE_ID = REC.SHIP_SITE_USE_ID;
+
+            COMMIT;
+         EXCEPTION
+            WHEN OTHERS
+            THEN
+               FAIL_COUNT := FAIL_COUNT + 1;
+               FAIL_MSG := 'AI' || FAIL_MSG || ' ' || SQLERRM;
+
+               UPDATE FRT_CUSTOMER_INTERFACE_ALL
+                  SET RESULT = FAIL_MSG,
+                      PARTY_FLAG = V_PARTY_FLAG,
+                      ACCOUNT_FLAG = V_ACCOUNT_FLAG,
+                      PARTY_SITE_FLAG = V_PARTY_SITE_FLAG,
+                      ACCOUNT_SITE_FLAG = V_ACCOUNT_SITE_FLAG,
+                      SHIP_SITE_USE_FLAG = V_SHIP_SITE_USE_FLAG,
+                      BILL_SITE_USE_FLAG = V_BILL_SITE_USE_FLAG,
+                      LOCATION_FLAG = V_LOCATION_FLAG,
+                      FLAG = 'F'
+                WHERE SHIP_SITE_USE_ID = REC.SHIP_SITE_USE_ID;
+
+               COMMIT;
+         END;
+      END LOOP;
+
+      SELECT COUNT (*)
+        INTO TRANS_ERROR
+        FROM FRT_CUSTOMER_INTERFACE_TL
+       WHERE FLAG = 'F' AND OPERATION_ID = V_OPERATION_ID;
+
+      IF FAIL_COUNT > 0 OR TRANS_ERROR > 0
+      THEN
+         FND_MESSAGE.SET_NAME (
+            'AI',
+               'OP:'
+            || V_OPERATION_ID
+            || ' TRANS:'
+            || TRANS_ERROR
+            || ' PROC:'
+            || FAIL_COUNT);
+      END IF;
+   END;
+END FRT_AI_CUSTOMER_PKG;
+/
+SELECT CIT.OPERATION_ID,
+       CIT.LINE_NUMBER,
+       CIT.SITE_USE_ID,
+       CIT.SITE_BRAND,
+       CIT.ACCOUNT_BRAND,
+       CIT.ACCOUNT_BRANCH,
+       CIT.SITE_NUMBER,
+       CIT.CUSTOMER_NUMBER,
+       CIT.CUSTOMER_NAME,
+       CIT.ACCOUNT_NUMBER,
+       CIT.ACCOUNT_NAME,
+       CIT.SITE_NAME,
+       CIT.ADDRESS,
+       CIT.TERRITORY_NAME,
+       CIT.ACCOUNT_CLASS,
+       CIT.CITY,
+       CIT.SALESREP_NAME,
+       CIT.SALESREP_NUMBER,
+       CIT.PHONE_NUMBER,
+       CIT.CONTACT_NAME,
+       CIT.TAXPAYER_ID,
+       CIT.NATIONAL_ID,
+       CIT.EMAIL_ADDRESS,
+       CIT.PAY_MACHINE,
+       CIT.SUPERVISOR,
+       CIT.USER_ID,
+       CIT.CREATION_DATE,
+       CASE WHEN CIA.FLAG = 'F' THEN CIA.FLAG || '2' ELSE CIT.FLAG END FLAG,
+       CASE WHEN CIA.FLAG = 'F' THEN CIA.RESULT ELSE CIT.RESULT END
+          RESULT
+  FROM FRT_CUSTOMER_INTERFACE_TL CIT, FRT_CUSTOMER_INTERFACE_ALL CIA
+ WHERE     CIT.OPERATION_ID = CIA.OPERATION_ID(+)
+       AND CIT.LINE_NUMBER = CIA.LINE_NUMBER(+)

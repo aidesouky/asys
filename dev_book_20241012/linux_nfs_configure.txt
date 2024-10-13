@@ -1,0 +1,102 @@
+##### Install NFS Server #####
+==============================
+# yum install nfs-utils.x86_64
+# apt install nfs-kernel-server
+
+##### Create Shared Directory #####
+===================================
+# mkdir -P /share/mydocs 
+# mkdir /share/mydata /share/public /share/private
+
+##### Export shared Directories #####
+=====================================
+# exportfs -o rw,no_subtree_check 192.168.1.0/255.255.255.0:/share/public
+# vim /etc/exports
+/share/public 192.168.1.0/255.255.255.0(rw,no_subtree_check)
+/share/private 192.168.1.0/255.255.255.0(ro,no_subtree_check)
+/share/mydata 192.168.1.0/255.255.255.0(rw,no_subtree_check)
+/share/mydocs 192.168.1.0/255.255.255.0(rw,no_subtree_check)
+
+##### Unexport Reexport Shared Directory #####
+==============================================
+# exportfs -ua
+# exportfs -ra
+
+##### View shared Directories #####
+===================================
+# exportfs
+# showmount -e
+# cat /etc/exports
+
+##### Reload NFS Server #####
+=============================
+# systemctl restart nfs-server
+
+##### Install NFS Client Tools #####
+====================================
+# yum install nfsv4-client-utils.x86_64
+# apt install nfs-common
+
+##### View Export List #####
+============================
+# showmount --exports 192.168.1.115
+/share/mydocs  192.168.1.0/255.255.255.0
+/share/mydata  192.168.1.0/255.255.255.0
+/share/private 192.168.1.0/255.255.255.0
+/share/public  192.168.1.0/255.255.255.0s
+
+##### Create Mount Points Manual #####
+======================================
+# mkdir /mnt/nfs
+# mkdire /mnt/nfs/pub /mnt/nfs/priv
+
+##### Mount Exported Directories Manual #####
+=============================================
+# mount 192.168.1.115:/share/public /mnt/nfs/pub
+# mount 192.168.1.115:/share/private /mnt/nfs/priv
+
+##### Check Mounted Points #####
+================================
+# mount
+# df -h
+
+##### Install autofs #####
+==========================
+# yum install autofs.x86_64
+# apt install autofs
+
+##### Configure autofs Service #####
+====================================
+# vim /etc/auto.master
+/mnt/nfs /etc/auto.nfs --ghost --timeout=60
+# vim /etc/auto.nfs
+docs -fstype=nfs4,rw 192.168.1.115:/share/mydocs
+data -fstype=nfs4,rw 192.168.1.115:/share/mydata
+
+##### Mount Exported Directories Auto (just enter directory to auto mount) #####
+================================================================================
+# cd /mnt/nfs/docs
+# cd /mnt/nfs/data
+
+##### Check Mounted Points (mounted points removed after timeout seconds) #####
+===============================================================================
+# mount
+# df -h
+
+##### File /etc/exports #####
+##### Example for NFSv2 and NFSv3: #####
+========================================
+ /srv/nfs        hostname1(rw,sync,no_subtree_check) hostname2(ro,sync,no_subtree_check)
+ /srv/nfs/homes  192.168.1.0/255.255.255.0(ro,sync,no_subtree_check)
+ /srv/nfs/homes  *(ro,sync,no_subtree_check)
+ 
+##### Example for NFSv4: #####
+==============================
+ /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)
+ /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)
+ 
+##### options: #####
+====================
+ ro,rw,sync,async,nohide,crossmnt,fsid=0,secure,insecure,no_subtree_check,
+ anonuid=150,anongid=100,root_squash,no_root_squash,all_squash
+

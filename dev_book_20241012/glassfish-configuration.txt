@@ -1,0 +1,132 @@
+2. list domains
+# asadmin list-domains
+
+1. create domain
+# asadmin create-domain --savemasterpassword --adminport 4848 domain1
+
+3. delete domain
+# asadmin delete-domain --domaindir ..\domains domain1
+
+4. backup domain
+# asadmin backup-domain --backupdir /<path>/ domain1
+
+5. restore domain
+# asadmin restore-domain --backupdir /<path>/ domain1
+
+6. list backups
+# asadmin list-backups --backupdir /<dir>/ domain1
+
+7. start domain
+# asadmin start-domain domain1
+
+8. restart domain
+# asadmin restart-domain domain1
+
+9. stop domain
+# asadmin stop-domain domain1
+
+10. list instances
+# asadmin list-instances
+
+10. create instance
+# asadmin create-instance --node localhost-domain1 <instance>
+
+10. delete instance
+# asadmin delete-instance <instance>
+
+10. start instance
+# asadmin start-instance <instance>
+
+10. stop instance
+# asadmin stop-instance <instance>
+
+10. create local instance
+# asadmin create-local-instance --node localhost-domain1 <instance>
+
+10. delete local instance
+# asadmin delete-local-instance <instance>
+
+10. start local instance
+# asadmin start-local-instance <instance>
+
+10. stop local instance
+# asadmin stop-local-instance <instance>
+
+10. lis jdbc-connection-pool
+# asadmin list-jdbc-connection-pools
+
+11. create jdbc-connection-pool
+---created but not working datasource
+# asadmin create-jdbc-connection-pool --datasourceclassname oracle.jdbc.pool.OracleDataSource --restype javax.sql.DataSource --property portNumber=1521:password=aidb:user=aidb:serverName=192.168.1.104:databaseName=xe
+---created and it working
+# asadmin create-jdbc-connection-pool --datasourceclassname oracle.jdbc.pool.OracleDataSource --restype javax.sql.DataSource --property user=aidb:password=aidb:url='jdbc:oracle:thin:@192.168.1.104:1521/xe' <aidbPool>
+---created and it working
+# asadmin create-jdbc-connection-pool --driverclassname oracle.jdbc.driver.OracleDriver --restype java.sql.Driver --property user=aidb:password=aidb:url='jdbc:oracle:thin:@192.168.1.104:1521/xe' <aidbPool>
+
+12. delete jdbc-connection-pool
+# asadmin delete-jdbc-connection-pool <conn>
+
+13. ping connection-pool
+# asadmin ping-connection-pool <conn>
+
+14. list jndi-resources
+# asadmin list-jndi-resources
+
+15. list jndi-entries
+# asadmin list-jndi-entries
+
+16. create jndi-resource 
+# asadmin create-jndi-resource 
+
+17. delete jndi-resource 
+# asadmin delete-jndi-resource <resource>
+
+18. list jdbc-resources
+# asadmin list-jdbc-resources
+
+19. create jdbc-resource
+# asadmin create-jdbc-resource --connectionpoolid aidbPool --description "my desc" jdbc/aidb
+
+20. delete jdbc-resource
+# asadmin delete-jdbc-resource <jdbc/test>
+
+21. list applications
+# asadmin list-applications
+
+23. deploy apps
+# asadmin deploy /<path>/app.war
+
+24. redeploy apps
+# asadmin redeploy --properties keepSessions=true /<path>/app.war
+
+25. undeploy apps
+# asadmin undeploy app
+
+26. add library
+# asadmin add-library --type {common|ext|app} /<path>/lib.jar
+
+1. list password aliases
+# asadmin list-password-aliases
+
+1. create password aliases
+# asadmin create-password-alias myalias
+
+1. delete password aliase
+# asadmin delete-password-alias myalias
+
+27. change master password
+# asadmin change-master-password --savemasterpassword=true domain1
+or
+Admin Console > Configuration > default-config > security > Default Principle Password
+
+28. change admin password
+# asadmin change-admin-password
+
+22. list http-listeners
+# asadmin list-http-listeners
+
+29. query uptime
+# asadmin uptime
+
+30. query version
+# asadmin version

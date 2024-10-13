@@ -1,0 +1,61 @@
+##### firewall configure #####
+==============================
+# firewall-cmd --state
+# firewall-cmd --reload
+# firewall-cmd --list-all
+# firewall-cmd --list-services
+# firewall-cmd --list-ports
+# firewall-cmd --get-active-zones
+# firewall-cmd --get-default-zone
+# firewall-cmd --get-zones
+# firewall-cmd --set-default-zone = zone_name
+# firewall-cmd --permanent --add-service service_name
+# firewall-cmd --permanent --remove-service service_name
+# firewall-cmd --permanent --add-port port/protocol
+# firewall-cmd --permanent --remove-port port/protocol
+# firewall-cmd --permanent --add-interface interface_name
+# firewall-cmd --permanent --remove-interface interface_name
+# ufw enable
+# ufw disable
+# ufw reset
+# ufw status
+# ufw status numbered
+# ufw allow ssh
+# ufw deny ssh
+# ufw limit ssh
+# ufw allow 22/tcp
+# ufw deny 22/tcp
+# ufw limit 22/tcp
+# ufw allow 1000:2000/tcp
+# ufw deny 1000:2000/tcp
+# ufw delete allow 80/tcp
+# ufw delete 4
+# ufw allow from server_ip
+
+##### servers connections #####
+================================
+# wget -o image.jpg https://freeimages.com/animal.jpg			downlad image to the current directory with output name image.jpg
+# wget -q --show-progress https://freeimages.com/animal.jpg		downlad image to the current directory and in backgroud show download progress and find result with command "cat wget-log"
+# wget -p ~/images https://freeimages.com/animal.jpg			downlad image to the directory ~/images
+# wget -i ~/images/link.txt -q --show-progress				downlad links in file ~/images/link.txt to current directory
+# wget http://worldtimeapi.org/api/timezone/Africa/Cairo		send get request to worldtimeapi and download json file as a result
+# wget --method=post -O- -q --body-data='{"name":"value"}' --header="Content-Type:application/json"s https://server.com/json
+# wget --method=post -O- -q --body-data='{"name":"value"}' --header="Content-Type: application/json" --header="Authorization: Bearer token" https://server.com/json
+# curl -o image.jpg https://freeimages.com/animal.jpg			downlad image to the current directory with output name image.jpg
+# curl -o cairo.json http://worldtimeapi.org/api/timezone/Africa/Cairo	send get request to worldtimeapi and download json file as a result
+# curl -X POST https://server.com/json -H 'Content-Type: application/json' -d '{"name":"value"}'
+# curl -X POST https://server.com/form -H "Content-Type: application/x-www-form-urlencoded" -d "key1=value1&key2=value2"
+# curl -X POST https://server.com/xml -H "Content-Type: application/xml" -d "<user><Id>1</Id><name>name<name><User>"
+# curl -X POST https://server.com/json -H 'Content-Type: application/json' -d @data.json
+# curl -X POST https://server.com//json --user "user:pass"
+
+##### transfer receive files #####
+=======================
+# scp /share/file1.txt ai@192.168.1.104:/share
+# scp ai@192.168.1.104:/share/file2.txt /share
+
+## general #####
+================
+# telnet ip port
+# rpcinfo -p ip
+# netstat -an | grep <port>

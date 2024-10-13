@@ -1,0 +1,84 @@
+SELECT * FROM WIP_ACCOUNTING_CLASSES;
+/
+BEGIN
+   FOR Z IN (SELECT *
+               FROM FRT_EAM_INTERFACE
+              WHERE C05 IS NOT NULL AND C06 IS NOT NULL AND C07 IS NOT NULL)
+   LOOP
+      INSERT INTO WIP_ACCOUNTING_CLASSES (CLASS_CODE,
+                                          ORGANIZATION_ID,
+                                          LAST_UPDATE_DATE,
+                                          LAST_UPDATED_BY,
+                                          CREATION_DATE,
+                                          CREATED_BY,
+                                          CLASS_TYPE,
+                                          DESCRIPTION,
+                                          MATERIAL_ACCOUNT,
+                                          MATERIAL_VARIANCE_ACCOUNT,
+                                          MATERIAL_OVERHEAD_ACCOUNT,
+                                          RESOURCE_ACCOUNT,
+                                          RESOURCE_VARIANCE_ACCOUNT,
+                                          OUTSIDE_PROCESSING_ACCOUNT,
+                                          OUTSIDE_PROC_VARIANCE_ACCOUNT,
+                                          OVERHEAD_ACCOUNT,
+                                          OVERHEAD_VARIANCE_ACCOUNT)
+           VALUES (Z.C01,
+                   292,
+                   SYSDATE,
+                   2887,
+                   SYSDATE,
+                   2887,
+                   6,
+                   Z.C01,
+                   Z.C05,
+                   Z.C05,
+                   Z.C05,
+                   Z.C06,
+                   Z.C06,
+                   Z.C07,
+                   Z.C07,
+                   Z.C05,
+                   Z.C05);
+   END LOOP;
+
+   COMMIT;
+END;
+/
+DECLARE
+   ACC_ID   NUMBER;
+BEGIN
+   FOR Z IN (SELECT * FROM FRT_EAM_INTERFACE)
+   LOOP
+   BEGIN
+      SELECT CODE_COMBINATION_ID
+        INTO ACC_ID
+        FROM GL_CODE_COMBINATIONS
+       WHERE    SEGMENT1
+             || '.'
+             || SEGMENT2
+             || '.'
+             || SEGMENT3
+             || '.'
+             || SEGMENT4
+             || '.'
+             || SEGMENT5
+             || '.'
+             || SEGMENT6
+             || '.'
+             || SEGMENT7
+             || '.'
+             || SEGMENT8
+             || '.'
+             || SEGMENT9 = Z.C04;
+
+      UPDATE FRT_EAM_INTERFACE
+         SET C07 = ACC_ID
+       WHERE ID = Z.ID;
+       EXCEPTION WHEN OTHERS THEN
+       DBMS_OUTPUT.PUT_LINE(SQLERRM);
+       END;
+   END LOOP;
+
+   COMMIT;
+   
+END;

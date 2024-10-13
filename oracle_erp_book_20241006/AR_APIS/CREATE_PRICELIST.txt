@@ -1,0 +1,316 @@
+CREATE TABLE FRT_PL_INTERFACE
+(
+  LIST_HEADER_ID        NUMBER,
+  LIST_LINE_ID          NUMBER,
+  PRICING_ATTRIBUTE_ID  NUMBER,
+  ORG_ID                NUMBER,
+  NAME                  VARCHAR2(50),
+  DESCRIPTION           VARCHAR2(100),
+  CURRENCY_CODE         VARCHAR2(10),
+  START_DATE_ACTIVE     DATE,
+  END_DATE_ACTIVE       DATE,
+  VERSION_NO            NUMBER,
+  ACTIVE_FLAG           VARCHAR2(1),
+  INVENTORY_ITEM_ID     NUMBER,
+  OPERAND               NUMBER,
+  PRODUCT_UOM_CODE      VARCHAR2(5),
+  USER_ID               NUMBER,
+  FLAG                  VARCHAR2(5),
+  CREATION_DATE         DATE,
+  RESULT VARCHAR2(1000)
+)
+/
+CREATE TABLE FRT_TRX_PRICELIST
+(
+  TRX_TYPE_ID    NUMBER,
+  PRICE_LIST_ID  NUMBER,
+  USER_ID        NUMBER,
+  FLAG           VARCHAR2(5),
+  CREATION_DATE  DATE,
+  RESULT VARCHAR2(1000)
+)
+/
+CREATE OR REPLACE PACKAGE APPS.FRT_AI_PRICELIST_PKG
+AS
+   PROCEDURE AI_IMPORT_PL_LINES (P_LIST_HEADER_ID          NUMBER,
+                                 P_LIST_LINE_ID            NUMBER,
+                                 P_PRICING_ATTRIBUTE_ID    NUMBER,
+                                 P_ORG_ID                  NUMBER,
+                                 P_NAME                    VARCHAR2,
+                                 P_DESCRIPTION             VARCHAR2,
+                                 P_CURRENCY_CODE           VARCHAR2,
+                                 P_START_DATE_ACTIVE       DATE,
+                                 P_END_DATE_ACTIVE         DATE,
+                                 P_VERSION_NO              NUMBER,
+                                 P_ACTIVE_FLAG             VARCHAR2,
+                                 P_INVENTORY_ITEM_ID       NUMBER,
+                                 P_OPERAND                 NUMBER,
+                                 P_PRODUCT_UOM_CODE        VARCHAR2);
+
+   PROCEDURE AI_IMPORT_TRX_TYPES (P_TRX_TYPE_ID      NUMBER,
+                                  P_PRICE_LIST_ID    NUMBER);
+
+   PROCEDURE AI_CREATE_PRICELIST;
+
+   PROCEDURE AI_LINK_PRICELIST;
+END FRT_AI_PRICELIST_PKG;
+/
+CREATE OR REPLACE PACKAGE BODY APPS.FRT_AI_PRICELIST_PKG
+AS
+   PROCEDURE AI_IMPORT_PL_LINES (P_LIST_HEADER_ID          NUMBER,
+                                 P_LIST_LINE_ID            NUMBER,
+                                 P_PRICING_ATTRIBUTE_ID    NUMBER,
+                                 P_ORG_ID                  NUMBER,
+                                 P_NAME                    VARCHAR2,
+                                 P_DESCRIPTION             VARCHAR2,
+                                 P_CURRENCY_CODE           VARCHAR2,
+                                 P_START_DATE_ACTIVE       DATE,
+                                 P_END_DATE_ACTIVE         DATE,
+                                 P_VERSION_NO              NUMBER,
+                                 P_ACTIVE_FLAG             VARCHAR2,
+                                 P_INVENTORY_ITEM_ID       NUMBER,
+                                 P_OPERAND                 NUMBER,
+                                 P_PRODUCT_UOM_CODE        VARCHAR2)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+   BEGIN
+      INSERT INTO FRT_PL_INTERFACE (LIST_HEADER_ID,
+                                    LIST_LINE_ID,
+                                    PRICING_ATTRIBUTE_ID,
+                                    ORG_ID,
+                                    NAME,
+                                    DESCRIPTION,
+                                    CURRENCY_CODE,
+                                    START_DATE_ACTIVE,
+                                    END_DATE_ACTIVE,
+                                    VERSION_NO,
+                                    ACTIVE_FLAG,
+                                    INVENTORY_ITEM_ID,
+                                    OPERAND,
+                                    PRODUCT_UOM_CODE,
+                                    USER_ID,
+                                    FLAG,
+                                    CREATION_DATE)
+           VALUES (P_LIST_HEADER_ID,
+                   P_LIST_LINE_ID,
+                   P_PRICING_ATTRIBUTE_ID,
+                   P_ORG_ID,
+                   P_NAME,
+                   P_DESCRIPTION,
+                   P_CURRENCY_CODE,
+                   P_START_DATE_ACTIVE,
+                   P_END_DATE_ACTIVE,
+                   P_VERSION_NO,
+                   P_ACTIVE_FLAG,
+                   P_INVENTORY_ITEM_ID,
+                   P_OPERAND,
+                   P_PRODUCT_UOM_CODE,
+                   V_USER_ID,
+                   'N',
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_IMPORT_TRX_TYPES (P_TRX_TYPE_ID      NUMBER,
+                                  P_PRICE_LIST_ID    NUMBER)
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+   BEGIN
+      INSERT INTO FRT_TRX_PRICELIST (TRX_TYPE_ID,
+                                     PRICE_LIST_ID,
+                                     USER_ID,
+                                     FLAG,
+                                     CREATION_DATE)
+           VALUES (P_TRX_TYPE_ID,
+                   P_PRICE_LIST_ID,
+                   V_USER_ID,
+                   'N',
+                   SYSDATE);
+
+      COMMIT;
+   END;
+
+   PROCEDURE AI_CREATE_PRICELIST
+   IS
+      X_RETURN_STATUS               VARCHAR2 (1) := NULL;
+      X_MSG_COUNT                   NUMBER := 0;
+      X_MSG_DATA                    VARCHAR2 (2000);
+      V_PRICE_LIST_REC              QP_PRICE_LIST_PUB.PRICE_LIST_REC_TYPE;
+      V_PRICE_LIST_LINE_TBL         QP_PRICE_LIST_PUB.PRICE_LIST_LINE_TBL_TYPE;
+      V_PRICING_ATTR_TBL            QP_PRICE_LIST_PUB.PRICING_ATTR_TBL_TYPE;
+      PPR_PRICE_LIST_REC            QP_PRICE_LIST_PUB.PRICE_LIST_REC_TYPE;
+      PPR_PRICE_LIST_VAL_REC        QP_PRICE_LIST_PUB.PRICE_LIST_VAL_REC_TYPE;
+      PPR_PRICE_LIST_LINE_TBL       QP_PRICE_LIST_PUB.PRICE_LIST_LINE_TBL_TYPE;
+      PPR_PRICE_LIST_LINE_VAL_TBL   QP_PRICE_LIST_PUB.PRICE_LIST_LINE_VAL_TBL_TYPE;
+      PPR_QUALIFIERS_TBL            QP_QUALIFIER_RULES_PUB.QUALIFIERS_TBL_TYPE;
+      PPR_QUALIFIERS_VAL_TBL        QP_QUALIFIER_RULES_PUB.QUALIFIERS_VAL_TBL_TYPE;
+      PPR_PRICING_ATTR_TBL          QP_PRICE_LIST_PUB.PRICING_ATTR_TBL_TYPE;
+      PPR_PRICING_ATTR_VAL_TBL      QP_PRICE_LIST_PUB.PRICING_ATTR_VAL_TBL_TYPE;
+      FAIL_MSG                      VARCHAR2 (100);
+      V_USER_ID                     NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID                     NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID                     NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID                      NUMBER := 81;
+      I                             NUMBER := 1;
+      LIST_REC                      FRT_PL_INTERFACE%ROWTYPE;
+
+      CURSOR LIST_CUR (P_USER_ID NUMBER)
+      IS
+         SELECT *
+           FROM FRT_PL_INTERFACE
+          WHERE USER_ID = P_USER_ID;
+   BEGIN
+      MO_GLOBAL.INIT ('ONT');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      SELECT *
+        INTO LIST_REC
+        FROM FRT_PL_INTERFACE
+       WHERE USER_ID = V_USER_ID AND ROWNUM = 1;
+
+      --Header Rec
+
+      V_PRICE_LIST_REC.LIST_HEADER_ID := QP_LIST_HEADERS_B_S.NEXTVAL;
+      V_PRICE_LIST_REC.LIST_TYPE_CODE := 'PRL';
+      V_PRICE_LIST_REC.OPERATION := 'CREATE';
+      V_PRICE_LIST_REC.NAME := LIST_REC.NAME;
+      V_PRICE_LIST_REC.DESCRIPTION := LIST_REC.DESCRIPTION;
+      V_PRICE_LIST_REC.CURRENCY_CODE := LIST_REC.CURRENCY_CODE;
+      V_PRICE_LIST_REC.START_DATE_ACTIVE := TRUNC (LIST_REC.START_DATE_ACTIVE);
+      V_PRICE_LIST_REC.END_DATE_ACTIVE := LIST_REC.END_DATE_ACTIVE;
+
+      FOR REC IN LIST_CUR (V_USER_ID)
+      LOOP
+         --Line Record Values
+         V_PRICE_LIST_LINE_TBL (I).LIST_HEADER_ID :=
+            QP_LIST_HEADERS_B_S.CURRVAL;
+         V_PRICE_LIST_LINE_TBL (I).LIST_LINE_ID := QP_LIST_LINES_S.NEXTVAL;
+         V_PRICE_LIST_LINE_TBL (I).INVENTORY_ITEM_ID := REC.INVENTORY_ITEM_ID;
+         V_PRICE_LIST_LINE_TBL (I).START_DATE_ACTIVE :=
+            TRUNC (REC.START_DATE_ACTIVE);
+         V_PRICE_LIST_LINE_TBL (I).END_DATE_ACTIVE := REC.END_DATE_ACTIVE;
+         V_PRICE_LIST_LINE_TBL (I).OPERAND := REC.OPERAND;
+         V_PRICE_LIST_LINE_TBL (I).LIST_LINE_TYPE_CODE := 'PLL';
+         V_PRICE_LIST_LINE_TBL (I).ARITHMETIC_OPERATOR := 'UNIT_PRICE';
+         V_PRICE_LIST_LINE_TBL (I).CREATED_BY := V_USER_ID;
+         V_PRICE_LIST_LINE_TBL (I).CREATION_DATE := SYSDATE;
+         V_PRICE_LIST_LINE_TBL (I).LAST_UPDATED_BY := V_USER_ID;
+         V_PRICE_LIST_LINE_TBL (I).LAST_UPDATE_DATE := SYSDATE;
+         V_PRICE_LIST_LINE_TBL (I).OPERATION := 'CREATE';
+
+         --Attribute Record Values
+         V_PRICING_ATTR_TBL (I).PRICING_ATTRIBUTE_ID :=
+            QP_PRICING_ATTRIBUTES_S.NEXTVAL;
+         V_PRICING_ATTR_TBL (I).LIST_HEADER_ID := QP_LIST_HEADERS_B_S.CURRVAL;
+         V_PRICING_ATTR_TBL (I).LIST_LINE_ID := QP_LIST_LINES_S.CURRVAL;
+         V_PRICING_ATTR_TBL (I).PRODUCT_ATTRIBUTE_CONTEXT := 'ITEM';
+         V_PRICING_ATTR_TBL (I).PRODUCT_ATTRIBUTE := 'PRICING_ATTRIBUTE1';
+         V_PRICING_ATTR_TBL (I).PRODUCT_ATTR_VALUE := REC.INVENTORY_ITEM_ID;
+         V_PRICING_ATTR_TBL (I).PRODUCT_UOM_CODE := REC.PRODUCT_UOM_CODE;
+         V_PRICING_ATTR_TBL (I).CREATED_BY := V_USER_ID;
+         V_PRICING_ATTR_TBL (I).CREATION_DATE := SYSDATE;
+         V_PRICING_ATTR_TBL (I).LAST_UPDATED_BY := V_USER_ID;
+         V_PRICING_ATTR_TBL (I).LAST_UPDATE_DATE := SYSDATE;
+         V_PRICING_ATTR_TBL (I).EXCLUDER_FLAG := 'N';
+         V_PRICING_ATTR_TBL (I).ATTRIBUTE_GROUPING_NO := 1;
+         V_PRICING_ATTR_TBL (I).PRICE_LIST_LINE_INDEX := I;
+         V_PRICING_ATTR_TBL (I).OPERATION := 'CREATE';
+         I := I + 1;
+      END LOOP;
+
+      QP_PRICE_LIST_PUB.PROCESS_PRICE_LIST (
+         P_API_VERSION_NUMBER        => 1,
+         P_INIT_MSG_LIST             => FND_API.G_TRUE,
+         P_RETURN_VALUES             => FND_API.G_FALSE,
+         P_COMMIT                    => FND_API.G_FALSE,
+         X_RETURN_STATUS             => X_RETURN_STATUS,
+         X_MSG_COUNT                 => X_MSG_COUNT,
+         X_MSG_DATA                  => X_MSG_DATA,
+         P_PRICE_LIST_REC            => V_PRICE_LIST_REC,
+         P_PRICE_LIST_LINE_TBL       => V_PRICE_LIST_LINE_TBL,
+         P_PRICING_ATTR_TBL          => V_PRICING_ATTR_TBL,
+         X_PRICE_LIST_REC            => PPR_PRICE_LIST_REC,
+         X_PRICE_LIST_VAL_REC        => PPR_PRICE_LIST_VAL_REC,
+         X_PRICE_LIST_LINE_TBL       => PPR_PRICE_LIST_LINE_TBL,
+         X_QUALIFIERS_TBL            => PPR_QUALIFIERS_TBL,
+         X_QUALIFIERS_VAL_TBL        => PPR_QUALIFIERS_VAL_TBL,
+         X_PRICING_ATTR_TBL          => PPR_PRICING_ATTR_TBL,
+         X_PRICING_ATTR_VAL_TBL      => PPR_PRICING_ATTR_VAL_TBL,
+         X_PRICE_LIST_LINE_VAL_TBL   => PPR_PRICE_LIST_LINE_VAL_TBL);
+
+      IF X_MSG_COUNT > 0
+      THEN
+         X_MSG_DATA := OE_MSG_PUB.GET (P_MSG_INDEX => 1, P_ENCODED => 'F');
+         FND_MESSAGE.SET_NAME ('AI', X_MSG_DATA);
+      END IF;
+
+      DELETE FROM FRT_PL_INTERFACE
+            WHERE USER_ID = V_USER_ID;
+
+      COMMIT;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         ROLLBACK;
+
+         DELETE FROM FRT_PL_INTERFACE
+               WHERE USER_ID = V_USER_ID;
+
+         COMMIT;
+         FAIL_MSG := SQLERRM;
+         FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+   END;
+
+   PROCEDURE AI_LINK_PRICELIST
+   AS
+      V_USER_ID   NUMBER := FND_GLOBAL.USER_ID;
+      V_RESP_ID   NUMBER := FND_GLOBAL.RESP_ID;
+      V_APPL_ID   NUMBER := FND_GLOBAL.RESP_APPL_ID;
+      V_ORG_ID    NUMBER := 81;
+      FAIL_MSG    VARCHAR2 (100);
+
+      CURSOR DATA_CUR (P_USER_ID NUMBER)
+      IS
+         SELECT *
+           FROM FRT_TRX_PRICELIST
+          WHERE USER_ID = P_USER_ID;
+   BEGIN
+      MO_GLOBAL.INIT ('ONT');
+      MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+      FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+      FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,
+                                  RESP_ID        => V_RESP_ID,
+                                  RESP_APPL_ID   => V_APPL_ID);
+
+      FOR REC IN DATA_CUR (V_USER_ID)
+      LOOP
+         UPDATE OE_TRANSACTION_TYPES_ALL
+            SET PRICE_LIST_ID = REC.PRICE_LIST_ID,
+                LAST_UPDATED_BY = V_USER_ID,
+                LAST_UPDATE_DATE = SYSDATE
+          WHERE TRANSACTION_TYPE_ID = REC.TRX_TYPE_ID;
+      END LOOP;
+
+      DELETE FROM FRT_TRX_PRICELIST
+            WHERE USER_ID = V_USER_ID;
+
+      COMMIT;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         ROLLBACK;
+
+         DELETE FROM FRT_TRX_PRICELIST
+               WHERE USER_ID = V_USER_ID;
+
+         COMMIT;
+         FAIL_MSG := SQLERRM;
+         FND_MESSAGE.SET_NAME ('AI', FAIL_MSG);
+   END;
+END FRT_AI_PRICELIST_PKG;
+/

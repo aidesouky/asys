@@ -1,0 +1,134 @@
+--==============================
+-- PLSQL JSON EXAMPLE
+DECLARE
+   JEO   JSON_ELEMENT_T;
+   JEA   JSON_ELEMENT_T;
+   JO    JSON_OBJECT_T;
+   JO2   JSON_OBJECT_T;
+   JA    JSON_ARRAY_T;
+BEGIN
+   JEO := JSON_ELEMENT_T.PARSE ('{"name":"mohammed"}');
+   JEA := JSON_ELEMENT_T.PARSE ('[{"name":"mohammed"}]');
+   DBMS_OUTPUT.PUT_LINE ('==================================');
+
+   IF (JEO.IS_OBJECT)
+   THEN
+      JO := TREAT (JEO AS JSON_OBJECT_T);
+      --JO := JSON_OBJECT_T.PARSE ('{"name":"ahmed"}');
+      DBMS_OUTPUT.PUT_LINE ('Object before put: ' || JO.TO_STRING);
+      JO.PUT ('price', 99.99);
+      JO.PUT ('num', 22);
+      JO2 := JSON_OBJECT_T.PARSE ('{"name":"osman"}');
+      DBMS_OUTPUT.PUT_LINE ('child Object2: ' || JO2.TO_STRING);
+      JO.PUT ('child', JO2);
+      DBMS_OUTPUT.PUT_LINE ('Object after put: ' || JO.TO_STRING);
+      JO.RENAME_KEY ('num', 'id');
+      DBMS_OUTPUT.PUT_LINE ('Object rename key: ' || JO.TO_STRING);
+      JO.REMOVE ('id');
+      DBMS_OUTPUT.PUT_LINE ('Object remove attribute: ' || JO.TO_STRING);
+      JO2 := JO.GET_OBJECT ('child');
+      DBMS_OUTPUT.PUT_LINE ('child Object3: ' || JO2.TO_STRING);
+   END IF;
+
+   DBMS_OUTPUT.PUT_LINE ('==================================');
+
+   IF (JEA.IS_ARRAY)
+   THEN
+      JA := TREAT (JEA AS JSON_ARRAY_T);
+      --JA := JSON_ARRAY_T.PARSE ('[{"name":"ahmed"}]');
+      DBMS_OUTPUT.PUT_LINE ('json array before append: ' || JA.TO_STRING);
+      JO := JSON_OBJECT_T.PARSE ('{"name":"ahmed"}');
+      JO2 := JSON_OBJECT_T.PARSE ('{"name":"ibrahim"}');
+      JA.APPEND (JO);
+      JA.APPEND (JO2);
+      DBMS_OUTPUT.PUT_LINE ('json array after append: ' || JA.TO_STRING);
+      JA.REMOVE (1);
+      DBMS_OUTPUT.PUT_LINE ('json array after remove: ' || JA.TO_STRING);
+
+      FOR I IN 0 .. JA.GET_SIZE - 1
+      LOOP
+         DBMS_OUTPUT.PUT_LINE (JA.GET (I).TO_STRING);
+         JO := TREAT (JA.GET (I) AS JSON_OBJECT_T);
+         DBMS_OUTPUT.PUT_LINE ('item' || I || ': ' || JO.GET_STRING ('name'));
+      END LOOP;
+   END IF;
+END;
+-----=====================
+-- CREATE JSON FROM TABLE SELECT
+DECLARE
+   CN_JA   JSON_ARRAY_T;
+   CN_JO   JSON_OBJECT_T;
+   CN_J    JSON_OBJECT_T;
+
+   CURSOR CN_CUR
+   IS
+      SELECT '{"name":"' || COUNTRY_NAME || '","id":"' || COUNTRY_ID || '"}'
+                OBJ
+        FROM HR.COUNTRIES;
+
+   CURSOR CN_CUR2
+   IS
+      SELECT JSON_OBJECT ('name' value COUNTRY_NAME, 'id' value COUNTRY_ID) OBJ FROM HR.COUNTRIES;
+
+      --SELECT JSON_OBJECTAGG(COUNTRY_NAME VALUE COUNTRY_ID) FROM HR.COUNTRIES;
+BEGIN
+   CN_J := NEW JSON_OBJECT_T();
+   CN_JA := NEW JSON_ARRAY_T();
+
+   FOR CN IN CN_CUR2
+   LOOP
+      DBMS_OUTPUT.PUT_LINE (CN.OBJ);
+      CN_JO := JSON_OBJECT_T.PARSE (CN.OBJ);
+      CN_JA.APPEND (CN_JO);
+   END LOOP;
+   CN_J.PUT('countries',CN_JA);
+   DBMS_OUTPUT.PUT_LINE (CN_J.TO_STRING);
+END;
+--=============================
+--SEND HTTP GET REQUEST
+DECLARE
+   REQ          UTL_HTTP.REQ;
+   RESP         UTL_HTTP.RESP;
+   RECDATA      VARCHAR2 (4000);
+   DATALENGTH   NUMBER;
+   URI          VARCHAR2 (100);
+   JE           JSON_ELEMENT_T;
+   JO           JSON_OBJECT_T;
+   JA           JSON_ARRAY_T;
+   JK           JSON_KEY_LIST;
+BEGIN
+   URI := 'http://localhost';
+   REQ := UTL_HTTP.BEGIN_REQUEST (URI, 'GET');
+   UTL_HTTP.SET_HEADER (REQ, 'User-agent', 'mozilla/4.0');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept', 'application/json');
+   UTL_HTTP.SET_HEADER (REQ, 'Accept-Charset', 'utf-8');
+   RESP := UTL_HTTP.GET_RESPONSE (REQ);
+   UTL_HTTP.GET_HEADER_BY_NAME (RESP, 'Content-Length', DATALENGTH);
+   UTL_HTTP.READ_TEXT (RESP, RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('DATALENGTH=' || DATALENGTH);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA=' || RECDATA);
+   UTL_HTTP.END_RESPONSE (RESP);
+   JO := JSON_OBJECT_T.PARSE (RECDATA);
+   DBMS_OUTPUT.PUT_LINE ('ID=' || JO.GET_NUMBER ('id'));
+   DBMS_OUTPUT.PUT_LINE ('TITLE=' || JO.GET_STRING ('title'));
+   JK := JO.GET_KEYS;
+   JA := NEW JSON_ARRAY_T;
+   FOR I IN 1 .. JK.COUNT
+   LOOP
+   DBMS_OUTPUT.PUT_LINE ('KEY'||I||': ' || JK (I) ||' VALUE: '|| JO.GET_STRING (JK (I)));
+    JA.APPEND (JK (I));
+   END LOOP;
+
+   DBMS_OUTPUT.PUT_LINE ('JA=' || JA.TO_STRING);
+   DBMS_OUTPUT.PUT_LINE ('RECDATA-JSON=' || JO.TO_STRING);
+EXCEPTION
+   WHEN UTL_HTTP.END_OF_BODY
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('ERROR END_OF_BODY');
+      UTL_HTTP.END_RESPONSE (RESP);
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE (SQLERRM);
+END;
+/
+

@@ -1,0 +1,42 @@
+DECLARE
+   X_ROWID   VARCHAR (50);
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2887,
+                               RESP_ID        => 23118,
+                               RESP_APPL_ID   => 426);
+
+   FOR Z IN (SELECT * FROM FRT_EAM_INTERFACE)
+   LOOP
+      BEGIN
+         BOM_RESOURCE_SHIFTS_PKG.INSERT_ROW (X_ROWID              => X_ROWID,
+                                             X_DEPARTMENT_ID      => 1005,
+                                             X_RESOURCE_ID        => 5,
+                                             X_SHIFT_NUM          => 1,
+                                             X_CAPACITY_UNITS     => 1,
+                                             X_LAST_UPDATE_DATE   => SYSDATE,
+                                             X_LAST_UPDATED_BY    => 2887,
+                                             X_CREATION_DATE      => SYSDATE,
+                                             X_CREATED_BY         => 2887);
+
+         COMMIT;
+
+
+         IF X_ROWID IS NOT NULL
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('Done! ' || X_ROWID);
+         ELSE
+            DBMS_OUTPUT.PUT_LINE (
+                  'Error: '
+               || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                                   P_ENCODED     => FND_API.G_FALSE));
+         END IF;
+
+         X_ROWID := NULL;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            DBMS_OUTPUT.PUT_LINE ('ERR: ' || SQLERRM);
+      END;
+   END LOOP;
+END;

@@ -1,0 +1,348 @@
+--==============================================================
+-- Journal entry type: Manual                      VARCHAR2    MANUAL
+-- Journal entry type: Upgrade                     VARCHAR2    UPGRADE
+-- Journal entry type: Merge                       VARCHAR2    MERGE
+----------------------------------------------------------------
+-- Reversal option: Change Sign                    VARCHAR2    SIGN
+-- Reversal option: Switch DR/CR                   VARCHAR2    SIDE
+----------------------------------------------------------------
+-- Balance type code: Actual                       VARCHAR2    A
+-- Balance type code: Budget                       VARCHAR2    B
+-- Balance type code: Encumbrance                  VARCHAR2    E
+----------------------------------------------------------------
+-- Party site code: Customer                       VARCHAR2    C
+-- Party site code: Supplier                       VARCHAR2    S
+----------------------------------------------------------------
+-- Completion option: Save as Incomplete           VARCHAR2    S
+-- Completion option: Draft                        VARCHAR2    D
+-- Completion option: Final                        VARCHAR2    F
+-- Completion option: Final and Transfer           VARCHAR2    T
+-- Completion option: Final, Transfer, and Post    VARCHAR2    P
+----------------------------------------------------------------
+-- Transfer mode: Summary                          VARCHAR2    S
+-- Transfer mode: Details                          VARCHAR2    D
+----------------------------------------------------------------
+-- Journal entry status: Incomplete                VARCHAR2    N
+-- Journal entry status: Invalid                   VARCHAR2    I
+-- Journal entry status: Draft                     VARCHAR2    D
+-- Journal entry status: Final                     VARCHAR2    F
+----------------------------------------------------------------
+-- Deletion mode: Normal                           VARCHAR2    N
+-- Deletion mode: Force                            VARCHAR2    F
+----------------------------------------------------------------
+-- Message mode: Standard                          VARCHAR2    S
+-- Message mode: OAF                               VARCHAR2    O
+----------------------------------------------------------------
+-- Return status: Success                          VARCHAR2    S
+-- Return status: Un Expected Error                VARCHAR2    U
+-- Return status: Error                            VARCHAR2    E
+----------------------------------------------------------------
+-- Return code: completed successfully             NUMBER      0
+-- Return code: validation error found             NUMBER      1
+----------------------------------------------------------------
+-- Return code: completed successfully             VARCHAR2    C
+-- Return code: completed reserved funds success   VARCHAR2    S
+-- Return code: completed reserved funds advisory  VARCHAR2    A
+-- Return code: validation error is found          VARCHAR2    X
+-- Return code: funds reserve failed               VARCHAR2    F
+--==============================================================
+
+-- CREATE JOURNAL ENTRY HEADER
+-- X_RETCODE = 0 WHEN SUCCESS
+
+DECLARE
+   X_AE_HEADER_ID        INTEGER;
+   X_EVENT_ID            INTEGER;
+   X_PERIOD_NAME         VARCHAR2;
+   X_CREATION_DATE       DATE;
+   X_CREATED_BY          INTEGER;
+   X_LAST_UPDATE_DATE    DATE;
+   X_LAST_UPDATED_BY     INTEGER;
+   X_LAST_UPDATE_LOGIN   INTEGER;
+   X_RETCODE             INTEGER;
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.CREATE_JOURNAL_ENTRY_HEADER (
+      P_APPLICATION_ID               => 200,
+      P_LEDGER_ID                    => 2021,
+      P_LEGAL_ENTITY_ID              => 23273,
+      P_GL_DATE                      => SYSDATE,
+      P_ACCOUNTING_ENTRY_TYPE_CODE   => 'MANUAL',
+      P_DESCRIPTION                  => 'Test Journal',
+      P_JE_CATEGORY_NAME             => 'Purchase Invoices',
+      P_BALANCE_TYPE_CODE            => 'A',
+      P_BUDGET_VERSION_ID            => NULL,
+      P_REFERENCE_DATE               => NULL,
+      P_ATTRIBUTE_CATEGORY           => NULL,
+      P_ATTRIBUTE1                   => NULL,
+      P_ATTRIBUTE2                   => NULL,
+      P_ATTRIBUTE3                   => NULL,
+      P_ATTRIBUTE4                   => NULL,
+      P_ATTRIBUTE5                   => NULL,
+      P_ATTRIBUTE6                   => NULL,
+      P_ATTRIBUTE7                   => NULL,
+      P_ATTRIBUTE8                   => NULL,
+      P_ATTRIBUTE9                   => NULL,
+      P_ATTRIBUTE10                  => NULL,
+      P_ATTRIBUTE11                  => NULL,
+      P_ATTRIBUTE12                  => NULL,
+      P_ATTRIBUTE13                  => NULL,
+      P_ATTRIBUTE14                  => NULL,
+      P_ATTRIBUTE15                  => NULL,
+      P_MSG_MODE                     => 'S',
+      P_AE_HEADER_ID                 => X_AE_HEADER_ID,
+      P_EVENT_ID                     => X_EVENT_ID,
+      P_PERIOD_NAME                  => X_PERIOD_NAME,
+      P_CREATION_DATE                => X_CREATION_DATE,
+      P_CREATED_BY                   => X_CREATED_BY,
+      P_LAST_UPDATE_DATE             => X_LAST_UPDATE_DATE,
+      P_LAST_UPDATED_BY              => X_LAST_UPDATED_BY,
+      P_LAST_UPDATE_LOGIN            => X_LAST_UPDATE_LOGIN,
+      P_RETCODE                      => X_RETCODE);
+END;
+/
+
+-- UPDATE JOURNAL ENTRY HEADER
+-- X_RETCODE = 0 WHEN SUCCESS
+
+DECLARE
+   X_PERIOD_NAME         VARCHAR2 (100);
+   X_LAST_UPDATE_DATE    DATE;
+   X_LAST_UPDATED_BY     NUMBER;
+   X_LAST_UPDATE_LOGIN   NUMBER;
+   X_RETCODE             NUMBER;
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.UPDATE_JOURNAL_ENTRY_HEADER (
+      P_AE_HEADER_ID                 => 1,
+      P_APPLICATION_ID               => 200,
+      P_LEGAL_ENTITY_ID              => 23273,
+      P_GL_DATE                      => SYSDATE,
+      P_ACCOUNTING_ENTRY_TYPE_CODE   => 'MANUAL',
+      P_DESCRIPTION                  => 'Test Journal',
+      P_JE_CATEGORY_NAME             => 'Purchase Invoices',
+      P_BUDGET_VERSION_ID            => NULL,
+      P_REFERENCE_DATE               => NULL,
+      P_ATTRIBUTE_CATEGORY           => NULL,
+      P_ATTRIBUTE1                   => NULL,
+      P_ATTRIBUTE2                   => NULL,
+      P_ATTRIBUTE3                   => NULL,
+      P_ATTRIBUTE4                   => NULL,
+      P_ATTRIBUTE5                   => NULL,
+      P_ATTRIBUTE6                   => NULL,
+      P_ATTRIBUTE7                   => NULL,
+      P_ATTRIBUTE8                   => NULL,
+      P_ATTRIBUTE9                   => NULL,
+      P_ATTRIBUTE10                  => NULL,
+      P_ATTRIBUTE11                  => NULL,
+      P_ATTRIBUTE12                  => NULL,
+      P_ATTRIBUTE13                  => NULL,
+      P_ATTRIBUTE14                  => NULL,
+      P_ATTRIBUTE15                  => NULL,
+      P_MSG_MODE                     => 'S',
+      P_PERIOD_NAME                  => X_PERIOD_NAME,
+      P_LAST_UPDATE_DATE             => X_LAST_UPDATE_DATE,
+      P_LAST_UPDATED_BY              => X_LAST_UPDATED_BY,
+      P_LAST_UPDATE_LOGIN            => X_LAST_UPDATE_LOGIN,
+      P_RETCODE                      => X_RETCODE);
+END;
+/
+
+-- DELETE JOURNAL ENTRY WITH LINES
+
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.DELETE_JOURNAL_ENTRY (P_AE_HEADER_ID     => 11111,
+                                                 P_APPLICATION_ID   => 200,
+                                                 P_MODE             => 'N',
+                                                 P_MSG_MODE         => 'S');
+END;
+/
+
+-- CREATE JOURNAL ENTRY LINE
+-- X_RETCODE = 0 WHEN SUCCESS
+
+DECLARE
+   X_AE_LINE_NUM         NUMBER;
+   X_CREATION_DATE       DATE;
+   X_CREATED_BY          NUMBER;
+   X_LAST_UPDATE_DATE    DATE;
+   X_LAST_UPDATED_BY     NUMBER;
+   X_LAST_UPDATE_LOGIN   NUMBER;
+   X_RETCODE             NUMBER;
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.CREATE_JOURNAL_ENTRY_LINE (
+      P_AE_HEADER_ID            => 1,
+      P_DISPLAYED_LINE_NUMBER   => 1,
+      P_APPLICATION_ID          => 200,
+      P_CODE_COMBINATION_ID     => 1,
+      P_GL_TRANSFER_MODE        => 'S',
+      P_ACCOUNTING_CLASS_CODE   => 'A',
+      P_DESCRIPTION             => 'Test',
+      P_CURRENCY_CODE           => 'EGP',
+      P_ENTERED_DR              => 100,
+      P_ENTERED_CR              => 0,
+      P_ACCOUNTED_DR            => 100,
+      P_ACCOUNTED_CR            => 0,
+      P_CONVERSION_TYPE         => 'User',
+      P_CONVERSION_DATE         => SYSDATE,
+      P_CONVERSION_RATE         => 1,
+      P_PARTY_TYPE_CODE         => NULL,
+      P_PARTY_ID                => NULL,
+      P_PARTY_SITE_ID           => NULL,
+      P_STATISTICAL_AMOUNT      => NULL,
+      P_JGZZ_RECON_REF          => NULL,
+      P_ATTRIBUTE_CATEGORY      => NULL,
+      P_ENCUMBRANCE_TYPE_ID     => NULL,
+      P_ATTRIBUTE1              => NULL,
+      P_ATTRIBUTE2              => NULL,
+      P_ATTRIBUTE3              => NULL,
+      P_ATTRIBUTE4              => NULL,
+      P_ATTRIBUTE5              => NULL,
+      P_ATTRIBUTE6              => NULL,
+      P_ATTRIBUTE7              => NULL,
+      P_ATTRIBUTE8              => NULL,
+      P_ATTRIBUTE9              => NULL,
+      P_ATTRIBUTE10             => NULL,
+      P_ATTRIBUTE11             => NULL,
+      P_ATTRIBUTE12             => NULL,
+      P_ATTRIBUTE13             => NULL,
+      P_ATTRIBUTE14             => NULL,
+      P_ATTRIBUTE15             => NULL,
+      P_MSG_MODE                => 'S',
+      P_AE_LINE_NUM             => X_AE_LINE_NUM,
+      P_CREATION_DATE           => X_CREATION_DATE,
+      P_CREATED_BY              => X_CREATED_BY,
+      P_LAST_UPDATE_DATE        => X_LAST_UPDATE_DATE,
+      P_LAST_UPDATED_BY         => X_LAST_UPDATED_BY,
+      P_LAST_UPDATE_LOGIN       => X_LAST_UPDATE_LOGIN,
+      P_RETCODE                 => X_RETCODE);
+END;
+/
+
+-- UPDATE JOURNAL ENTRY LINE
+-- X_RETCODE = 0 WHEN SUCCESS
+
+DECLARE
+   X_LAST_UPDATE_DATE    DATE;
+   X_LAST_UPDATED_BY     NUMBER;
+   X_LAST_UPDATE_LOGIN   NUMBER;
+   X_RETCODE             NUMBER;
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.UPDATE_JOURNAL_ENTRY_LINE (
+      P_AE_HEADER_ID            => 1,
+      P_AE_LINE_NUM             => 1,
+      P_DISPLAYED_LINE_NUMBER   => 1,
+      P_APPLICATION_ID          => 200,
+      P_CODE_COMBINATION_ID     => 1,
+      P_GL_TRANSFER_MODE        => 'S',
+      P_ACCOUNTING_CLASS_CODE   => 'A',
+      P_DESCRIPTION             => NULL,
+      P_CURRENCY_CODE           => 'EGP',
+      P_ENTERED_DR              => 100,
+      P_ENTERED_CR              => 0,
+      P_ACCOUNTED_DR            => 100,
+      P_ACCOUNTED_CR            => 0,
+      P_CONVERSION_TYPE         => 'User',
+      P_CONVERSION_DATE         => SYSDATE,
+      P_CONVERSION_RATE         => 1,
+      P_PARTY_TYPE_CODE         => NULL,
+      P_PARTY_ID                => NULL,
+      P_PARTY_SITE_ID           => NULL,
+      P_STATISTICAL_AMOUNT      => NULL,
+      P_JGZZ_RECON_REF          => NULL,
+      P_ATTRIBUTE_CATEGORY      => NULL,
+      P_ENCUMBRANCE_TYPE_ID     => NULL,
+      P_ATTRIBUTE1              => NULL,
+      P_ATTRIBUTE2              => NULL,
+      P_ATTRIBUTE3              => NULL,
+      P_ATTRIBUTE4              => NULL,
+      P_ATTRIBUTE5              => NULL,
+      P_ATTRIBUTE6              => NULL,
+      P_ATTRIBUTE7              => NULL,
+      P_ATTRIBUTE8              => NULL,
+      P_ATTRIBUTE9              => NULL,
+      P_ATTRIBUTE10             => NULL,
+      P_ATTRIBUTE11             => NULL,
+      P_ATTRIBUTE12             => NULL,
+      P_ATTRIBUTE13             => NULL,
+      P_ATTRIBUTE14             => NULL,
+      P_ATTRIBUTE15             => NULL,
+      P_MSG_MODE                => 'S',
+      P_LAST_UPDATE_DATE        => X_LAST_UPDATE_DATE,
+      P_LAST_UPDATED_BY         => X_LAST_UPDATED_BY,
+      P_LAST_UPDATE_LOGIN       => X_LAST_UPDATE_LOGIN,
+      P_RETCODE                 => X_RETCODE);
+END;
+/
+
+-- DELETE JOURNAL ENTRY LINE
+
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.DELETE_JOURNAL_ENTRY_LINE (
+      P_AE_HEADER_ID     => 1,
+      P_AE_LINE_NUM      => 1,
+      P_APPLICATION_ID   => 200,
+      P_MSG_MODE         => 'N');
+END;
+/
+
+-- COMPLETE JOURNAL ENTRY
+-- X_RETCODE = S WHEN SUCCESS
+
+DECLARE
+   X_AE_STATUS_CODE            VARCHAR2 (100);
+   X_FUNDS_STATUS_CODE         VARCHAR2 (100);
+   X_COMPLETION_SEQ_VALUE      VARCHAR2 (100);
+   X_COMPLETION_SEQ_VER_ID     NUMBER;
+   X_COMPLETED_DATE            DATE;
+   X_GL_TRANSFER_STATUS_CODE   VARCHAR2 (100);
+   X_LAST_UPDATE_DATE          DATE;
+   X_LAST_UPDATED_BY           NUMBER;
+   X_LAST_UPDATE_LOGIN         NUMBER;
+   X_TRANSFER_REQUEST_ID       NUMBER;
+   X_RETCODE                   VARCHAR2 (100);
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.COMPLETE_JOURNAL_ENTRY (
+      P_AE_HEADER_ID              => 1,
+      P_APPLICATION_ID            => 200,
+      P_COMPLETION_OPTION         => 'T',
+      P_FUNCTIONAL_CURR           => 'EGP',
+      P_JE_SOURCE_NAME            => 'Payables',
+      P_MSG_MODE                  => 'S',
+      P_CONTEXT                   => NULL,
+      P_AE_STATUS_CODE            => X_AE_STATUS_CODE,
+      P_FUNDS_STATUS_CODE         => X_FUNDS_STATUS_CODE,
+      P_COMPLETION_SEQ_VALUE      => X_COMPLETION_SEQ_VALUE,
+      P_COMPLETION_SEQ_VER_ID     => X_COMPLETION_SEQ_VER_ID,
+      P_COMPLETED_DATE            => X_COMPLETED_DATE,
+      P_GL_TRANSFER_STATUS_CODE   => X_GL_TRANSFER_STATUS_CODE,
+      P_LAST_UPDATE_DATE          => X_LAST_UPDATE_DATE,
+      P_LAST_UPDATED_BY           => X_LAST_UPDATED_BY,
+      P_LAST_UPDATE_LOGIN         => X_LAST_UPDATE_LOGIN,
+      P_TRANSFER_REQUEST_ID       => X_TRANSFER_REQUEST_ID,
+      P_RETCODE                   => X_RETCODE);
+END;
+/
+
+-- REVERSE JOURNAL ENTRY
+-- X_COMPLETION_RETCODE = S WHEN SUCCESS
+
+DECLARE
+   X_REV_HEADER_ID         NUMBER;
+   X_REV_EVENT_ID          NUMBER;
+   X_COMPLETION_RETCODE    VARCHAR2 (100);
+   X_TRANSFER_REQUEST_ID   NUMBER;
+BEGIN
+   XLA_JOURNAL_ENTRIES_PKG.REVERSE_JOURNAL_ENTRY (
+      P_AE_HEADER_ID          => 1,
+      P_APPLICATION_ID        => 200,
+      P_REVERSAL_METHOD       => 'SIDE',
+      P_GL_DATE               => SYSDATE,
+      P_COMPLETION_OPTION     => 'T',
+      P_FUNCTIONAL_CURR       => 'EGP',
+      P_JE_SOURCE_NAME        => 'Payables',
+      P_MSG_MODE              => 'S',
+      P_CONTEXT               => NULL,
+      P_REV_HEADER_ID         => X_REV_HEADER_ID,
+      P_REV_EVENT_ID          => X_REV_EVENT_ID,
+      P_COMPLETION_RETCODE    => X_COMPLETION_RETCODE,
+      P_TRANSFER_REQUEST_ID   => X_TRANSFER_REQUEST_ID);
+END;

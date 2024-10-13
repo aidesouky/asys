@@ -1,0 +1,119 @@
+Install Google Chrome
+=====================
+create repo
+-----------
+vi /etc/yum.repos.d/google-chrome.repo
+
+paste next value
+------------------
+[google-chrome]
+name=google-chrome
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+
+display info
+------------
+yum info google-chrome-stable
+
+install google-chrome
+---------------------
+yum install google-chrome-stable
+
+Install Jasper Server
+=====================
+download jasper server
+----------------------
+TIB_js-jrs-cp_8.2.0_linux_x86_64.run
+
+change file mode
+----------------
+chmod +x TIB_js-jrs-cp_8.2.0_linux_x86_64.run
+
+run installer
+----------------
+./TIB_js-jrs-cp_8.2.0_linux_x86_64.run
+
+
+Do you accept this license? [y/N]: y    -    Accept License Agreement
+
+----------------------------------------------------------------------------
+
+[1] Install All Components and Samples (requires disk space of: 1.5 GB)
+[2] Custom Install
+Please choose an option [1] : 1
+
+----------------------------------------------------------------------------
+
+Installation folder
+
+Please, choose a folder to install JasperReports Server CP 8.2.0
+
+Select a folder [/opt/jasperreports-server-cp-8.2.0]:
+
+----------------------------------------------------------------------------
+
+Chromium folder
+
+JasperReports Server uses the Chromium browser engine when you export reports
+and dashboards to PDF and other formats. If you do not have Chrome/Chromium
+installed you can download Chrome or Chromium using the links below this text.
+Press [Enter] to continue:
+
+https://www.google.com/chrome/ [Y/n]: n
+
+https://www.chromium.org/getting-involved/download-chromium [Y/n]: Y
+
+Do you want to use Chromium? [Y/n]: Y
+
+----------------------------------------------------------------------------
+Please specify the Chrome or Chromium executable
+
+Chromium executable [/usr/bin/chromium-browser]:
+
+----------------------------------------------------------------------------
+Default Keystore Warning!
+
+If any older JasperReports Server version is installed on your computer,
+installing this version will cause the default keystore to stop working. If an
+older version of JasperReports Server is still required, you must back up the
+.jrsks and .jrsksp files, then configure a separate keystore for the older
+version. For more details, see the link below to the Jaspersoft Community
+website.
+
+Click Next to acknowledge this warning and continue with the installation.
+Press [Enter] to continue:
+
+https://community.jaspersoft.com/wiki/keystore-management-and-repair/ [Y/n]: Y
+
+----------------------------------------------------------------------------
+Setup is now ready to begin installing JasperReports Server CP 8.2.0 on your
+computer.
+
+Do you want to continue? [Y/n]: Y
+
+----------------------------------------------------------------------------
+Please wait while Setup installs JasperReports Server CP 8.2.0 on your computer.
+
+Installing
+0% ______________ 50% ______________ 100%
+#########################################
+
+----------------------------------------------------------------------------
+Completing the JasperReports Server CP 8.2.0 Setup Wizard
+
+For release notes and further documentation please see,
+/opt/jasperreports-server-cp-8.2.0/docs. Our full documentation is also
+available at http://community.jaspersoft.com/documentation
+
+----------------------------------------------------------------------------
+
+Start Server
+=========================
+cd /opt/jasperreports-server-cp-8.2.0
+
+./ctlscript.sh start
+./ctlscript.sh stop
+./ctlscript.sh restart
+./ctlscript.sh status

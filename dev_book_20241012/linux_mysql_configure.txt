@@ -1,0 +1,42 @@
+Install MySQL Server - Fedora Linux
+# yum install community-mysql-server.x86_64
+
+Configure MySQL Server
+# mysql_secure_installation
+new password:
+
+Login to MySQL Server
+# mysql -u root -p
+# password:
+mysql>create user 'ai' identified by 'ai';
+mysql>grant all on *.* to ai;
+mysql>exit
+
+Allow root to login remotely
+mysql> grant all privileges on *.* TO 'root';
+mysql> update mysql.user set host='%' where user='root';
+
+Set Password Policy
+mysql> install component 'file://component_validate_password';
+
+Reset Password Policy
+mysql> uninstall component 'file://component_validate_password';
+
+Reset Global Variables
+mysql> show variables like 'validate_password%';
+mysql> set global validate_password.policy=LOW;
+mysql> set global validate_password.check_user_name=OFF;
+mysql> set global validate_password.length=2;
+mysql> set global validate_password.mixed_case_count=0;
+mysql> set global validate_password.number_count=0;
+mysql> set global validate_password.special_char_count=0;
+
+Configure Firewall
+# sudo firewall-cmd --permanent --add-port 3306/tcp
+# sudo systemctl restart firewalld
+
+Connect to MySQL Server
+URL: jdbc:mysql://localhost:3306/mydb?useSSL=false
+user: ai
+password: ai
+

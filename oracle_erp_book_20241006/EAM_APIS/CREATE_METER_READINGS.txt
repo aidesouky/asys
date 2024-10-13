@@ -1,0 +1,154 @@
+SELECT * FROM CSI_ITEM_INSTANCES ;
+SELECT * FROM CSI_COUNTERS_TL;
+SELECT * FROM CSI_COUNTERS_B;
+SELECT * FROM CSI_COUNTER_ASSOCIATIONS ;
+SELECT * FROM CSI_COUNTER_READINGS;
+SELECT * FROM WIP_ENTITIES;
+SELECT * FROM WIP_DISCRETE_JOBS;
+SELECT * FROM MTL_SYSTEM_ITEMS_B;
+SELECT * FROM MTL_PARAMETERS;
+/
+SELECT CII.INSTANCE_NUMBER ASSET,
+       CCT.NAME METER,
+       CCN.UOM_CODE UOM,
+       CCR.PRE_VALUE,
+       CCR.PRE_DATE,
+       NULL CUR_VALUE,
+       NULL CUR_DATE,
+       NULL WORK_ORDER,
+       NULL COMMENTS
+  FROM CSI_COUNTERS_TL CCT,
+       CSI_COUNTERS_B CCN,
+       CSI_COUNTER_ASSOCIATIONS CCA,
+       CSI_ITEM_INSTANCES CII,
+       (SELECT CRU.COUNTER_ID, CCR.COUNTER_READING PRE_VALUE, CRU.PRE_DATE
+          FROM (  SELECT COUNTER_ID, MAX (VALUE_TIMESTAMP) PRE_DATE
+                    FROM CSI_COUNTER_READINGS
+                GROUP BY COUNTER_ID) CRU,
+               CSI_COUNTER_READINGS CCR
+         WHERE     CRU.COUNTER_ID = CCR.COUNTER_ID
+               AND CRU.PRE_DATE = CCR.VALUE_TIMESTAMP) CCR
+ WHERE     CCT.COUNTER_ID = CCA.COUNTER_ID
+       AND CCN.COUNTER_ID = CCA.COUNTER_ID
+       AND CCT.LANGUAGE = 'US'
+       AND CCA.SOURCE_OBJECT_ID = CII.INSTANCE_ID
+       AND CCA.COUNTER_ID = CCR.COUNTER_ID
+       AND (CCA.ATTRIBUTE1 = 'RUN' OR CCT.NAME LIKE 'KM%');
+/
+CREATE OR REPLACE PACKAGE FRT_EAM_UTILITY_PKG
+AS
+   PROCEDURE AI_PREPARE_COUNTER_READING (P_ASSET_NUMBER    VARCHAR2,
+                                         P_METER_NAME      VARCHAR2,
+                                         P_UOM             VARCHAR2,
+                                         P_PRE_VALUE       NUMBER,
+                                         P_PRE_DATE        DATE,
+                                         P_CUR_VALUE       NUMBER,
+                                         P_CUR_DATE        DATE,
+                                         P_WORK_ORDER      VARCHAR2,
+                                         P_COMMENTS        VARCHAR2);
+
+   FUNCTION AI_CREATE_COUNTER_READING (P_INSTANCE_ID      NUMBER,
+                                       P_COUNTER_ID       NUMBER,
+                                       P_CUR_VALUE        NUMBER,
+                                       P_CUR_DATE         DATE,
+                                       P_WIP_ENTITY_ID    NUMBER,
+                                       P_COMMENTS         VARCHAR2)
+      RETURN NUMBER;
+END FRT_EAM_UTILITY_PKG;
+/
+
+CREATE OR REPLACE PACKAGE BODY FRT_EAM_UTILITY_PKG
+AS
+   PROCEDURE AI_PREPARE_COUNTER_READING (P_ASSET_NUMBER    VARCHAR2,
+                                         P_METER_NAME      VARCHAR2,
+                                         P_UOM             VARCHAR2,
+                                         P_PRE_VALUE       NUMBER,
+                                         P_PRE_DATE        DATE,
+                                         P_CUR_VALUE       NUMBER,
+                                         P_CUR_DATE        DATE,
+                                         P_WORK_ORDER      VARCHAR2,
+                                         P_COMMENTS        VARCHAR2)
+   AS
+      V_INSTANCE_ID     NUMBER;
+      V_COUNTER_ID      NUMBER;
+      V_WIP_ENTITY_ID   NUMBER;
+      READING_ID        NUMBER;
+   BEGIN
+      SELECT INSTANCE_ID
+        INTO V_INSTANCE_ID
+        FROM CSI_ITEM_INSTANCES
+       WHERE INSTANCE_NUMBER = P_ASSET_NUMBER;
+
+      SELECT COUNTER_ID
+        INTO V_COUNTER_ID
+        FROM CSI_COUNTERS_TL
+       WHERE NAME = P_METER_NAME AND LANGUAGE = 'US';
+
+      IF P_WORK_ORDER IS NOT NULL
+      THEN
+         SELECT WIP_ENTITY_ID
+           INTO V_WIP_ENTITY_ID
+           FROM WIP_ENTITIES
+          WHERE WIP_ENTITY_NAME = P_WORK_ORDER;
+      END IF;
+
+      READING_ID :=
+         AI_CREATE_COUNTER_READING (V_INSTANCE_ID,
+                                    V_COUNTER_ID,
+                                    P_CUR_VALUE,
+                                    P_CUR_DATE,
+                                    V_WIP_ENTITY_ID,
+                                    P_COMMENTS);
+   END;
+
+   FUNCTION AI_CREATE_COUNTER_READING (P_INSTANCE_ID      NUMBER,
+                                       P_COUNTER_ID       NUMBER,
+                                       P_CUR_VALUE        NUMBER,
+                                       P_CUR_DATE         DATE,
+                                       P_WIP_ENTITY_ID    NUMBER,
+                                       P_COMMENTS         VARCHAR2)
+      RETURN NUMBER
+   AS
+      V_METER_READING_REC   EAM_METERREADING_PUB.METER_READING_REC_TYPE;
+      X_MSG_COUNT           NUMBER;
+      X_RETURN_STATUS       VARCHAR2 (100);
+      X_MSG_DATA            VARCHAR2 (4000);
+      V_METER_READING_ID    NUMBER;
+   BEGIN
+      V_METER_READING_REC.METER_ID := P_COUNTER_ID;
+      V_METER_READING_REC.INSTANCE_ID := P_INSTANCE_ID;
+      V_METER_READING_REC.WIP_ENTITY_ID := P_WIP_ENTITY_ID;
+      V_METER_READING_REC.CURRENT_READING := P_CUR_VALUE;
+      V_METER_READING_REC.CURRENT_READING_DATE := P_CUR_DATE;
+      V_METER_READING_REC.DESCRIPTION := P_COMMENTS;
+      V_METER_READING_REC.RESET_FLAG := NULL;
+
+      EAM_METERREADING_PUB.CREATE_METER_READING (
+         P_API_VERSION          => 1.0,
+         P_INIT_MSG_LIST        => FND_API.G_FALSE,
+         P_COMMIT               => FND_API.G_FALSE,
+         P_METER_READING_REC    => V_METER_READING_REC,
+         P_IGNORE_WARNINGS      => 'Y',
+         P_VALUE_BEFORE_RESET   => NULL,
+         X_MSG_COUNT            => X_MSG_COUNT,
+         X_MSG_DATA             => X_MSG_DATA,
+         X_RETURN_STATUS        => X_RETURN_STATUS,
+         X_METER_READING_ID     => V_METER_READING_ID);
+
+      IF X_RETURN_STATUS != 'S'
+      THEN
+         DBMS_OUTPUT.PUT_LINE (
+               'ERR_MSG: '
+            || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                                P_ENCODED     => FND_API.G_FALSE));
+         V_METER_READING_ID := 0;
+      END IF;
+
+      COMMIT;
+      RETURN V_METER_READING_ID;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         RETURN 0;
+   END;
+END FRT_EAM_UTILITY_PKG;

@@ -1,0 +1,83 @@
+DECLARE
+   X_RETURN_STATUS        VARCHAR2 (20);
+   X_MSG_COUNT            NUMBER;
+   X_MSG_DATA             VARCHAR2 (2000);
+   V_QC_TESTS_REC         GMD_QC_TESTS%ROWTYPE;
+   V_QC_TEST_VALUES_TBL   GMD_QC_TESTS_PUB.QC_TEST_VALUES_TBL;
+   V_QC_CUST_TESTS_TBL    GMD_QC_TESTS_PUB.QC_CUST_TESTS_TBL;
+   X_QC_TESTS_REC         GMD_QC_TESTS%ROWTYPE;
+   X_QC_TEST_VALUES_TBL   GMD_QC_TESTS_PUB.QC_TEST_VALUES_TBL;
+   X_QC_CUST_TESTS_TBL    GMD_QC_TESTS_PUB.QC_CUST_TESTS_TBL;
+BEGIN
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', 81);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => 2218,
+                               RESP_ID        => 20561,
+                               RESP_APPL_ID   => 250);
+
+   V_QC_TESTS_REC.TEST_CODE := 'TT002';
+   V_QC_TESTS_REC.TEST_DESC := 'TEST DESCRIPTION T002';
+   V_QC_TESTS_REC.TEST_METHOD_ID := 0;
+   V_QC_TESTS_REC.TEST_CLASS := 'Specs';
+   V_QC_TESTS_REC.TEST_TYPE := 'V'; ---V list value,L num range with lable,T text range,U nothing,N numeric range,E expresion
+   V_QC_TESTS_REC.TEST_UNIT:=NULL;
+   V_QC_TESTS_REC.MIN_VALUE_NUM := NULL;
+   V_QC_TESTS_REC.MAX_VALUE_NUM := NULL;
+   V_QC_TESTS_REC.DISPLAY_PRECISION := NULL;
+   V_QC_TESTS_REC.REPORT_PRECISION := NULL;
+   V_QC_TESTS_REC.PRIORITY := '5N';
+   V_QC_TESTS_REC.DELETE_MARK := 0;
+
+   V_QC_TEST_VALUES_TBL (1).TEXT_RANGE_SEQ := NULL;                       ---T
+   V_QC_TEST_VALUES_TBL (1).VALUE_CHAR := 'LOW';                        ---V,T
+   V_QC_TEST_VALUES_TBL (1).TEST_VALUE_DESC := 'LOW';                   ---V,T
+   V_QC_TEST_VALUES_TBL (1).DISPLAY_LABEL_NUMERIC_RANGE := NULL;        ---E,L
+   V_QC_TEST_VALUES_TBL (1).EXPRESSION_REF_TEST_ID := NULL;               ---E
+
+   V_QC_TEST_VALUES_TBL (2).TEXT_RANGE_SEQ := NULL;                       ---T
+   V_QC_TEST_VALUES_TBL (2).VALUE_CHAR := 'NORMAL';                     ---V,T
+   V_QC_TEST_VALUES_TBL (2).TEST_VALUE_DESC := 'NORMAL';                ---V,T
+   V_QC_TEST_VALUES_TBL (2).DISPLAY_LABEL_NUMERIC_RANGE := NULL;        ---E,L
+   V_QC_TEST_VALUES_TBL (2).EXPRESSION_REF_TEST_ID := NULL;               ---E
+
+   V_QC_TEST_VALUES_TBL (3).TEXT_RANGE_SEQ := NULL;                       ---T
+   V_QC_TEST_VALUES_TBL (3).VALUE_CHAR := 'HIGH';                       ---V,T
+   V_QC_TEST_VALUES_TBL (3).TEST_VALUE_DESC := 'HIGH';                  ---V,T
+   V_QC_TEST_VALUES_TBL (3).DISPLAY_LABEL_NUMERIC_RANGE := NULL;        ---E,L
+   V_QC_TEST_VALUES_TBL (3).EXPRESSION_REF_TEST_ID := NULL;               ---E
+
+   GMD_QC_TESTS_PUB.CREATE_TESTS (
+      P_API_VERSION          => 1.0,
+      P_INIT_MSG_LIST        => 'F',
+      P_COMMIT               => 'F',
+      P_VALIDATION_LEVEL     => FND_API.G_VALID_LEVEL_FULL,
+      P_QC_TESTS_REC         => V_QC_TESTS_REC,
+      P_QC_TEST_VALUES_TBL   => V_QC_TEST_VALUES_TBL,
+      P_QC_CUST_TESTS_TBL    => V_QC_CUST_TESTS_TBL,
+      P_USER_NAME            => 'MIBRAHEEM',
+      X_QC_TESTS_REC         => X_QC_TESTS_REC,
+      X_QC_TEST_VALUES_TBL   => X_QC_TEST_VALUES_TBL,
+      X_QC_CUST_TESTS_TBL    => X_QC_CUST_TESTS_TBL,
+      X_RETURN_STATUS        => X_RETURN_STATUS,
+      X_MSG_COUNT            => X_MSG_COUNT,
+      X_MSG_DATA             => X_MSG_DATA);
+
+
+   DBMS_OUTPUT.PUT_LINE ('RESULT: ' || X_RETURN_STATUS || ' ' || X_MSG_DATA);
+
+   IF X_RETURN_STATUS = 'S'
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('Done!');
+   ELSE
+      DBMS_OUTPUT.PUT_LINE ('X_MSG_DATA ' || X_MSG_DATA);
+   END IF;
+
+   DBMS_OUTPUT.PUT_LINE (
+         'RESULT: '
+      || FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.G_LAST,
+                          P_ENCODED     => FND_API.G_FALSE));
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      DBMS_OUTPUT.PUT_LINE ('SQLERRM ' || SQLERRM);
+END;

@@ -1,0 +1,37 @@
+ Setup Tomcat to support SSL or https
+=========================================
+
+------------------------------------
+#1.Generating keystore file : server.keystore
+------------------------------------
+# openssl req -x509 -sha256 -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=DK/ST=DK/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,DNS:localhost"
+# openssl pkcs12 -export -out keystore.p12 -inkey privatekey.key -in certificate.crt
+
+-------------------------------------
+#2.Now we will configure tomcat for using keystore file and SSL config
+-------------------------------------
+
+# vim <tomcat>/conf/server.xml
+
+<Connector SSLEnabled="true" acceptCount="100" clientAuth="false"
+    disableUploadTimeout="true" enableLookups="false" maxThreads="25"
+    port="8443" keystoreFile="/root/keystore.p12" keystorePass="password"
+    protocol="org.apache.coyote.http11.Http11NioProtocol" scheme="https"
+    secure="true" sslProtocol="TLS" />
+    
+----------------------------------------
+#3.Now we will configure our web app to run on https.
+---------------------------------------
+# vim <tomcat>/conf/web.xml
+
+<security-constraint>
+    <web-resource-collection>
+        <web-resource-name>securedapp</web-resource-name>
+        <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <user-data-constraint>
+        <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+    </user-data-constraint>
+</security-constraint>
+----------------------------------------
+#4.Test Run 

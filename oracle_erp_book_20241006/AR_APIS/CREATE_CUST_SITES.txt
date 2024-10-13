@@ -1,0 +1,65 @@
+DECLARE
+   V_CUST_ACCT_SITE_REC          HZ_CUST_ACCOUNT_SITE_V2PUB.CUST_ACCT_SITE_REC_TYPE;
+   V_ERROR_MSG                   VARCHAR2 (1000);
+   X_CUST_ACCT_SITE_ID           NUMBER;
+   X_RETURN_STATUS               VARCHAR2 (30);
+   X_MSG_COUNT                   NUMBER;
+   X_MSG_DATA                    VARCHAR2 (2000);
+   V_MODULE_NAME                 VARCHAR (30) := 'HZ_CPUI';
+   V_USER_ID                     NUMBER := 1170;--FND_GLOBAL.USER_ID;          --1170
+   V_RESP_ID                     NUMBER := 51432;--FND_GLOBAL.RESP_ID;         --51432
+   V_APPL_ID                     NUMBER := 222;--FND_GLOBAL.RESP_APPL_ID;      --222
+   V_ORG_ID                      NUMBER := 81;
+BEGIN
+   MO_GLOBAL.INIT ('AR');
+   MO_GLOBAL.SET_POLICY_CONTEXT ('S', V_ORG_ID);
+   FND_CLIENT_INFO.SET_ORG_CONTEXT (V_ORG_ID);
+   FND_GLOBAL.APPS_INITIALIZE (USER_ID        => V_USER_ID,             --1170
+                               RESP_ID        => V_RESP_ID,            --51432
+                               RESP_APPL_ID   => V_APPL_ID);             --222
+
+   FOR Z IN (SELECT * FROM FRT_TEMP_INTERFACE)
+   LOOP
+      BEGIN
+         --================= CREATE CUSTOMER SITE ============[01]
+
+         V_CUST_ACCT_SITE_REC.CUST_ACCOUNT_ID := Z.C06;
+         V_CUST_ACCT_SITE_REC.PARTY_SITE_ID := Z.C07;
+         V_CUST_ACCT_SITE_REC.TERRITORY_ID := Z.C05;
+         V_CUST_ACCT_SITE_REC.STATUS := 'A';
+         V_CUST_ACCT_SITE_REC.ATTRIBUTE5 := Z.C01;
+         V_CUST_ACCT_SITE_REC.ATTRIBUTE6 := Z.C02;
+         V_CUST_ACCT_SITE_REC.ATTRIBUTE7 := Z.C03;
+         V_CUST_ACCT_SITE_REC.ATTRIBUTE10 := Z.C04;
+         --V_CUST_ACCT_SITE_REC.ATTRIBUTE11 := Z.C06;
+         V_CUST_ACCT_SITE_REC.ATTRIBUTE12 := 'A';
+         V_CUST_ACCT_SITE_REC.CREATED_BY_MODULE := V_MODULE_NAME;
+         
+         HZ_CUST_ACCOUNT_SITE_V2PUB.CREATE_CUST_ACCT_SITE (
+            P_INIT_MSG_LIST        => 'T',
+            P_CUST_ACCT_SITE_REC   => V_CUST_ACCT_SITE_REC,
+            X_CUST_ACCT_SITE_ID    => X_CUST_ACCT_SITE_ID,
+            X_RETURN_STATUS        => X_RETURN_STATUS,
+            X_MSG_COUNT            => X_MSG_COUNT,
+            X_MSG_DATA             => X_MSG_DATA);
+
+         IF X_RETURN_STATUS = 'S'
+         THEN
+            DBMS_OUTPUT.PUT_LINE (Z.C02 || ' => ' || X_RETURN_STATUS);
+         ELSE
+            V_ERROR_MSG :=
+               FND_MSG_PUB.GET (P_MSG_INDEX   => FND_MSG_PUB.COUNT_MSG,
+                                P_ENCODED     => 'F');
+
+            DBMS_OUTPUT.PUT_LINE (Z.C02 || ' => ' || V_ERROR_MSG);
+         END IF;
+
+         COMMIT;
+      EXCEPTION
+         WHEN OTHERS
+         THEN
+            V_ERROR_MSG := SQLERRM;
+            DBMS_OUTPUT.PUT_LINE (Z.C02 || ' => ' || V_ERROR_MSG);
+      END;
+   END LOOP;
+END;
