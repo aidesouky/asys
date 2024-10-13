@@ -1,0 +1,66 @@
+git commands
+============
+1.display version
+# git --version
+2.initiate git in th current directory
+# git init
+3.configure git
+# git config [--local,--global,--system] user.name <name>
+# git config [--local,--global,--system] user.email <email>
+3.list configuration values
+# git config --list
+# git config --get<key>
+4.create an alias for commands
+# git config --global alias.gc commit
+# git config --global alias.ga add
+5.get clone from remote repositoris
+# git clone <repo>
+# git clone -branch <branch> <repo>
+# git clone -branch <branch> <repo> <local_dir>
+6.list conneted repositories
+# git remote -v
+7.create connection to repositories
+# git remote add <con_name> <https://github.com/aidesouky/twin.git>
+8.remove repositories connection
+# git remote rm <con_name>
+9.rename repositories connection names
+# git remote rename <old_name> <new_name>
+10.list files or directories
+# git ls-files
+11.add files or directories to stage
+# git add <[.,*.txt,file_or_dir]>
+12.remove files or directories from stage
+# git rm <[.,*.txt,file_or_dir]>
+13.rename files or directories
+# git mv <old_name> <new_name>
+14.restore lost files or directories
+# git restore <[.,*.txt,file_or_dir]>
+15.restore files or directories from staged area
+# git restore --staged <[.,*.txt,file_or_dir]>
+16.view changes in the local repository
+# git status -s
+17.save snapshot of the staged changes
+# git commit -m "[Commit message]"
+18.staging changes and commit it with message
+# git add -am "[Commit message]"
+19.edit the latest commit
+# git commit --amend -m "[New commit message]"
+20.push files and directories to remote repository
+# git push <repo_name> [<branch>]
+21.push files and directories to new branch in remote repository
+# git push --set-upstream origin <repo_name> [<branch>]
+22.fetch files and directories from remote repository
+# git fetch <repo_name> [<branch>]
+# git pull <repo_name> [<branch>]
+23.list branches
+# git branch -l
+24.switch between branchs
+# git checkout <branch>
+25.create branch
+# git checkout -b <branch>
+26.merge sub branch to main branch
+# git merge <branch>
+27.delete branch
+# git branch --delete <branch>
+28.delete remote branch
+# git push origin --delete <branch>
