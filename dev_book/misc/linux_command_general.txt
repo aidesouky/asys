@@ -14,6 +14,7 @@
 # ls > file1		write result into file file1 (create new file or overwrite)
 # ls >> file1		write result into file file1 (apend data to current data)
 # ls > /dev/null	write result into null (do not show result)
+# alias ll="ls -l"	create an short name for a command
 
 ##### system info #####
 =======================
