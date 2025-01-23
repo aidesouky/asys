@@ -26,10 +26,10 @@ echo $use_percent % usage safe point
 [8-9]*)
 echo $use_percent % usage critical point
 apt autoremove && apt autoclean
-find /log-src -name "*log-*" -mtime +3 exec mv -f {} /log-dist \;
+find /log-src -name "*log-*" -mtime +3 -exec mv -f {} /log-dist \;
 
-#find /log-src -name "*log-*" -mtime +30 exec cp {} /log-dist \;
-#find /log-src -name "*log-*" -mtime +30 exec rm -f {} \;
+#find /log-src -name "*log-*" -mtime +30 -exec cp {} /log-dist \;
+#find /log-src -name "*log-*" -mtime +30 -exec rm -f {} \;
 ;;
 *)
 echo nothing
@@ -37,4 +37,4 @@ esac
 
 # and find in directory /lod-dist files has name include log- and last change date before 90 day
 # and remove it
-find /log-dist -name "*log-*" -mtime +90 exec rm -f {} \;
+find /log-dist -name "*log-*" -mtime +90 -exec rm -f {} \;
