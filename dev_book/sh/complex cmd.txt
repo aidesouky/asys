@@ -1,0 +1,23 @@
+move files from location to another
+# find /log-src -name "*log-*" -mtime +3 -exec mv -f {} /log-dist \;
+# find /log-src -name "*log-*" -mtime +3 | xargs -i mv -f {} /log-dist
+# ls /log-src | grep "log-" | xargs -i mv -f {} /log-dist
+
+create files with generic names
+# seq 100 | xargs -i touch file{}.txt
+# seq 100 | xargs -I X1 touch fileX1.txt
+
+create files with users names
+# cat /etc/passwd | cut -d ":" -f1 | xargs -i touch file{}.txt
+# cat /etc/passwd | awk -F ':' '{print $1}' | xargs -I X1 touch fileX1.txt
+
+write file name into each file
+# find -name "*.txt" | cut -d "." -f1 | xargs -i sh -c 'echo file name is: {} > {}.txt'
+# ls | grep ".txt" | awk -F '.' '{print $1}' | xargs -i sh -c 'echo file name is: {} > {}.txt'
+
+display text for each file
+# find -name "*.txt" | xargs -i cat {}
+# ls | grep ".txt" | xargs -I X1 cat X1
+
+display first field for each line in a file
+# cat /etc/passwd | cut -d ":" -f1 | xargs -i echo {}
