@@ -1,0 +1,27 @@
+##Grant Permission to USB Device Linux
+
+# lsusb
+...
+Bus 003 Device 010: ID 1781:0c9f Multiple Vendors USBtiny
+...
+Bus:			003
+Device: 		010
+Vendor Id:		1781
+Product Id:		0c9f
+
+# ls -l /dev/bus/usb/003/010
+crw-rw-r--  1 root root    189, 269 jan 16 19:58 010
+# sudo chmod 666 /dev/bus/usb/003/010
+# ls -l /dev/bus/usb/003/010
+crw-rw-rw- 1 root root 189, 267 jan 17 15:17 /dev/bus/usb/003/010
+
+========================
+# usermod -aG plugdev ai
+# usermod -aG adm ai
+
+========================
+# touch /etc/udev/rules.d/00-USBtiny.rules
+SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0c9f", GROUP="adm", MODE="0666"
+
+# cat /etc/udev/rules.d/00-USBtiny.rules
+SUBSYSTEM=="usb", ATTR{idVendor}=="1781", ATTR{idProduct}=="0c9f", GROUP="adm", MODE="0666"

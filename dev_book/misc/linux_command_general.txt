@@ -38,7 +38,7 @@
 # lsblk -J -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid	list disks and parts with specific info in json format
 # fdisk -l		list disks and parts with some info
 # fdisk -x		list disks and parts with more info
-
+# lsusb			list usb devices
 ##### files and directories #####
 =================================
 # file filename		print file info
