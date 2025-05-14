@@ -1,2 +1,24 @@
 $ crontab -u <user> -e		edit crontab list
-$ crontab -l				list system jobs 
+$ crontab -l			list system jobs 
+
+Command				Run Cron Job
+===========================	==================================
+* * * * * /path/to/script	Every Minute
+*/15 * * * * /path/to/script	Every 15 Minutes
+30 * * * * /path/to/script	On the 30th Minute of Every Hour
+0 * * * * /path/to/script	At the Beginning of Every Hour
+0 0 * * * /path/to/script	Every Day at Midnight
+0 2 * * * /path/to/script	At 2 AM Every Day
+0 0 1 * * /path/to/script	Every 1st of the Month
+0 0 15 * * /path/to/script	Every 15th of the Month
+0 0 1 12 * /path/to/script	On December 1st - Midnight
+0 0 * * 6 /path/to/script	Saturdays at Midnight
+0 4 * * 1-5 /path/to/script	Every Weekday at 4 AM
+0 4 * * 2,4 /path/to/script	At 4 AM on Tuesdays and Thursdays
+37 1-23/2 * * * /path/to/script	Every Other Day at 37 Minutes Past the Hour
+*/20 * * * * /path/to/script1; /path/to/script2	Every 20 Minutes - Multiple Scripts
+0 12 * * 6,0 /path/to/script	On Saturdays and Sundays at 12 PM
+0 9-17 * * 1-5 /path/to/script	Monday to Friday - Every Hour 9 AM to 5 PM
+0 17-23 * * 3 /path/to/script	Every Hour from 5 PM on Wednesday to 5 AM on Thursday (Job Spans Two Days)
+0 0-5 * * 4 /path/to/script	
+0 0 * * * /path/to/script > /path/to/output.log 2>&1	Midnight Every Day - Send Output to a Different File
