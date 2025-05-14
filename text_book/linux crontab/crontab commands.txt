@@ -1,0 +1,2 @@
+$ crontab -u <user> -e		edit crontab list
+$ crontab -l				list system jobs 
