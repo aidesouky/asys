@@ -1,0 +1,74 @@
+Linux Config Files
+==================
+==================
+
+System Administration
+=====================
+/etc/nologin		Prevents specified users from logging in, often used for system maintenance messages.
+/etc/rpmrc			Configuration file for the RPM package manager that specifies global RPM settings.
+/etc/securetty		Lists terminals (TTYs) from which root (superuser) is allowed to log in directly.
+/etc/usertty		Specifies which terminals user accounts are allowed to use.
+/etc/passwd			The passwd file contains a list of user accounts and the corresponding user ID, group ID, home directory, and the default shell. It is readable by most users, but only root and sudo accounts can add new users or remove and modify existing user data.
+/etc/group			The group file contains a list of user groups. Each line in the file represents a group and displays the group name, GID, and group members. Administrators can interact with this file to manage settings for an entire collection of users.
+/etc/sudoers		The sudoers file specifies which users have elevated permissions, on which machines, and for which directories. Admins can use this file to configure permissions for users and groups to use the sudo command.
+/etc/shadow			The shadow file stores encrypted user password information and other password-related data such as the password expiration date, last change date, and account expiration date. It is only accessible by the root user or users with appropriate privileges. The restricted access and encryption add another security layer compared to the /etc/passwd file.
+/etc/gshadow		The gshadow file stores encrypted user group password information and other password-related data such as the password expiration date, last change date, and account expiration date. Like the shadow file, it is only accessible by the root user or users with appropriate privileges.
+/etc/skel			The skel directory contains default configuration scripts and templates such as .bashrc and bash_profile. The templates are copied to the user's home directory when a new user is created, streamlining the provisioning of new user accounts.
+/etc/login.defs		The login.defs file contains system-wide user account policy settings, like the password aging policy. System administrators can refer to and modify this file to enforce specific security and user management rules.
+
+Network Access Files
+====================
+/etc/hosts.config	Contains configuration options for hostname resolution using the /etc/hosts file.
+/etc/hosts			A local database for mapping hostnames to IP addresses used when DNS is unavailable or for local network configurations.
+/etc/hosts.allow	Specifies rules for allowing network services based on criteria like IP addresses or hostnames.
+/etc/hosts.deny		Contains rules to deny network access to specific services or hosts based on criteria like IP addresses or hostnames.
+
+Networking
+==========
+/etc/gated.conf		Configuration file for the gated routing protocol daemon.
+/etc/gated.version	Contains the gated daemon version number.
+/etc/gateway		An optional configuration file used by the routed daemon for routing information.
+/etc/networks		Lists names and addresses of networks accessible from your network. Used by the route command for network routing.
+/etc/protocols		Lists currently available network protocols used for network communication.
+/etc/resolv.conf	Specifies which name server should be queried when resolving IP addresses.
+/etc/rpc			Contains instructions/rules for Remote Procedure Call (RPC) used in NFS calls, remote file system mounting, and more.
+/etc/exports		Configuration for exporting file systems via NFS, including permissions.
+/etc/services		Translates network service names to port numbers and protocols used by various network-related programs.
+/etc/inetd.conf		Configuration file for inetd, which controls daemons or services for various network services.
+/etc/sendmail.cf	Configuration file for the sendmail mail transfer agent.
+/etc/sysconfig/network					Indicates whether networking is enabled. The file is read during system initialization.
+/etc/sysconfig/network-scripts/if*		Red Hat network configuration scripts for managing network interfaces.
+
+Booting
+=======
+/etc/issue			A text file that provides system information and a greeting message displayed before the login prompt.
+/etc/issue.net		Similar to /etc/issue but used for network connections and remote logins.
+/etc/rc.d/rc		A script that manages system runlevels and startup services.
+/etc/rc.d/rc.sysinit	A script responsible for system initialization tasks at boot time, including hardware initialization and mounting filesystems.
+/etc/rc.d/rcX.d/		A directory containing symbolic links to scripts that control services started or stopped at various runlevels (X represents the runlevel number).
+
+Login/Logout
+============
+/etc/issue 			Provides system information and displays a greeting message before the login prompt.
+/etc/issue.net		Has the same purpose as /etc/issue but is used for network connections and remote logins.
+
+File System
+===========
+/etc/mtab			A file that lists currently mounted file systems, the information about the device, mount point, and file system type.
+/etc/fstab			A configuration file that defines and configures static file system mounts, including options for each mount point.
+/etc/mtools.conf	The configuration file for the mtools package, used for accessing and managing MS-DOS (FAT) file systems, specifying settings for tools like mcopy and mdir.
+
+System Commands
+===============
+/etc/lilo.conf		Configuration file for the LILO (LInux LOader) bootloader that specifies how the system should boot and manage multiple operating systems.
+/etc/logrotate.conf Configuration file for the log rotation utility, logrotate, that manages log files and controls log rotation policies.
+/etc/identd.conf	Configuration file for the Ident daemon, which identifies the owner of TCP connections and which is used for network services like IRC.
+/etc/ld.so.conf		Lists the directories in which the system should search for shared libraries dynamically linked to executable files.
+/etc/inittab		Configuration file for the init process that specifies system runlevels, actions, and processes to execute during system initialization.
+/etc/termcap		Defines terminal capabilities and characteristics for various terminal types, enabling applications to interact with terminal devices correctly.
+
+Daemons
+=======
+/etc/syslogd.conf	Configuration file for the syslog daemon (syslogd), which manages system and application logs, specifying how to handle log messages and where to store them.
+/etc/httpd.conf		Configuration file for the Apache HTTP server (httpd), used to define server settings, virtual hosts, and behavior for serving web content.
+

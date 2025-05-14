@@ -4,7 +4,8 @@
 # clear			clean the screen
 # pwd			print current directory
 # who			print users used the system
-# w			print users used the system
+# w				print users used the system
+# last			Show the last system logins.
 # whoami		print user name
 # which vim		print location of the program vim
 # whereis vim		print location of the program vim
@@ -38,7 +39,20 @@
 # lsblk -J -o name,rm,ro,type,mountpoints,size,fssize,fsused,fsavail,fsuse%,model,mode,serial,uuid	list disks and parts with specific info in json format
 # fdisk -l		list disks and parts with some info
 # fdisk -x		list disks and parts with more info
-# lsusb			list usb devices
+# lsusb -tv		list usb devices
+# lscpu			display cpu information
+# lspci -tv		display pci device graphics card, network card, etc.
+# lshw			List hardware configuration information.
+# free -h		Display free and used memory.
+# dmidecode		Show hardware information from the BIOS.
+# hdparm -i /dev/<device_name>		Display disk data information.
+# hdparm -tT /dev/<device_name>		Conduct a read speed test on the device/disk.
+# badblocks -s /dev/<device_name>	Test for unreadable blocks on the device/disk.
+# fsck /dev/<device_name>			Run a disk check on an unmounted disk or partition.
+# cat /proc/cpuinfo		Show detailed CPU information.
+# cat /proc/meminfo		View detailed system memory information.
+# cat /proc/mounts		See mounted file systems.
+
 ##### files and directories #####
 =================================
 # file filename		print file info
@@ -70,8 +84,11 @@
 # du -d	1			print size in first level
 # du -h -t [-,+]n[k,M,G]	print size in human readable with size plus or minus
 # du -ch			print size in human readable and print total
+# findmnt			Display target mount point for all file systems.
 # mount /dev/device /mnt/dir	mount storage device in /mnt/dir
 # umount /mnt/dir		un mount /mnt/dir
+# gpg -c <file_name>	Encrypt a file.
+# gpg <file_name>.gpg	Decrypt an encrypted .gpg file.
 
 ##### ls command #####
 ======================
@@ -136,6 +153,7 @@
 printf formats [\\a bill,\\t tab,\\b back,\\n newline][%f filename,
 %B[D\ r,F\ r] create date,%A[D\ r,F\ r] access date,%T[D\ r,F\ r] modify date,
 %m-%M permission,%n hard links,%p-%P full file name,%s filesize]
+# locate <name>			Locate all files and directories related to a particular name.
 
 ##### user commands #####
 =========================
@@ -175,6 +193,7 @@ printf formats [\\a bill,\\t tab,\\b back,\\n newline][%f filename,
 # groupmod -n group2 group1				modify group group1 change name to group2
 # groupdel group1					remove group group1
 # passwd ahmed						change password for user ahmed
+# finger <user_name>				Show user information.
 
 ##### permissions commands #####
 ================================
