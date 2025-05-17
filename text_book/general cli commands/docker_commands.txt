@@ -1,3 +1,4 @@
-# docker run <image_name[:tag]>
-# docker start <container_id>
-# docker stop <container_id>
+# docker run <image_name[:tag]> pull image and create container from it and run it
+# docker ps			list all containers
+# docker start <container_id>	start container
+# docker stop <container_id>	stop container
