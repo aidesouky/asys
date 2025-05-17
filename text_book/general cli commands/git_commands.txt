@@ -10,15 +10,6 @@ git commands
 # git config --global alias.gc commit		create an alias for commands
 # git config --global alias.ga add			create an alias for commands
 
-# git clone <repo>									get clone from remote repositoris
-# git clone -branch <branch> <repo>					get clone from remote repositoris
-# git clone -branch <branch> <repo> <local_dir>		get clone from remote repositoris
-
-# git remote -v			list conneted repositories
-# git remote add <con_name> <https://github.com/aidesouky/asys.git>		create connection to repositories
-# git remote rm <con_name>						remove repositories connection
-# git remote rename <old_name> <new_name>		rename repositories connection names
-
 # git status -s										view changes in the local repository
 # git ls-files										list files or directories
 # git add <[.,*.txt,file_or_dir]>					add files or directories to stage
@@ -29,6 +20,20 @@ git commands
 # git restore <[.,*.txt,file_or_dir]>				restore lost files or directories
 # git restore --staged <[.,*.txt,file_or_dir]>		restore files or directories from staged area
 # git commit --amend -m "[New commit message]"		edit the latest commit
+
+# git remote -v										list conneted repositories
+# git remote add <con_name> https://github.com/<user_name/repo_name.get>				create connection to repositories
+# git remote add <con_name> https://<token>@github.com/<user_name/repo_name.git>		create connection to repositories with access token
+# git remote set-url <con_name> https://<token>@github.com/<user_name/repo_name.git> 	set access remote repo to access token
+# git remote rm <con_name>							remove repositories connection
+# git remote rename <old_name> <new_name>			rename repositories connection names
+# git remote add <con_name> <user:pass>@github.com/<user_name/repo_name.git>
+git remote add aiws3 aiadesouky:Twin@181084@github.com/aiadesouky/asys.git
+
+# git clone <repo>									get clone from remote repositoris
+# git clone -branch <branch> <repo>					get clone from remote repositoris
+# git clone -branch <branch> <repo> <local_dir>		get clone from remote repositoris
+# git clone -branch <branch> <user:pass@user_name/repo_name> <local_dir>		get clone from remote repositoris
 
 # git push <repo_name> [<branch>]					push files and directories to remote repository
 # git push --set-upstream origin <repo_name> [<branch>]		push files and directories to new branch in remote repository
