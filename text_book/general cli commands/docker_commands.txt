@@ -1,0 +1,3 @@
+# docker run <image_name[:tag]>
+# docker start <container_id>
+# docker stop <container_id>
