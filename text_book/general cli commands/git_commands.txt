@@ -6,7 +6,7 @@ git commands
 # git config [--local,--global,--system] user.name <name>		configure git
 # git config [--local,--global,--system] user.email <email>		configure git
 # git config --list			list configuration values
-# git config --get<key>		list configuration values
+# git config --get <key>	list configuration values
 # git config --global alias.gc commit		create an alias for commands
 # git config --global alias.ga add			create an alias for commands
 
@@ -21,14 +21,16 @@ git commands
 # git restore --staged <[.,*.txt,file_or_dir]>		restore files or directories from staged area
 # git commit --amend -m "[New commit message]"		edit the latest commit
 
+# ssh-keygen -t rsa -b 4096 -C "user@email.com"		generate ssh key to access github
+# ssh -T git@github.com								connect to github using ssh key
+
 # git remote -v										list conneted repositories
 # git remote add <con_name> https://github.com/<user_name/repo_name.get>				create connection to repositories
 # git remote add <con_name> https://<token>@github.com/<user_name/repo_name.git>		create connection to repositories with access token
-# git remote set-url <con_name> https://<token>@github.com/<user_name/repo_name.git> 	set access remote repo to access token
+# git remote add <con_name> git@github.com:<user_name/repo_name.git>					create connection to repositories with ssh key (ssh key required)
+# git remote set-url <con_name> https://github.com/<user_name/repo_name.git> 			set new remote repo access
 # git remote rm <con_name>							remove repositories connection
 # git remote rename <old_name> <new_name>			rename repositories connection names
-# git remote add <con_name> <user:pass>@github.com/<user_name/repo_name.git>
-git remote add aiws3 aiadesouky:Twin@181084@github.com/aiadesouky/asys.git
 
 # git clone <repo>									get clone from remote repositoris
 # git clone -branch <branch> <repo>					get clone from remote repositoris
