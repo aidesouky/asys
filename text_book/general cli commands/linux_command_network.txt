@@ -32,6 +32,11 @@
 # ufw delete 4
 # ufw allow from server_ip
 
+#### Certificates ####
+=================
+# sudo cp certificate.crt /usr/local/share/ca-certificate/certificate.crt
+# sudo update-ca-certificates		update system certificate and key store
+
 ##### servers connections #####
 ================================
 # wget -o image.jpg https://freeimages.com/animal.jpg			downlad image to the current directory with output name image.jpg
