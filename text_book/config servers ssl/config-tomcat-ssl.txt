@@ -39,5 +39,15 @@
     </user-data-constraint>
 </security-constraint>
 
+------------------------------------------------------
+#4.Allow to access tomcat manager from outside server
+------------------------------------------------------
+<tomcat_dir>/webapps/manager/META-INF/context.xml
+<tomcat_dir>/webapps/host-manager/META-INF/context.xml
+
+allow range or ip like this |192\.\d+\.\d+\.\d+| or |192\.\168\.\1\.\100|
+<Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|192\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+
 ----------------------------------------
 #4.Test Run 
