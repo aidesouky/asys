@@ -36,22 +36,22 @@ Requests and Certificates
 # openssl x509 -x509toreq -in certificate.crt -signkey privatekey.key -out request.csr
 
 3.create new certificate request from private key
-# openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+# openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 4.create private key and new certificate request in one shot
-# openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+# openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 5.create private key without pass phrase and new certificate request in one shot
-# openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+# openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 6.create certificate from private key and new certificate request
 # openssl x509 -req -sha256 -days 3650 -in request.csr -signkey privatekey.key -out certificate.crt
 
 7.create root certificate from private key in one shot
-# openssl req -x509 -new -nodes -sha256 -days 1826 -key rootkey.key -out rootca.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+# openssl req -x509 -new -nodes -sha256 -days 1826 -key cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 8.create private key and certificate in one shot
-# openssl req -x509 -sha256 -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+# openssl req -x509 -sha256 -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 9.create certificate from request using CA certificate and CA private key (issued by CA)
 # openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -set_serial 1001 -in request.csr -out certificate.crt -extfile san.txt
@@ -65,16 +65,19 @@ DNS.1 = twin.local
 DNS.2 = ai.twin.local
 DNS.3 = mi.twin.local
 DNS.4 = *.twin.local
+IP = 192.1.1.100
 ----------------------------
 ====================================================
-Ketstores
+Keystores
 ====================================================
 
 1.Create a PKCS12 keystore (.pfx .p12) from PEM certificate file and a private key
 # openssl pkcs12 -export -inkey privatekey.key -in certificate.crt -out keystore.pfx
 
 2.Create a PKCS12 keystore (.pfx .p12) from PEM certificate file and a private key and CA certificate
-# openssl pkcs12 -export -inkey privatekey.crt -in certificate.crt -certfile cacert.crt -out keystore.pfx
+# openssl pkcs12 -export -inkey privatekey.key -in certificate.crt -certfile cacert.crt -out keystore.pfx
+This command for widows server 2016 and earlier
+# openssl pkcs12 -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -inkey privatekey.key -in certificate.crt -certfile cacert.crt -out keystore.pfx
 Note: oracle bug jdk before 8u301/7u311 can't open pkcs12
 
 3.export private keys and certificates from keystore (.pfx .p12)
