@@ -13,14 +13,19 @@
 
 # vim <tomcat>/conf/server.xml
 
+<Connector port="8080" protocol="HTTP/1.1" connectionTimeout="20000" 
+    redirectPort="8443" maxParameterCount="1000" />
+
 <Connector SSLEnabled="true" acceptCount="100" clientAuth="false"
     disableUploadTimeout="true" enableLookups="false" maxThreads="25"
-    port="8443" keystoreFile="/root/keystore.p12" keystorePass="password"
+    port="8443" keystoreFile="conf/keystore.p12" keystorePass="password"
     protocol="org.apache.coyote.http11.Http11NioProtocol" scheme="https"
     secure="true" sslProtocol="TLS" />
-    
+
+** make sure the "redirectPort" and "port" are same
+
 ----------------------------------------
-#3.Now we will configure our web app to run on https.
+#3.Now we will configure our web app to enable redirect from http to https.
 ---------------------------------------
 # vim <tomcat>/conf/web.xml
 
@@ -33,5 +38,6 @@
         <transport-guarantee>CONFIDENTIAL</transport-guarantee>
     </user-data-constraint>
 </security-constraint>
+
 ----------------------------------------
 #4.Test Run 
