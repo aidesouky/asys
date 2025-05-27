@@ -1,5 +1,5 @@
-# OpenSSL intermediate CA configuration file.
-# Copy to `/subca/openssl.cnf`.
+# OpenSSL root CA configuration file.
+# Copy to `/rootca/openssl.cnf`.
 
 [ ca ]
 # `man ca`
@@ -7,7 +7,7 @@ default_ca = CA_default
 
 [ CA_default ]
 # Directory and file locations.
-dir               = /opt/ca/subca
+dir               = /opt/ca/rootca
 certs             = $dir/
 crl_dir           = $dir/
 new_certs_dir     = $dir/
@@ -16,12 +16,12 @@ serial            = $dir/serial
 RANDFILE          = $dir/.rand
 
 # The root key and root certificate.
-private_key       = $dir/subca.key.pem
-certificate       = $dir/subca.crt.pem
+private_key       = $dir/rootca.key.pem
+certificate       = $dir/rootca.crt.pem
 
 # For certificate revocation lists.
 crlnumber         = $dir/crlnumber
-crl               = $dir/subca.crl.pem
+crl               = $dir/ca.asys.crl.pem
 crl_extensions    = crl_ext
 default_crl_days  = 30
 
@@ -32,30 +32,28 @@ name_opt          = ca_default
 cert_opt          = ca_default
 default_days      = 3650
 preserve          = no
-policy            = policy_loose
-
-#Ensure that the extensione in the CSR make it to the signed certificate (like subjectAltNames)
-copy_extensions   = copy
+policy            = policy_strict
 
 [ policy_strict ]
 # The root CA should only sign intermediate certificates that match.
 # See the POLICY FORMAT section of `man ca`.
+commonName              = supplied
 countryName             = match
 stateOrProvinceName     = match
+localityName            = match
 organizationName        = match
 organizationalUnitName  = optional
-commonName              = supplied
 emailAddress            = optional
 
 [ policy_loose ]
 # Allow the intermediate CA to sign a more diverse range of certificates.
 # See the POLICY FORMAT section of the `ca` man page.
+commonName              = supplied
 countryName             = optional
 stateOrProvinceName     = optional
 localityName            = optional
 organizationName        = optional
 organizationalUnitName  = optional
-commonName              = supplied
 emailAddress            = optional
 
 [ req ]
@@ -63,29 +61,29 @@ emailAddress            = optional
 default_bits        = 4096
 distinguished_name  = req_distinguished_name
 string_mask         = utf8only
-
 # SHA-1 is deprecated, so use SHA-2 instead.
 default_md          = sha512
-
+#prompt             = no
 # Extension to add when the -x509 option is used.
 x509_extensions     = v3_ca
 
 [ req_distinguished_name ]
+commonName                      = Common Name
 countryName                     = Country Name (2 letter code)
 stateOrProvinceName             = State or Province Name
 localityName                    = Locality Name
 0.organizationName              = Organization Name
 organizationalUnitName          = Organizational Unit Name
-commonName                      = Common Name
 emailAddress                    = Email Address
 
 # Optionally, specify some defaults.
+commonName_default              = asys.local
 countryName_default             = EG
 stateOrProvinceName_default     = DK
 localityName_default            = DK
-0.organizationName_default      = ca.local
-organizationalUnitName_default  = subca.local
-emailAddress_default            = it@subcaca.local
+0.organizationName_default      = asys
+organizationalUnitName_default  = ai
+emailAddress_default            = contact@asys.local
 
 [ v3_ca ]
 # Extensions for a typical CA (`man x509v3_config`).

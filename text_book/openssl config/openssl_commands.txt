@@ -1,7 +1,7 @@
- type		extension
+##type		##extension
 ==============================
-PEM		.pem .crt .cer
-DER		.der
+PEM			.pem
+DER			.der
 PKCS#7		.p7b .p7c
 PKCS#8		
 PKCS#12		.p12 .pfx
@@ -9,6 +9,7 @@ JKS         .jks .jceks
 ===============================================
 Keys
 ===============================================
+
 1.generate Diffie-Hellman key
 # openssl dhparam 4096 -out privatekey.key
 
@@ -23,55 +24,99 @@ Keys
 
 5.set pass phrase to private key
 # openssl rsa -des3 -in oldPrivatekey.key -out newPrivatekey.key
+
+6.generate dsa privatekey
+# openssl dsaparam -out param.dsa 2048
+# openssl gendsa -AES256 -out dsaprivatekey.key param.dsa
+
+7.generate dsa public key from private key
+# openssl dsa -pubout -in dsaprivatekey.key -out dsapublickey.key
+
+8.generate ec privatekey
+# openssl ecparam -out param.ec -name P-256
+# openssl ecparam -name P-256 -genkey -out ecprivatekey.key
+# openssl ecparam -name P-256 -genkey -noout -out ecprivatekey.key
+# openssl ec -in ecprivatekey.key -out encecprivatekey.key -aes256
+
+9.generate ec public key from private key
+# openssl ec -pubout -in ecprivatekey.key -out ecpublickey.key
+
+10.generate random hex key
+# openssl rand -hex -out randomhex.key 32
+
+11.generate rsa privatekey using genpkey
+# openssl genpkey -aes-256-cbc -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -outform PEM -out privatekey.key
+
+12.generate DSA privatekey using genpkey
+# openssl genpkey -genparam -algorithm DSA -pkeyopt pbits:2048 -out param.dsa
+# openssl genpkey -aes-256-cbc -paramfile param.dsa -out dsaprivatekey.key
+
+13.generate EC privatekey using genpkey
+# openssl genpkey -genparam -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out param.ec
+# openssl genpkey -aes-256-cbc -paramfile param.ec -out ecprivatekey.key
  
 ==================================================
 Requests and Certificates
 ==================================================
-1.create root certificate from private key in one shot
-# openssl req -x509 -new -nodes -sha256 -days 1826 -key rootkey.key -out rootca.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
 
-2.create private key and certificate in one shot
-# openssl req -x509 -sha256 -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
-
-3.create private key without pass phrase and certificate in one shot
+1.create private key without pass phrase and certificate in one shot
 # openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
 
-4.create new certificate request from existing certificate
+2.create new certificate request from existing certificate
 # openssl x509 -x509toreq -in certificate.crt -signkey privatekey.key -out request.csr
 
-5.create certificate from private key and new certificate request
+3.create new certificate request from private key in one shot
+# openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
+
+4.create private key and new certificate request in one shot
+# openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
+
+5.create private key without pass phrase and new certificate request in one shot
+# openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
+
+6.create CA certificate from private key and new certificate request
 # openssl x509 -req -sha256 -days 3650 -in request.csr -signkey privatekey.key -out certificate.crt
 
-6.create new certificate request from private key
-# openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+7.create CA certificate from private key in one shot
+# openssl req -x509 -sha256 -days 3650 -new -key privatekey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-7.create private key and new certificate request in one shot
-# openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+8.create private key and CA certificate in one shot
+# openssl req -x509 -sha256 -days 3650 -new -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-8.create private key without pass phrase and new certificate request in one shot
-# openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
+9.create private key and CA certificate without pass phrase in one shot
+# openssl req -x509 -sha256 -days 3650 -new -nodes -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-9.create certificate from request using CA certificate and CA private key (issued by CA)
-# openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -set_serial 1001 -in request.csr -out certificate.crt -extfile file.ext
-# openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -CAcreateserial -in request.csr -out certificate.crt -extfile file.ext
---------file.ext------------
+10.create certificate from request using CA certificate and CA private key (issued by CA)
+# openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -set_serial 1001 -in request.csr -out certificate.crt -extfile san.txt
+# openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -CAcreateserial -in request.csr -out certificate.crt -extfile san.txt
+--------san.txt------------
+basicConstraints=CA:false
 authorityKeyIdentifier=keyid,issuer 
-basicConstraints=CA:FALSE
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
 subjectAltName = @alt_names 
+
 [alt_names] 
 DNS.1 = twin.local
 DNS.2 = ai.twin.local
 DNS.3 = mi.twin.local
 DNS.4 = *.twin.local
+IP.1 = 192.1.1.100
+IP.2 = 192.1.1.101
 ----------------------------
 ====================================================
-Ketstores
+Keystores
 ====================================================
+
 1.Create a PKCS12 keystore (.pfx .p12) from PEM certificate file and a private key
 # openssl pkcs12 -export -inkey privatekey.key -in certificate.crt -out keystore.pfx
 
 2.Create a PKCS12 keystore (.pfx .p12) from PEM certificate file and a private key and CA certificate
-# openssl pkcs12 -export -inkey privatekey.crt -in certificate.crt -certfile cacert.crt -out keystore.pfx
+# openssl pkcs12 -export -inkey privatekey.key -in certificate.crt -certfile cacert.crt -out keystore.pfx
+This command for widows server 2016 and earlier
+# openssl pkcs12 -macalg SHA1 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -inkey privatekey.key -in certificate.crt -certfile cacert.crt -out keystore.pfx
 Note: oracle bug jdk before 8u301/7u311 can't open pkcs12
 
 3.export private keys and certificates from keystore (.pfx .p12)
@@ -83,93 +128,168 @@ Note: oracle bug jdk before 8u301/7u311 can't open pkcs12
 5.export private keys from keystore (.pfx .p12)
 # openssl pkcs12 -in keystore.pfx -nodes -nocerts -out privatekey.crt
 
-6.Create a DER pkcs5 privatekey file (.der) from PEM privateky file (.pem) with DES encryption
-# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.pem -v2 des3 -out privatekey.der
-
-7.Create a PEM privateky file (.pem) from DER pkcs8 privatekey file (.der)
-# openssl pkcs8 -inform DER outform PEM -in privatekey.der -out privatekey.pem -nocrypt
-
-8.Create a DER pkcs8 privatekey file (.der) from PEM privateky file (.pem)
-# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.pem -out privatekey.der -nocrypt
-
-9.Create a PEM privateky file (.pem) file from DER privateky file (.der)
-# openssl rsa -inform DER -outform PEM -in privatekey.pem -out privatekey.der
-
-10.Create a DER privateky file (.der) file from PEM privateky file (.pem)
-# openssl rsa -inform PEM -outform DER -in privatekey.pem -out privatekey.der
-
-11.Create a PEM (.crt .cer) file from DER file (.der)
-# openssl x509 -inform DER -outform PEM -in certificate.der -out certificate.crt
-
-12.Create a DER file from PEM file (.crt .cer)
-# openssl x509 -inform PEM -outform DER -in certificate.crt -out certificate.der
-
-13.Create a DER file from crl file (.pem)
-# openssl crl -in crl.pem -outform DER -out crl.der
-
-========================================================
-Utils
-========================================================
-
-1.check private key
-# openssl rsa-in privatekey.key -text -noout -check
-
-2.verify new certificate request
-# openssl req -in request.csr -text -noout -verify
-
-3.view private key
-# openssl rsa-in privatekey.key -text -noout
-
-4.view new certificate request
-# openssl req -in request.csr -text -noout
-
-5.view certificate
-# openssl x509 -in certificate.crt -text -noout
-
-6.view certificate revocation list
-openssl crl -in crl.pem -text -noout
-openssl crl -in crl.der -text -noout
-
-7.view KeyStore certs, keys, both
+6.view KeyStore certs, keys, both
 # openssl pkcs12 -info -nokeys -in keystore.p12
 # openssl pkcs12 -info -nocerts -in keystore.p12
 # openssl pkcs12 -info -in keystore.p12
 
-8.Measure SSL connection time
+========================================================
+Reform
+========================================================
+
+1.convert from PEM privateky file (.pem) to DER pkcs5 privatekey file (.der) with DES encryption
+# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.pem -v2 des3 -out privatekey.der
+
+2.convert from DER pkcs8 privatekey file (.der) to PEM privateky file (.pem) 
+# openssl pkcs8 -inform DER outform PEM -in privatekey.der -out privatekey.pem -nocrypt
+
+3.convert from PEM privateky file (.pem) to DER pkcs8 privatekey file (.der) 
+# openssl pkcs8 -topk8 -inform PEM -outform DER -in privatekey.pem -out privatekey.der -nocrypt
+
+4.convert from DER privateky file (.der) to PEM privateky file (.pem) file 
+# openssl rsa -inform DER -outform PEM -in privatekey.pem -out privatekey.der
+
+5.convert from PEM privateky file (.pem) to DER privateky file (.der) file 
+# openssl rsa -inform PEM -outform DER -in privatekey.pem -out privatekey.der
+
+6.convert from DER file (.der) to PEM (.crt .cer) file 
+# openssl x509 -inform DER -outform PEM -in certificate.der -out certificate.crt
+
+7.convert from PEM file (.crt .cer) to DER file 
+# openssl x509 -inform PEM -outform DER -in certificate.crt -out certificate.der
+
+8.convert from crl PEM file (.pem) to crl DER file (.der)
+# openssl crl -inform PEM -outform DER -in crlchain.pem -out crlchain.der
+
+9.convert from crl DER file (.der) to crl PEM file (.pem)
+# openssl crl -inform DER -outform PEM -in crlchain.der -out crlchain.pem
+
+========================================================
+Encryption and Sign
+========================================================
+
+1.encrypt and decryptusing aes-256-cbc algorithm
+# openssl aes-256-cbc -in file.txt -out file.enc -e -a <-kfile hex.key>
+# openssl aes-256-cbc -in file.enc -out file.txt -d -a <-kfile hex.key>
+
+2.encrypt and decryptusing des-ede3-cbc algorithm
+# openssl des-ede3-cbc -in file.txt -out file.enc -e -a <-kfile hex.key>
+# openssl des-ede3-cbc -in file.enc -out file.txt -d -a <-kfile hex.key>
+
+3.encrypt and decryptusing aes-256-cbc algorithm and password base key
+# openssl aes-256-cbc -in file.txt -out file.enc -e -a <-kfile hex.key> -pbkdf2 -iter 10000
+# openssl aes-256-cbc -in file.enc -out file.txt -d -a <-kfile hex.key> -pbkdf2 -iter 10000
+
+4.encrypt and decryptusing aes-256-ctr algorithm and password base key
+# openssl enc -aes-256-ctr -in file.txt -out file.enc -e -a <-kfile hex.key> -pbkdf2 -iter 10000
+# openssl enc aes-256-ctr -in file.enc -out file.txt -d -a <-kfile hex.key> -pbkdf2 -iter 10000
+
+5.encrypt and decrypt using public and private key
+# openssl rsautl -encrypt -inkey publickey.key -pubin -in file.txt -out file.enc
+# openssl rsautl -decrypt -inkey privatekey.key -in file.enc -out file.txt
+# openssl pkeyutl -encrypt -inkey publickey.key -pubin -in file.txt -out file.enc
+# openssl pkeyutl -decrypt -inkey privatekey.key -in file.enc -out file.txt
+
+6.sign and verify using private and public key
+# openssl rsautl -sign -inkey privatekey.key -in file.txt -out file.sign
+# openssl rsautl -verify -pubin -inkey publickey.key -in file.sign -out file.txt
+# openssl pkeyutl -sign -inkey privatekey.key -in file.txt -out file.sign
+# openssl pkeyutl -verify -pubin -inkey publickey.key -in file.sign -out file.txt
+
+7.sign and verify with hash method using private and public key
+# openssl sha256 -sign privatekey.key -out file.sign file.txt
+# openssl sha256 -verify publickey.key -signature file.sign file.txt
+# openssl dgst -sha256 -sign privatekey.key -out file.sign file.txt
+# openssl dgst -sha256 -verify publickey.key -signature file.sign file.txt
+
+8.genrate hmac and cmac
+# openssl sha256 -hmac <hex> -out file.hmac file.txt
+# openssl dgst -sha256 -hmac <hex> -out file.hmac file.txt
+# openssl dgst -sha256 -mac hmac -macopt hexkey:<hex> -out file.hmac file.txt
+# openssl dgst -sha256 -mac cmac -macopt cipher:aes-256-cbc -macopt hexkey:<hex> -out file.cmac file.txt
+========================================================
+Utils
+========================================================
+
+1.download certificate file [TLS 1.2]
+# openssl s_client -showcerts -connect secureurl.com:443 [-tls1_2] | openssl x509 -outform PEM > certfile.pem
+
+2.download CRL DER file for a certificate
+# wget -O crlchain.der [http://crl3.digicert.com/DigiCertTLSRSASHA2562020CA1.crl]
+
+3.download CA Certificates file PEM
+# wget -O - http://curl.haxx.se/ca/cacert.pem
+----https://curl.se/docs/caextract.html----
+
+4.download CA Certificates file PEM and split to multi certificate files(linux)
+# wget -O - http://curl.haxx.se/ca/cacert.pem | awk 'split_after==1{n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}
+
+5.verify certificate request
+# openssl req -in request.csr -text -noout -verify
+
+6.verify certificate with CA certificate
+# openssl verify -show_chain -CAfile cacert.crt certificate.crt
+
+7.verify certificate with CRL chain
+# openssl verify -crl_check -CAfile crlchain.pem certificate.crt
+
+8.check private key
+# openssl rsa -in privatekey.key -text -noout -check
+
+9.view private key
+# openssl rsa -in privatekey.key -text -noout
+
+10.view certificate request
+# openssl req -in request.csr -text -noout
+
+11.view certificate
+# openssl x509 -in certificate.crt -text -noout
+
+12.view certificate revocation list
+# openssl crl -in crlchain.pem -text -noout
+# openssl crl -in crlchain.der -text -noout
+
+13.Measure SSL connection time
 # openssl s_time -connect secureurl.com:443 -new
 # openssl s_time -connect secureurl.com:443 -reuse
 
-9.check SSL V2, SSL V3, TLS 1.0, TLS 1.1, TLS 1.2
+14.check SSL V2, SSL V3, TLS 1.0, TLS 1.1, TLS 1.2
 # openssl s_client -connect secureurl.com:443 [-ssl2|–ssl3|–tls1|–tls1_1|–tls1_2]
 # openssl s_client -host secureurl.com -port 443 [-ssl2|–ssl3|–tls1|–tls1_1|–tls1_2]
 
-10.download certificate file TLS 1.2
-# openssl s_client -showcerts -connect secureurl.com:443 -tls1_2 | openssl x509 -outform PEM > certfile.crt
-
-11.run ssl server to test certificates
+15.run ssl server to test certificates
 # openssl s_server -key privatekey.key -cert certificate.crt -accept 443 -www
 
-12.Measure speed of various security algorithms
+16.Measure speed of various security algorithms
 # openssl speed rsa2048
 # openssl speed ecdsap256
+
+17.list cipher,digest commands
+# openssl list -cipher-commands
+# openssl list -digest-commands
+
+18.list cipher,digest algorithms
+# openssl list -cipher-algorithms
+# openssl list -digest-algorithms
  
 ==================================================================
 Create ca, intermediate ca and sign new entity certificate steps
 ==================================================================
+
 Note: 
  mkdir rootca subca server
  cd rootca
  touch index.txt index.txt.attr serial crlnumber 
- cp# openssl_root.cnf .
+ # cp root.cnf .
  echo 1000 > serial
  echo 1000 > crlnumber
  cd subca
  touch  index.txt index.txt.attr serial crlnumber 
- cp# openssl_intermediate.cnf .
+ # cp intermediate.cnf .
  echo 1001 > serial
  echo 1000 > crlnumber
  cd server
- cp# openssl_csr_san.cnf .
+ # cp server.cnf .
 
 1.create privatekey
 # openssl genrsa -aes256 -out rootca/rootca.key 2048

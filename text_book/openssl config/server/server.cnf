@@ -1,0 +1,40 @@
+[ req ]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+req_extensions     = req_ext
+#prompt             = no
+
+[ req_distinguished_name ]
+commonName                      = Common Name
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+emailAddress                    = Email Address
+
+# Optionally, specify some defaults.
+commonName_default              = asys.local
+countryName_default             = EG
+stateOrProvinceName_default     = DK
+localityName_default            = DK
+0.organizationName_default      = asys
+organizationalUnitName_default  = ai
+emailAddress_default            = contact@asys.local
+
+[ req_ext ]
+basicConstraints=CA:false
+authorityKeyIdentifier=keyid,issuer 
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1	= twin.local
+DNS.2	= ai.twin.local
+DNS.3	= mi.twin.local
+DNS.4	= *.twin.local
+DNS.5	= localhost
+IP.1	= 192.168.1.100

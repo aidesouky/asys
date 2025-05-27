@@ -24,6 +24,36 @@ Keys
 
 5.set pass phrase to private key
 # openssl rsa -des3 -in oldPrivatekey.key -out newPrivatekey.key
+
+6.generate dsa privatekey
+# openssl dsaparam -out param.dsa 2048
+# openssl gendsa -AES256 -out dsaprivatekey.key param.dsa
+
+7.generate dsa public key from private key
+# openssl dsa -pubout -in dsaprivatekey.key -out dsapublickey.key
+
+8.generate ec privatekey
+# openssl ecparam -out param.ec -name P-256
+# openssl ecparam -name P-256 -genkey -out ecprivatekey.key
+# openssl ecparam -name P-256 -genkey -noout -out ecprivatekey.key
+# openssl ec -in ecprivatekey.key -out encecprivatekey.key -aes256
+
+9.generate ec public key from private key
+# openssl ec -pubout -in ecprivatekey.key -out ecpublickey.key
+
+10.generate random hex key
+# openssl rand -hex -out randomhex.key 32
+
+11.generate rsa privatekey using genpkey
+# openssl genpkey -aes-256-cbc -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -outform PEM -out privatekey.key
+
+12.generate DSA privatekey using genpkey
+# openssl genpkey -genparam -algorithm DSA -pkeyopt pbits:2048 -out param.dsa
+# openssl genpkey -aes-256-cbc -paramfile param.dsa -out dsaprivatekey.key
+
+13.generate EC privatekey using genpkey
+# openssl genpkey -genparam -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out param.ec
+# openssl genpkey -aes-256-cbc -paramfile param.ec -out ecprivatekey.key
  
 ==================================================
 Requests and Certificates
@@ -35,7 +65,7 @@ Requests and Certificates
 2.create new certificate request from existing certificate
 # openssl x509 -x509toreq -in certificate.crt -signkey privatekey.key -out request.csr
 
-3.create new certificate request from private key
+3.create new certificate request from private key in one shot
 # openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
 4.create private key and new certificate request in one shot
@@ -44,28 +74,37 @@ Requests and Certificates
 5.create private key without pass phrase and new certificate request in one shot
 # openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
-6.create certificate from private key and new certificate request
+6.create CA certificate from private key and new certificate request
 # openssl x509 -req -sha256 -days 3650 -in request.csr -signkey privatekey.key -out certificate.crt
 
-7.create root certificate from private key in one shot
-# openssl req -x509 -new -nodes -sha256 -days 1826 -key cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
+7.create CA certificate from private key in one shot
+# openssl req -x509 -sha256 -days 3650 -new -key privatekey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-8.create private key and certificate in one shot
-# openssl req -x509 -sha256 -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
+8.create private key and CA certificate in one shot
+# openssl req -x509 -sha256 -days 3650 -new -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-9.create certificate from request using CA certificate and CA private key (issued by CA)
+9.create private key and CA certificate without pass phrase in one shot
+# openssl req -x509 -sha256 -days 3650 -new -nodes -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
+
+10.create certificate from request using CA certificate and CA private key (issued by CA)
 # openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -set_serial 1001 -in request.csr -out certificate.crt -extfile san.txt
 # openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -CAcreateserial -in request.csr -out certificate.crt -extfile san.txt
 --------san.txt------------
+basicConstraints=CA:false
 authorityKeyIdentifier=keyid,issuer 
-basicConstraints=CA:FALSE
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
 subjectAltName = @alt_names 
+
 [alt_names] 
 DNS.1 = twin.local
 DNS.2 = ai.twin.local
 DNS.3 = mi.twin.local
 DNS.4 = *.twin.local
-IP = 192.1.1.100
+IP.1 = 192.1.1.100
+IP.2 = 192.1.1.101
 ----------------------------
 ====================================================
 Keystores
@@ -126,6 +165,49 @@ Reform
 # openssl crl -inform DER -outform PEM -in crlchain.der -out crlchain.pem
 
 ========================================================
+Encryption and Sign
+========================================================
+
+1.encrypt and decryptusing aes-256-cbc algorithm
+# openssl aes-256-cbc -in file.txt -out file.enc -e -a <-kfile hex.key>
+# openssl aes-256-cbc -in file.enc -out file.txt -d -a <-kfile hex.key>
+
+2.encrypt and decryptusing des-ede3-cbc algorithm
+# openssl des-ede3-cbc -in file.txt -out file.enc -e -a <-kfile hex.key>
+# openssl des-ede3-cbc -in file.enc -out file.txt -d -a <-kfile hex.key>
+
+3.encrypt and decryptusing aes-256-cbc algorithm and password base key
+# openssl aes-256-cbc -in file.txt -out file.enc -e -a <-kfile hex.key> -pbkdf2 -iter 10000
+# openssl aes-256-cbc -in file.enc -out file.txt -d -a <-kfile hex.key> -pbkdf2 -iter 10000
+
+4.encrypt and decryptusing aes-256-ctr algorithm and password base key
+# openssl enc -aes-256-ctr -in file.txt -out file.enc -e -a <-kfile hex.key> -pbkdf2 -iter 10000
+# openssl enc aes-256-ctr -in file.enc -out file.txt -d -a <-kfile hex.key> -pbkdf2 -iter 10000
+
+5.encrypt and decrypt using public and private key
+# openssl rsautl -encrypt -inkey publickey.key -pubin -in file.txt -out file.enc
+# openssl rsautl -decrypt -inkey privatekey.key -in file.enc -out file.txt
+# openssl pkeyutl -encrypt -inkey publickey.key -pubin -in file.txt -out file.enc
+# openssl pkeyutl -decrypt -inkey privatekey.key -in file.enc -out file.txt
+
+6.sign and verify using private and public key
+# openssl rsautl -sign -inkey privatekey.key -in file.txt -out file.sign
+# openssl rsautl -verify -pubin -inkey publickey.key -in file.sign -out file.txt
+# openssl pkeyutl -sign -inkey privatekey.key -in file.txt -out file.sign
+# openssl pkeyutl -verify -pubin -inkey publickey.key -in file.sign -out file.txt
+
+7.sign and verify with hash method using private and public key
+# openssl sha256 -sign privatekey.key -out file.sign file.txt
+# openssl sha256 -verify publickey.key -signature file.sign file.txt
+# openssl dgst -sha256 -sign privatekey.key -out file.sign file.txt
+# openssl dgst -sha256 -verify publickey.key -signature file.sign file.txt
+
+8.genrate hmac and cmac
+# openssl sha256 -hmac <hex> -out file.hmac file.txt
+# openssl dgst -sha256 -hmac <hex> -out file.hmac file.txt
+# openssl dgst -sha256 -mac hmac -macopt hexkey:<hex> -out file.hmac file.txt
+# openssl dgst -sha256 -mac cmac -macopt cipher:aes-256-cbc -macopt hexkey:<hex> -out file.cmac file.txt
+========================================================
 Utils
 ========================================================
 
@@ -181,6 +263,14 @@ Utils
 16.Measure speed of various security algorithms
 # openssl speed rsa2048
 # openssl speed ecdsap256
+
+17.list cipher,digest commands
+# openssl list -cipher-commands
+# openssl list -digest-commands
+
+18.list cipher,digest algorithms
+# openssl list -cipher-algorithms
+# openssl list -digest-algorithms
  
 ==================================================================
 Create ca, intermediate ca and sign new entity certificate steps
@@ -190,16 +280,16 @@ Note:
  mkdir rootca subca server
  cd rootca
  touch index.txt index.txt.attr serial crlnumber 
- cp# openssl_root.cnf .
+ # cp root.cnf .
  echo 1000 > serial
  echo 1000 > crlnumber
  cd subca
  touch  index.txt index.txt.attr serial crlnumber 
- cp# openssl_intermediate.cnf .
+ # cp intermediate.cnf .
  echo 1001 > serial
  echo 1000 > crlnumber
  cd server
- cp# openssl_csr_san.cnf .
+ # cp server.cnf .
 
 1.create privatekey
 # openssl genrsa -aes256 -out rootca/rootca.key 2048
