@@ -1,0 +1,15 @@
+basicConstraints=CA:false
+authorityKeyIdentifier=keyid,issuer 
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
+subjectAltName = @alt_names 
+
+[alt_names] 
+DNS.1 = twin.local
+DNS.2 = ai.twin.local
+DNS.3 = mi.twin.local
+DNS.4 = *.twin.local
+IP.1 = 192.1.1.100
+IP.2 = 192.1.1.101

@@ -62,50 +62,40 @@ Requests and Certificates
 1.create private key without pass phrase and certificate in one shot
 # openssl req -x509 -sha256 -nodes -days 3650 -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local"
 
-2.create new certificate request from existing certificate
+2.create request from existing certificate
 # openssl x509 -x509toreq -in certificate.crt -signkey privatekey.key -out request.csr
 
-3.create new certificate request from private key in one shot
+3.create request from private key in one shot
 # openssl req -new -sha256 -key privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
-4.create private key and new certificate request in one shot
+4.create privatekey and request with config file in one shot (config file in the end of this file)
+# openssl req -new -keyout privatekey.key -out request.csr -config config.txt
+
+5.create privatekey and request in one shot
 # openssl req -new -newkey rsa:2048 -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
-5.create private key without pass phrase and new certificate request in one shot
+6.create privatekey and request without pass phrase in one shot
 # openssl req -new -newkey rsa:2048 -nodes -keyout privatekey.key -out request.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100"
 
-6.create CA certificate from private key and new certificate request
+7.create certificate from privatekey and request
 # openssl x509 -req -sha256 -days 3650 -in request.csr -signkey privatekey.key -out certificate.crt
 
-7.create CA certificate from private key in one shot
-# openssl req -x509 -sha256 -days 3650 -new -key privatekey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
+8.create privatekey and certificate with config file in one shot (config file in the end of this file)
+# openssl req -x509 -new -keyout privatekey.key -out certificate.crt -config config.txt
 
-8.create private key and CA certificate in one shot
-# openssl req -x509 -sha256 -days 3650 -new -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
+9.create privatekey and certificate in one shot
+# openssl req -x509 -sha256 -days 3650 -new -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-9.create private key and CA certificate without pass phrase in one shot
-# openssl req -x509 -sha256 -days 3650 -new -nodes -newkey rsa:4096 -keyout cakey.key -out cacert.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
+10.create privatekey and certificate without pass phrase in one shot
+# openssl req -x509 -sha256 -days 3650 -new -nodes -newkey rsa:4096 -keyout privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
 
-10.create certificate from request using CA certificate and CA private key (issued by CA)
+11.create certificate from privatekey in one shot
+# openssl req -x509 -sha256 -days 3650 -new -key privatekey.key -out certificate.crt -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/" -addext "subjectAltName=DNS:twin.local,DNS:*.twin.local,IP:192.1.1.100" -addext "basicConstraints=critical, CA:true"
+
+12.create certificate from request using CA certificate and CA private key (issued by CA) (san file in the end of this file)
 # openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -set_serial 1001 -in request.csr -out certificate.crt -extfile san.txt
 # openssl x509 -req -days 3650 -CA cacert.crt -CAkey cakey.key -CAcreateserial -in request.csr -out certificate.crt -extfile san.txt
---------san.txt------------
-basicConstraints=CA:false
-authorityKeyIdentifier=keyid,issuer 
-#authorityInfoAccess=OCSP;URI:https://asys.local
-#authorityInfoAccess=caIssuers;URI:https://asys.local
-#keyUsage=digitalSignature, keyEncipherment
-#extendedKeyUsage=codesigning
-subjectAltName = @alt_names 
 
-[alt_names] 
-DNS.1 = twin.local
-DNS.2 = ai.twin.local
-DNS.3 = mi.twin.local
-DNS.4 = *.twin.local
-IP.1 = 192.1.1.100
-IP.2 = 192.1.1.101
-----------------------------
 ====================================================
 Keystores
 ====================================================
@@ -120,12 +110,14 @@ This command for widows server 2016 and earlier
 Note: oracle bug jdk before 8u301/7u311 can't open pkcs12
 
 3.export private keys and certificates from keystore (.pfx .p12)
+# openssl pkcs12 -in keystore.pfx -out certificate.crt
 # openssl pkcs12 -in keystore.pfx -nodes -out certificate.crt
 
 4.export certificates from keystore (.pfx .p12)
 # openssl pkcs12 -in keystore.pfx -nokeys -out certificate.crt
 
 5.export private keys from keystore (.pfx .p12)
+# openssl pkcs12 -in keystore.pfx -nocerts -out privatekey.crt
 # openssl pkcs12 -in keystore.pfx -nodes -nocerts -out privatekey.crt
 
 6.view KeyStore certs, keys, both
@@ -294,23 +286,99 @@ Note:
 1.create privatekey
 # openssl genrsa -aes256 -out rootca/rootca.key 2048
 
-2.create root certificate from private key using configuration file
-# openssl req -new -x509 -sha512 -days 3650 -config rootca/openssl_root.cnf -extensions v3_ca -key rootca/rootca.key -out rootca/rootca.crt
+2.create root certificate and privatekey using configuration file
+# openssl req -new -x509 -config rootca/root.cnf -keyout rootca/rootca.key -out rootca/rootca.crt
 
-3.create intermediate request and private key using configuration file
-# openssl req -new -newkey rsa:2048 -config subca/openssl_intermediate.cnf -keyout subca/subca.key -out subca/subca.req.csr
+3.create intermediate request and privatekey using configuration file
+# openssl req -new -config subca/intermediate.cnf -keyout subca/subca.key -out subca/subca.csr
+# openssl req -new -config subca/intermediate.cnf -keyout subca/subca2.key -out subca/subca2.csr
 
 4.create intermediate certificate from request using configuration file
-# openssl ca -days 3650 -notext -md sha512 -config rootca/openssl_root.cnf -extensions v3_intermediate_ca -in subca/subca.req.csr -out subca/subca.crt
+# openssl ca -notext -config rootca/root.cnf -extensions v3_intermediate_ca -in subca/subca.csr -out subca/subca.crt
+# openssl ca -notext -config subca/subca.cnf -extensions v3_intermediate_ca -in subca/subca2.csr -out subca/subca2.crt
 
-5.create server request and private key using configuration file
-# openssl req -newkey rsa:2048 -nodes -config server/openssl_csr_san.cnf -keyout server/server.key -out server/server.req.csr
+5.create server request and privatekey using configuration file
+# openssl req -new -config server/server.cnf -keyout server/server.key -out server/server.csr
 
 6.create server certificate from request using configuration file
-# openssl ca -days 3650 -notext -md sha512 -config subca/openssl_intermediate.cnf -extensions server_cert -in server/server.req.csr -out server/server.crt
+# openssl ca -notext -config subca/intermediate.cnf -extensions server_cert -in server/server.csr -out server/server.crt
 
-7.create client request and private key
-# openssl req -new -newkey rsa:2048 -keyout client.key -out client.req.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/"
+7.create server request and privatekey
+# openssl req -new -newkey rsa:2048 -keyout server/server.key -out server/server.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/"
 
-8.create client certificate from request
-# openssl x509 -req -days 3650 -CA subca/subca.crt -CAkey subca/subca.key -in client.req.csr -out client.crt
+8.create server certificate from request
+# openssl x509 -req -days 3650 -CA subca/subca.crt -CAkey subca/subca.key -in server/server.csr -out server/server.crt -extfile san.txt
+
+======================================================================
+======================================================================
+--------san.txt------------
+basicConstraints=CA:false
+authorityKeyIdentifier=keyid,issuer 
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
+subjectAltName = @alt_names 
+
+[alt_names] 
+DNS.1 = twin.local
+DNS.2 = ai.twin.local
+DNS.3 = mi.twin.local
+DNS.4 = *.twin.local
+IP.1 = 192.1.1.100
+IP.2 = 192.1.1.101
+----------------------------
+
+--------server config.txt------------
+[ req ]
+default_bits       = 2048
+default_md          = sha256
+default_days      = 3650
+distinguished_name = req_distinguished_name
+# when using -x509 flag
+x509_extensions     = x509_ext
+string_mask         = utf8only
+#prompt              = no
+#encrypt_key         = no
+
+[ req_distinguished_name ]
+commonName                      = Common Name
+countryName                     = Country Name (2 letter code)
+stateOrProvinceName             = State or Province Name
+localityName                    = Locality Name
+0.organizationName              = Organization Name
+organizationalUnitName          = Organizational Unit Name
+emailAddress                    = Email Address
+
+# Optionally, specify some defaults.
+commonName_default              = asys.local
+countryName_default             = EG
+stateOrProvinceName_default     = DK
+localityName_default            = DK
+0.organizationName_default      = asys
+organizationalUnitName_default  = ai
+emailAddress_default            = contact@asys.local
+
+[ x509_ext ]
+basicConstraints=CA:false
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer 
+#authorityInfoAccess=OCSP;URI:https://asys.local
+#authorityInfoAccess=caIssuers;URI:https://asys.local
+#keyUsage=digitalSignature, keyEncipherment
+#extendedKeyUsage=codesigning
+subjectAltName = @alt_names
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1	= twin.local
+DNS.2	= ai.twin.local
+DNS.3	= mi.twin.local
+DNS.4	= *.twin.local
+DNS.5	= localhost
+IP.1	= 192.168.1.100
+IP.2	= 192.168.1.101
+
+----------------------------

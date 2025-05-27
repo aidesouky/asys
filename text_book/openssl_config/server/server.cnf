@@ -1,10 +1,15 @@
 [ req ]
 default_bits       = 2048
-default_days      = 3650
 default_md          = sha256
+default_days      = 3650
 distinguished_name = req_distinguished_name
+# when using -x509 flag
+x509_extensions     = x509_ext
+# when using -req flag
 req_extensions     = req_ext
-#prompt             = no
+string_mask         = utf8only
+#prompt              = no
+#encrypt_key         = no
 
 [ req_distinguished_name ]
 commonName                      = Common Name
@@ -14,7 +19,6 @@ localityName                    = Locality Name
 0.organizationName              = Organization Name
 organizationalUnitName          = Organizational Unit Name
 emailAddress                    = Email Address
-
 # Optionally, specify some defaults.
 commonName_default              = asys.local
 countryName_default             = EG
@@ -24,13 +28,19 @@ localityName_default            = DK
 organizationalUnitName_default  = ai
 emailAddress_default            = contact@asys.local
 
-[ req_ext ]
+[ x509_ext ]
 basicConstraints=CA:false
+subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer 
 #authorityInfoAccess=OCSP;URI:https://asys.local
 #authorityInfoAccess=caIssuers;URI:https://asys.local
 #keyUsage=digitalSignature, keyEncipherment
-#extendedKeyUsage=codesigning
+#extendedKeyUsage=serverAuth, clientAuth, emailProtection, codesigning
+subjectAltName = @alt_names
+
+[ req_ext ]
+basicConstraints=CA:false
+subjectKeyIdentifier=hash
 subjectAltName = @alt_names
 
 [alt_names]
