@@ -120,12 +120,14 @@ This command for widows server 2016 and earlier
 Note: oracle bug jdk before 8u301/7u311 can't open pkcs12
 
 3.export private keys and certificates from keystore (.pfx .p12)
+# openssl pkcs12 -in keystore.pfx -out certificate.crt
 # openssl pkcs12 -in keystore.pfx -nodes -out certificate.crt
 
 4.export certificates from keystore (.pfx .p12)
 # openssl pkcs12 -in keystore.pfx -nokeys -out certificate.crt
 
 5.export private keys from keystore (.pfx .p12)
+# openssl pkcs12 -in keystore.pfx -nocerts -out privatekey.crt
 # openssl pkcs12 -in keystore.pfx -nodes -nocerts -out privatekey.crt
 
 6.view KeyStore certs, keys, both
@@ -295,22 +297,22 @@ Note:
 # openssl genrsa -aes256 -out rootca/rootca.key 2048
 
 2.create root certificate from private key using configuration file
-# openssl req -new -x509 -sha512 -days 3650 -config rootca/openssl_root.cnf -extensions v3_ca -key rootca/rootca.key -out rootca/rootca.crt
+# openssl req -new -x509 -sha512 -days 3650 -config rootca/root.cnf -extensions v3_ca -key rootca/rootca.key -out rootca/rootca.crt
 
 3.create intermediate request and private key using configuration file
-# openssl req -new -newkey rsa:2048 -config subca/openssl_intermediate.cnf -keyout subca/subca.key -out subca/subca.req.csr
+# openssl req -new -newkey rsa:2048 -config subca/intermediate.cnf -keyout subca/subca.key -out subca/subca.req.csr
 
 4.create intermediate certificate from request using configuration file
-# openssl ca -days 3650 -notext -md sha512 -config rootca/openssl_root.cnf -extensions v3_intermediate_ca -in subca/subca.req.csr -out subca/subca.crt
+# openssl ca -days 3650 -notext -md sha512 -config rootca/root.cnf -extensions v3_intermediate_ca -in subca/subca.req.csr -out subca/subca.crt
 
 5.create server request and private key using configuration file
-# openssl req -newkey rsa:2048 -nodes -config server/openssl_csr_san.cnf -keyout server/server.key -out server/server.req.csr
+# openssl req -newkey rsa:2048 -config server/server.cnf -keyout server/server.key -out server/server.req.csr
 
 6.create server certificate from request using configuration file
-# openssl ca -days 3650 -notext -md sha512 -config subca/openssl_intermediate.cnf -extensions server_cert -in server/server.req.csr -out server/server.crt
+# openssl ca -days 3650 -notext -md sha512 -config subca/intermediate.cnf -extensions server_cert -in server/server.req.csr -out server/server.crt
 
 7.create client request and private key
 # openssl req -new -newkey rsa:2048 -keyout client.key -out client.req.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/"
 
 8.create client certificate from request
-# openssl x509 -req -days 3650 -CA subca/subca.crt -CAkey subca/subca.key -in client.req.csr -out client.crt
+# openssl x509 -req -days 3650 -CA subca/subca.crt -CAkey subca/subca.key -in client.req.csr -out client.crt -extfile san.txt

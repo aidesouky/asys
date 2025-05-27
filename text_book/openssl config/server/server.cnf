@@ -1,5 +1,7 @@
 [ req ]
 default_bits       = 2048
+default_days      = 3650
+default_md          = sha256
 distinguished_name = req_distinguished_name
 req_extensions     = req_ext
 #prompt             = no
@@ -38,3 +40,4 @@ DNS.3	= mi.twin.local
 DNS.4	= *.twin.local
 DNS.5	= localhost
 IP.1	= 192.168.1.100
+IP.2	= 192.168.1.101
