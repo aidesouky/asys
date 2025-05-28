@@ -294,14 +294,14 @@ Note:
 # openssl req -new -config subca/intermediate.cnf -keyout subca/subca2.key -out subca/subca2.csr
 
 4.create intermediate certificate from request using configuration file
-# openssl ca -notext -config rootca/root.cnf -extensions v3_intermediate_ca -in subca/subca.csr -out subca/subca.crt
-# openssl ca -notext -config subca/subca.cnf -extensions v3_intermediate_ca -in subca/subca2.csr -out subca/subca2.crt
+# openssl ca -notext -days 3650 -md sha256 -config rootca/root.cnf -extensions v3_intermediate_ca -in subca/subca.csr -out subca/subca.crt
+# openssl ca -notext -days 3650 -md sha256 -config subca/subca.cnf -extensions v3_intermediate_ca -in subca/subca2.csr -out subca/subca2.crt
 
 5.create server request and privatekey using configuration file
 # openssl req -new -config server/server.cnf -keyout server/server.key -out server/server.csr
 
 6.create server certificate from request using configuration file
-# openssl ca -notext -config subca/intermediate.cnf -extensions server_cert -in server/server.csr -out server/server.crt
+# openssl ca -notext -days 3650 -md sha256 -config subca/intermediate.cnf -extensions server_cert -in server/server.csr -out server/server.crt
 
 7.create server request and privatekey
 # openssl req -new -newkey rsa:2048 -keyout server/server.key -out server/server.csr -subj "/C=EG/O=twin/OU=ai/L=CA/ST=CA/emailAddress=admin@twin.local/CN=twin.local/"
