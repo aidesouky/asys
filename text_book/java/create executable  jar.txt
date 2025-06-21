@@ -2,6 +2,8 @@ Create Executable jar file
 ==========================
 1.create java class
 # touch MyClass.java
+-- for class in package "com.example"
+# touch com/example/MyClass.java
 
 2.write code into java file
 public class MyClass {
@@ -9,7 +11,7 @@ public class MyClass {
         System.out.println("Hello, world!");
     }
 }
-------------------------
+-- for class in package "com.example"
 package com.example;
 public class MyClass {
     public static void main(String[] args) {
@@ -20,8 +22,10 @@ public class MyClass {
 
 3.compile java file to generate MyClass.class
 # javac MyClass.java
+-- for class in package "com.example"
+# javac com/example/MyClass.java
 
 4.create jar with class file
 # jar -c -f myprogram.jar -e MyClass ./Myclass.class
------------------------------------------------------
+-- for class in package "com.example"
 # jar -c -f myprogram.jar -e com.example.MyClass ./com/example/Myclass.class
