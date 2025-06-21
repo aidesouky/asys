@@ -1,0 +1,27 @@
+Create Executable jar file
+==========================
+1.create java class
+# touch MyClass.java
+
+2.write code into java file
+public class MyClass {
+    public static void main(String[] args) {
+        System.out.println("Hello, world!");
+    }
+}
+------------------------
+package com.example;
+public class MyClass {
+    public static void main(String[] args) {
+        System.out.println("Hello, world!");
+    }
+}
+
+
+3.compile java file to generate MyClass.class
+# javac MyClass.java
+
+4.create jar with class file
+# jar -c -f myprogram.jar -e MyClass ./Myclass.class
+-----------------------------------------------------
+# jar -c -f myprogram.jar -e com.example.MyClass ./com/example/Myclass.class

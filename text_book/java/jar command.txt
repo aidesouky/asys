@@ -1,0 +1,35 @@
+JAR Command
+===========
+make "files" directory as jar file
+# jar cf file.jar ./files
+
+make "files" directory as jar file without create "MANIFEST.MF" file
+# jar cfM file.jar ./files
+
+list all files and directories in "file.jar"
+# jar tf file.jar
+
+extract all files and directories in "file.jar"
+# jar xf file.jar
+
+extract "file.txt" from file.jar
+# jar xf file.jar files/file.txt
+
+insert "file.txt" into "files" directory in "file.jar"
+# jar uf file.jar files/file.txt
+
+update "MANIFEST.MF" file
+# jar ufm file.jar META-INF/MANIFEST.MF
+# jar -u -f file.jar -m META-INF/MANIFEST.MF
+
+create jar file with main class "com.example.mainclass" and mainclass file
+# jar cfe file.jar com.example.mainclass ./com/example/MainClass.class
+# jar c -f file.jar -e com.example.mainclass ./com/example/MainClass.class
+
+change Main Class in "MANIFEST.MF" file to "com.example.mainclass"
+# jar ufe file.jar com.example.mainclass
+# jar u -f file.jar -e com.example.mainclass
+
+change Main Class in "MANIFEST.MF" file to "com.example.mainclass" and insert mainclass file
+# jar ufe file.jar com.example.mainclass ./com/example/MainClass.class
+# jar u -f file.jar -e com.example.mainclass ./com/example/MainClass.class
