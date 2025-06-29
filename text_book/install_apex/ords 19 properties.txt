@@ -1,0 +1,39 @@
+ORDS 19.x Configuration Properties Table
+========================================
+Property Name									Scope	Type (Category)				Description
+standalone.http.port							global	Standalone Server			HTTP port for built-in Jetty server
+standalone.https.port							global	Standalone Server			HTTPS port
+standalone.ssl.cert								global	Standalone Server			Path to SSL cert (PEM or JKS)
+standalone.ssl.cert.key							global	Standalone Server			SSL private key
+standalone.doc.root								global	Standalone Server			Directory to serve static files
+standalone.static.context.path					global	Standalone Server			Context path for static file hosting
+log.console										global	Logging						Enable/disable console logging
+security.authentication							global	Security					basic, oauth, or custom
+security.requestValidationFunction				global	Security					PL/SQL function to validate request
+security.oauth.token.lifetime					global	Security (OAuth2)			Token lifespan in seconds
+security.oauth.grant.client.credentials.enabled	global	Security (OAuth2)			Enable OAuth2 client credentials flow
+security.access.token.signature.key				global	Security (OAuth2)			Key to sign JWT tokens
+security.verifySSL								global	Security					Require HTTPS for token access
+misc.defaultPage								global	Miscellaneous				Default page when ORDS is called
+misc.pagination.maxRows							global	Miscellaneous				Max rows per paginated response
+cache.caching									global	Caching						Enable 	browser/HTTP caching
+feature.sdw										global	Feature 					Toggle	Enable Schema Design Wizard
+feature.sqlDeveloperWeb							global	Feature 					Toggle	Enable SQL Developer Web (if available)
+jdbc.InitialLimit								pool	JDBC Connection Pool		Initial number of connections
+jdbc.MinLimit									pool	JDBC Connection Pool		Minimum pool size
+jdbc.MaxLimit									pool	JDBC Connection Pool		Maximum pool size
+jdbc.MaxStatementsLimit							pool	JDBC Connection Pool		Statement cache size
+jdbc.InactivityTimeout							pool	JDBC Connection Pool		Idle connection timeout in seconds
+jdbc.MaxConnectionReuseCount					pool	JDBC Connection Pool		Max times a connection is reused
+jdbc.enableONS									pool	RAC Support					Enable Oracle Notification Service
+jdbc.ONSConfig									pool	RAC Support					ONS config string for FAN support
+db.hostname										pool	Connection Settings			DB host name
+db.port											pool	Connection Settings			DB listener port
+db.servicename									pool	Connection Settings			DB service name
+db.sid											pool	Connection Settings			SID, if not using service name
+db.username										pool	Connection Settings			ORDS schema user
+db.password										pool	Connection Settings			Encrypted password
+db.wallet.zip.path								pool	Connection Settings			Wallet path (TCPS)
+db.ssl.cert.path								pool	Connection Settings			SSL cert for JDBC
+db.connectionType								pool	Connection Settings			basic, customurl, etc.
+db.customURL									pool	Connection Settings			Full JDBC URL for advanced setups
