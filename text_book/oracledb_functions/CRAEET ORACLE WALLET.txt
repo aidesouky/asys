@@ -7,31 +7,31 @@
 # orapki wallet create -wallet C:\ora_wallet -auto_login_only
 
 -- To view an Oracle wallet
-# orapki wallet display -wallet C:\ora_wallet
+# orapki wallet display -wallet C:\ora_wallet -pwd system11
 
 -- To change the wallet password
 # orapki wallet change_pwd -wallet C:\ora_wallet -oldpwd system11  -newpwd system12
 
 -- To change the wallet algorithm from 3DES to AES256
-# orapki wallet convert -wallet C:\ora_wallet -pwd system11 -compat_v12
+# orapki wallet convert -wallet C:\ora_wallet -compat_v12 -pwd system11 
 
 -- To add a certificate request to an Oracle wallet
-# orapki wallet add -wallet C:\ora_wallet -dn user_dn -keySize [512|1024|2048]
+# orapki wallet add -wallet C:\ora_wallet -dn user_dn -keySize [512|1024|2048] -pwd system11
 
 -- To add a trusted certificate to an Oracle wallet
-# orapki wallet add -wallet C:\ora_wallet -trusted_cert -cert certificate.crt
-
--- To add a root certificate to an Oracle wallet
-# orapki wallet add -wallet C:\ora_wallet -dn <certificate_dn> -keySize [512|1024|2048] -self_signed -validity <number_of_days>
+# orapki wallet add -wallet C:\ora_wallet -trusted_cert -cert certificate.crt -pwd system11
 
 -- To add a user certificate to an Oracle wallet
-# orapki wallet add -wallet C:\ora_wallet -user_cert -cert certificate.crt
+# orapki wallet add -wallet C:\ora_wallet -user_cert -cert certificate.crt -pwd system11
+
+-- To add a root certificate to an Oracle wallet
+# orapki wallet add -wallet C:\ora_wallet -dn <certificate_dn> -keySize [512|1024|2048] -self_signed -validity <number_of_days> -pwd system11
 
 -- To verify the credential details
 # orapki wallet p11_verify -wallet C:\ora_wallet -pwd system11
 
 -- To export a certificate from an Oracle wallet
-# orapki wallet export -wallet C:\ora_wallet -dn <certificate_dn> -cert certificate.crt
+# orapki wallet export -wallet C:\ora_wallet -dn <certificate_dn> -cert certificate.crt -pwd system11
 
 -- To export a certificate request from an Oracle wallet
-# orapki wallet export -wallet C:\ora_wallet -dn <certificate_request_dn> -request certificate_request.csr
+# orapki wallet export -wallet C:\ora_wallet -dn <certificate_request_dn> -request certificate_request.csr -pwd system11
