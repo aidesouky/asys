@@ -1,0 +1,14 @@
+##install jar file as a windows service
+#nssm.exe install <service_name> "<java_exe_path>" "-jar <jar_file_path>"
+##set working directory for the service
+#nssm.exe set <service_name> AppDirectory "<working_directory>"
+##get working directory for the service
+#nssm.exe get <service_name> AppDirectory
+
+##install service GUI
+#nssm.exe install <service_name>
+##edit service GUI
+#nssm.exe edit <service_name>
+##remove service GUI
+#nssm.exe remove <service_name>
+
