@@ -1,0 +1,58 @@
+fwconsole commands freepbx 16
+==========================
+System & Service Management
+--------------------------------------
+# sudo fwconsole reload             # Reload FreePBX configuration (shortcut: r)
+# sudo fwconsole restart            # Restart Asterisk and FreePBX services
+# sudo fwconsole start              # Start Asterisk and FreePBX services
+# sudo fwconsole stop               # Stop Asterisk and FreePBX services
+# sudo fwconsole chown              # Fix ownership of files
+# sudo fwconsole debug              # Enable debug streaming mode
+# sudo fwconsole backup           # Run FreePBX backup jobs
+
+Module Management
+--------------------------------------
+# sudo fwconsole moduleadmin list                       # List all modules (shortcut: ma list)
+# sudo fwconsole moduleadmin upgradeall                # Upgrade all modules (shortcut: ma upgradeall)
+# sudo fwconsole moduleadmin install <module_name>    # Install a module (shortcut: ma install)
+# sudo fwconsole moduleadmin upgrade <module_name>    # Upgrade a module (shortcut: ma upgrade)
+# sudo fwconsole moduleadmin delete <module_name>     # Delete a module (shortcut: ma delete)
+# sudo fwconsole moduleadmin downloadinstall <module_name> # Download & install a module
+
+Settings & Configuration
+--------------------------------------
+# sudo fwconsole setting SHOW <setting>   # View a specific setting
+# sudo fwconsole setting <setting> <value> # Update a setting
+# sudo fwconsole reload                   # Reload all configs (shortcut: r)
+
+Security & Validation
+--------------------------------------
+# sudo fwconsole allowlist                 # Manage IP allowlist
+# sudo fwconsole unlock                    # Unlock sessions
+# sudo fwconsole validate                  # Validate your PBX for potential security issues
+
+Trunks & Voicemail
+--------------------------------------
+# sudo fwconsole trunks                     # Enable/disable trunks from the CLI
+# sudo fwconsole voicemail                  # Manage voicemail notifications
+
+Other Utilities
+--------------------------------------
+# sudo fwconsole util                       # Common utilities
+# sudo fwconsole cdr                        # Manage CDR module
+# sudo fwconsole calendar                   # Calendar module
+# sudo fwconsole certificates               # Certificate management
+# sudo fwconsole notifications              # Manage notifications
+# sudo fwconsole userman                     # User manager module
+# sudo fwconsole extip                      # Show external IP
+# sudo fwconsole sounds                     # Sound language prompts
+# sudo fwconsole job                        # Centralized job management
+# sudo fwconsole pm2                        # Manage long-running processes
+# sudo fwconsole kvstore                     # Manage kvstore database
+# sudo fwconsole updatemanager              # Module/System Update Manager
+# sudo fwconsole system                      # System Update Administration
+# sudo fwconsole contactmanager             # Contact Manager
+# sudo fwconsole localization               # Localization utilities
+# sudo fwconsole doctrine                    # Run Doctrine commands
+# sudo fwconsole synologyabb                 # Synology Active Backup functions
+# sudo fwconsole motd                        # Print Message of the Day

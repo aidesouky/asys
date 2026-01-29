@@ -1,0 +1,71 @@
+Asterisk 18 commands
+==========================
+Core Commands
+--------------------------------------
+# sudo asterisk -rx "core show version"            # Show the Asterisk version
+# sudo asterisk -rx "core show uptime"             # Show Asterisk uptime
+# sudo asterisk -rx "core show channels"           # List all active channels
+# sudo asterisk -rx "core show channel <channel_name>"  # Show details of a specific channel
+# sudo asterisk -rx "core set verbose 5"          # Set CLI verbosity level to 5
+# sudo asterisk -rx "core set debug 5"            # Set debug level to 5
+# sudo asterisk -rx "core reload"                 # Reload core configuration without restarting
+
+Module Management
+--------------------------------------
+# sudo asterisk -rx "module show"                 # List all loaded modules
+# sudo asterisk -rx "module reload"               # Reload all modules
+# sudo asterisk -rx "module load module_name.so"  # Dynamically load a module
+# sudo asterisk -rx "module unload module_name.so" # Dynamically unload a module
+# sudo asterisk -rx "module show like module_name" # Show info about a specific module
+
+Dialplan
+--------------------------------------
+# sudo asterisk -rx "dialplan reload"            # Reload the dialplan (extensions.conf)
+# sudo asterisk -rx "dialplan show"              # Show the entire dialplan
+# sudo asterisk -rx "dialplan show <context_name>" # Show the dialplan for a specific context
+
+SIP (chan_sip)
+--------------------------------------
+# sudo asterisk -rx "sip show peers"             # Show all SIP peers/endpoints
+# sudo asterisk -rx "sip show registry"          # Show SIP registration status
+# sudo asterisk -rx "sip show channels"          # Show active SIP calls
+# sudo asterisk -rx "sip reload"                 # Reload SIP configuration
+
+PJSIP (chan_pjsip)
+--------------------------------------
+# sudo asterisk -rx "pjsip show endpoints"       # Show all PJSIP endpoints
+# sudo asterisk -rx "pjsip show aors"            # Show all AORs (Address of Record)
+# sudo asterisk -rx "pjsip show contacts"        # Show current contacts for endpoints
+# sudo asterisk -rx "pjsip show registrations"   # Show PJSIP registration status
+# sudo asterisk -rx "pjsip reload"               # Reload PJSIP configuration
+
+Voicemail
+--------------------------------------
+# sudo asterisk -rx "voicemail reload"           # Reload voicemail configuration
+# sudo asterisk -rx "voicemail show users"       # List all voicemail users
+# sudo asterisk -rx "voicemail show <mailbox>@<context>" # Show messages for a specific mailbox
+
+Queues
+--------------------------------------
+# sudo asterisk -rx "queue reload"               # Reload queue configuration
+# sudo asterisk -rx "queue show"                 # Show all queues and their members
+# sudo asterisk -rx "queue show <queue_name>"    # Show details of a specific queue
+
+Channels / Calls
+--------------------------------------
+# sudo asterisk -rx "core show channels"                       # List all active channels
+# sudo asterisk -rx "core show channel <channel_name>"         # Show details of a specific channel
+# sudo asterisk -rx "channel request hangup <channel_name>"    # Hang up a specific channel
+
+Logging / Debug
+--------------------------------------
+# sudo asterisk -rx "logger reload"            # Reload logger configuration
+# sudo asterisk -rx "sip set debug on"         # Enable SIP packet debugging
+# sudo asterisk -rx "pjsip set logger on"      # Enable PJSIP packet logging
+
+System / Service
+--------------------------------------
+# sudo systemctl start asterisk                 # Start Asterisk service
+# sudo systemctl stop asterisk                  # Stop Asterisk service
+# sudo systemctl restart asterisk               # Restart Asterisk service
+# sudo systemctl status asterisk                # Show status of Asterisk service
