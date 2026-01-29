@@ -1,0 +1,627 @@
+Asterisk 18 Dialplan Applications – Complete Reference with Examples and WHY
+=============================================================================
+This document includes commonly used Asterisk 18 dialplan applications with:
+Purpose
+Full syntax
+Parameter meanings
+Possible values (type + examples)
+Working dialplan example
+WHY each application is used in detail
+
+[1] Answer
+=============================================
+Purpose: Answer an incoming call
+-------------------
+Syntax:
+-------------------
+Answer([delay])
+-------------------
+Parameters:
+-------------------
+Name	Type	Meaning	Possible Values
+-------------------
+delay	Integer	Delay before answering	Seconds (0–10)
+-------------------
+Example:
+-------------------
+exten => s,1,Answer()
+-------------------
+WHY: Explicitly accepts a call so audio, billing, recording, or subsequent dialplan apps can interact. Essential for IVR and AGI.
+-------------------
+[2] Playback
+=============================================
+Purpose: Play an audio file
+-------------------
+Syntax:
+-------------------
+Playback(filename[,options])
+-------------------
+Parameters: | filename | String | Sound file | welcome | | options | String | Playback options | skip, noanswer |
+-------------------
+Example:
+-------------------
+same => n,Playback(welcome)
+-------------------
+WHY: Used for announcements or messages where input isn’t needed.
+-------------------
+[3] Background
+=============================================
+Purpose: Play audio while listening for DTMF input
+-------------------
+Syntax:
+-------------------
+Background(filename[,options])
+-------------------
+Example:
+-------------------
+same => n,Background(main-menu)
+-------------------
+WHY: Used for IVR menus, allowing user selection during playback.
+-------------------
+4. WaitExten
+=============================================
+Purpose: Wait for user DTMF input
+-------------------
+Syntax:
+-------------------
+WaitExten([seconds])
+-------------------
+Example:
+-------------------
+same => n,WaitExten(10)
+-------------------
+WHY: Pauses execution for user input after a prompt.
+-------------------
+5. Read
+=============================================
+Purpose: Capture DTMF input into a variable
+-------------------
+Syntax:
+-------------------
+Read(variable,filename[,maxdigits[,options[,timeout]]])
+-------------------
+Example:
+-------------------
+same => n,Read(PIN,enter-pin,4)
+-------------------
+WHY: Used for secure input like PIN codes or menu choices.
+-------------------
+6. Set
+=============================================
+Purpose: Set a channel variable
+-------------------
+Syntax:
+-------------------
+Set(variable=value)
+-------------------
+Example:
+-------------------
+same => n,Set(TRY=1)
+-------------------
+WHY: Store runtime information for logic control or AGI scripts.
+-------------------
+7. Dial
+=============================================
+Purpose: Connect to another endpoint
+-------------------
+Syntax:
+-------------------
+Dial(technology/resource[,timeout[,options[,url]]])
+-------------------
+Example:
+-------------------
+same => n,Dial(PJSIP/200,20)
+-------------------
+WHY: Bridges calls to extensions, external numbers, or trunks.
+-------------------
+8. Hangup
+=============================================
+Purpose: Terminate the call
+-------------------
+Syntax:
+-------------------
+Hangup([causecode])
+-------------------
+Example:
+-------------------
+same => n,Hangup()
+-------------------
+WHY: Ends calls cleanly with proper signaling.
+-------------------
+9. Goto
+=============================================
+Purpose: Jump to a specific context, extension, priority
+-------------------
+Syntax:
+-------------------
+Goto([context,]extension,priority)
+-------------------
+Example:
+-------------------
+same => n,Goto(ivr-menu,s,1)
+-------------------
+WHY: Used to control call flow; essential for IVR and routing.
+-------------------
+10. GotoIf
+=============================================
+Purpose: Conditional branching
+-------------------
+Syntax:
+-------------------
+GotoIf(condition?true:false)
+-------------------
+Example:
+-------------------
+same => n,GotoIf($["${PIN}"="1234"]?success,1:fail,1)
+-------------------
+WHY: Makes decisions based on variables or expressions.
+-------------------
+11. While / EndWhile
+=============================================
+Purpose: Loop execution
+-------------------
+Syntax:
+-------------------
+While(condition)
+...
+EndWhile
+-------------------
+Example:
+-------------------
+same => n,Set(I=1)
+same => n,While($[${I}<=3])
+ same => n,Playback(beep)
+ same => n,Set(I=$[${I}+1])
+EndWhile
+-------------------
+WHY: For retries, repeated menus, or multiple attempts.
+-------------------
+12. Macro
+=============================================
+Purpose: Reusable logic (legacy)
+-------------------
+Syntax:
+-------------------
+Macro(name[,arg1[,arg2...]])
+-------------------
+Example:
+-------------------
+[macro-call-user]
+exten => s,1,Dial(PJSIP/${ARG1},20)
+-------------------
+WHY: Encapsulates reusable logic; deprecated in favor of Gosub.
+-------------------
+13. Gosub / Return
+=============================================
+Purpose: Modular reusable subroutine logic
+-------------------
+Syntax:
+-------------------
+Gosub(context,extension,priority)
+Return()
+-------------------
+Example:
+-------------------
+same => n,Gosub(utils,log,s,1)
+-------------------
+WHY: Modern replacement for Macro; improves maintainability.
+-------------------
+14. Progress
+=============================================
+Purpose: Indicate call progress without answering
+-------------------
+Syntax:
+-------------------
+Progress()
+-------------------
+Example:
+-------------------
+same => n,Progress()
+-------------------
+WHY: Used to play tones or announcements before billing.
+-------------------
+15. Ringing
+=============================================
+Purpose: Send ringing indication
+-------------------
+Syntax:
+-------------------
+Ringing()
+-------------------
+Example:
+-------------------
+same => n,Ringing()
+-------------------
+WHY: Simulates ringing for the caller.
+-------------------
+16. Busy
+=============================================
+Purpose: Return busy signal
+-------------------
+Syntax:
+-------------------
+Busy([timeout])
+-------------------
+Example:
+-------------------
+same => n,Busy(10)
+-------------------
+WHY: Indicates line busy or capacity exceeded.
+-------------------
+17. Congestion
+=============================================
+Purpose: Indicate network congestion
+-------------------
+Syntax:
+-------------------
+Congestion([timeout])
+-------------------
+Example:
+-------------------
+same => n,Congestion(5)
+-------------------
+WHY: Used for controlled call failure instead of hangup.
+-------------------
+18. Wait
+=============================================
+Purpose: Pause execution
+-------------------
+Syntax:
+-------------------
+Wait(seconds)
+-------------------
+Example:
+-------------------
+same => n,Wait(2)
+-------------------
+WHY: Timing control, wait for external processes.
+-------------------
+19. MusicOnHold
+=============================================
+Purpose: Play music on hold
+-------------------
+Syntax:
+-------------------
+MusicOnHold([class[,duration]])
+-------------------
+Example:
+-------------------
+same => n,MusicOnHold(default,10)
+-------------------
+WHY: Keeps caller engaged while waiting.
+-------------------
+20. StopMusicOnHold
+=============================================
+Purpose: Stop MOH
+-------------------
+Syntax:
+-------------------
+StopMusicOnHold()
+-------------------
+Example:
+-------------------
+same => n,StopMusicOnHold()
+-------------------
+WHY: Stops hold music once call resumes.
+-------------------
+21. SendDTMF
+=============================================
+Purpose: Send DTMF digits
+-------------------
+Syntax:
+-------------------
+SendDTMF(digits[,timeout])
+-------------------
+Example:
+-------------------
+same => n,SendDTMF(1234)
+-------------------
+WHY: Used to interact with external IVR or systems requiring DTMF.
+-------------------
+22. SayDigits
+=============================================
+Purpose: Speak digits
+-------------------
+Syntax:
+-------------------
+SayDigits(digits)
+-------------------
+Example:
+-------------------
+same => n,SayDigits(1001)
+-------------------
+WHY: Useful for reading account numbers or codes to caller.
+-------------------
+23. SayNumber
+=============================================
+Purpose: Speak a number
+-------------------
+Syntax:
+-------------------
+SayNumber(number[,gender])
+-------------------
+Example:
+-------------------
+same => n,SayNumber(250)
+-------------------
+WHY: Used for verbalizing numeric information.
+-------------------
+24. Verbose
+=============================================
+Purpose: Log message to CLI
+-------------------
+Syntax:
+-------------------
+Verbose(level,message)
+-------------------
+Example:
+-------------------
+same => n,Verbose(2,Call reached IVR)
+-------------------
+WHY: For debugging and logging call flow.
+-------------------
+25. MixMonitor
+=============================================
+Purpose: Record call audio
+-------------------
+Syntax:
+-------------------
+MixMonitor(filename[,options[,command]])
+-------------------
+Example:
+-------------------
+same => n,MixMonitor(/tmp/call.wav)
+-------------------
+WHY: Used for compliance, quality monitoring, or dispute resolution.
+-------------------
+26. StopMixMonitor
+=============================================
+Purpose: Stop recording
+-------------------
+Syntax:
+-------------------
+StopMixMonitor()
+-------------------
+Example:
+-------------------
+same => n,StopMixMonitor()
+-------------------
+WHY: Ends call recording cleanly.
+-------------------
+27. Monitor
+=============================================
+Purpose: Legacy recording
+-------------------
+Syntax:
+-------------------
+Monitor(type,filename[,options])
+-------------------
+Example:
+-------------------
+same => n,Monitor(wav,call001)
+-------------------
+WHY: Used in older systems; replaced by MixMonitor.
+-------------------
+28. ExecIfTime
+=============================================
+Purpose: Execute app based on time
+-------------------
+Syntax:
+-------------------
+ExecIfTime(times,days,dates,months?app(args))
+-------------------
+Example:
+-------------------
+same => n,ExecIfTime(09:00-17:00,mon-fri,*,*?Playback(open))
+-------------------
+WHY: Time-based routing for business hours or holidays.
+-------------------
+29. GotoIfTime
+=============================================
+Purpose: Time-based branching
+-------------------
+Syntax:
+-------------------
+GotoIfTime(times,days,dates,months?label)
+-------------------
+Example:
+-------------------
+same => n,GotoIfTime(09:00-17:00,mon-fri,*,*?open,s,1)
+-------------------
+WHY: Route calls depending on time.
+-------------------
+30. ChanSpy
+=============================================
+Purpose: Listen to another channel
+-------------------
+Syntax:
+-------------------
+ChanSpy(channel[,options])
+-------------------
+Example:
+-------------------
+same => n,ChanSpy(PJSIP/200,q)
+-------------------
+WHY: Supervisor monitoring, training.
+-------------------
+31. Pickup
+=============================================
+Purpose: Pickup a ringing call
+-------------------
+Syntax:
+-------------------
+Pickup([group])
+-------------------
+Example:
+-------------------
+exten => *8,1,Pickup()
+-------------------
+WHY: Answer calls in a group without direct dialing.
+-------------------
+32. Bridge
+=============================================
+Purpose: Bridge two channels
+-------------------
+Syntax:
+-------------------
+Bridge(channel)
+-------------------
+Example:
+-------------------
+same => n,Bridge(PJSIP/300)
+-------------------
+WHY: Advanced call control or supervisor intervention.
+-------------------
+33. DB
+=============================================
+Purpose: Read from AstDB
+-------------------
+Syntax:
+-------------------
+DB(family/key)
+-------------------
+Example:
+-------------------
+same => n,Set(BALANCE=${DB(users/100)})
+-------------------
+WHY: Persistent storage for feature flags, user state.
+-------------------
+34. DBPut
+=============================================
+Purpose: Write to AstDB
+-------------------
+Syntax:
+-------------------
+DBPut(family/key=value)
+-------------------
+Example:
+-------------------
+same => n,DBPut(users/100=active)
+-------------------
+WHY: Store or update data persistently.
+-------------------
+35. DBDel
+=============================================
+Purpose: Delete AstDB entry
+-------------------
+Syntax:
+-------------------
+DBDel(family/key)
+-------------------
+Example:
+-------------------
+same => n,DBDel(users/100)
+-------------------
+WHY: Remove obsolete or temporary data.
+-------------------
+36. SIPAddHeader
+=============================================
+Purpose: Add SIP header (legacy)
+-------------------
+Syntax:
+-------------------
+SIPAddHeader(name: value)
+-------------------
+Example:
+-------------------
+same => n,SIPAddHeader(X-Test: 123)
+-------------------
+WHY: For CRM integration or trunk tagging.
+-------------------
+37. PJSIP_HEADER
+=============================================
+Purpose: Manipulate SIP headers (PJSIP)
+-------------------
+Syntax:
+-------------------
+Set(PJSIP_HEADER(action,header)=value)
+-------------------
+Example:
+-------------------
+same => n,Set(PJSIP_HEADER(add,X-Source)=IVR)
+-------------------
+WHY: Advanced SIP signaling manipulation.
+-------------------
+38. TryExec
+=============================================
+Purpose: Safely execute an application
+-------------------
+Syntax:
+-------------------
+TryExec(app(args))
+-------------------
+Example:
+-------------------
+same => n,TryExec(Dial(PJSIP/200,10))
+-------------------
+WHY: Prevents dialplan crash if app fails.
+-------------------
+39. ExecIf
+=============================================
+Purpose: Conditional execution
+-------------------
+Syntax:
+-------------------
+ExecIf(condition?app(args))
+-------------------
+Example:
+-------------------
+same => n,ExecIf($[${BALANCE}>0]?Playback(ok))
+-------------------
+WHY: Execute apps based on runtime conditions.
+-------------------
+40. ReturnIf
+=============================================
+Purpose: Conditional return from Gosub
+-------------------
+Syntax:
+-------------------
+ReturnIf(condition)
+-------------------
+Example:
+-------------------
+same => n,ReturnIf($[${AUTH}=0])
+-------------------
+WHY: Exit subroutine based on logic.
+-------------------
+41. MixMonitor
+=============================================
+Purpose: Record the call
+-------------------
+Syntax:
+-------------------
+MixMonitor(filename[,options[,command]])
+-------------------
+Example:
+-------------------
+same => n,MixMonitor(/tmp/call.wav)
+-------------------
+WHY: Call recording for compliance and QA.
+-------------------
+42. StopMixMonitor
+=============================================
+Purpose: Stop call recording
+-------------------
+Syntax:
+-------------------
+StopMixMonitor()
+-------------------
+Example:
+-------------------
+same => n,StopMixMonitor()
+-------------------
+WHY: End recording cleanly.
+-------------------
+43. Monitor
+=============================================
+Purpose: Legacy recording application
+-------------------
+Syntax:
+-------------------
+Monitor(type,filename[,options])
+-------------------
+Example:
+-------------------
+same => n,Monitor(wav,call001)
+-------------------
+WHY: Used in older systems; replaced by MixMonitor.
