@@ -44,6 +44,7 @@ invalid_operation_sound_en
 thank_you_sound_en
 
 =copy sound to /var/lib/asterisk/sounds/custom
+# sudo cp /var/lib/asterisk/sounds/en/custom/*  /var/lib/asterisk/sounds/custom/
 =or upload sounds over freepbx gui
 =you will found it in /var/lib/asterisk/sounds/en/custom
 
@@ -363,7 +364,6 @@ if ($update->execute()) {
 $update->close();
 $db->close();
 ?>
-
 -------------------------------------------
 
 =FIX FILE PERMISSIONS
@@ -403,10 +403,12 @@ exten => s,1,Answer()
  same => n,Playback(custom/thank_you_sound_ar)
  same => n,Hangup()
  
- same => n(failed),Playback(custom/invalid_operation_sound_ar)
+ same => n(failed),Playback(custom/invalid_entery_sound_ar)
+ same => n,Playback(custom/invalid_operation_sound_ar)
  same => n,Playback(custom/thank_you_sound_ar)
  same => n,Hangup()
  --------------------------------------------------------
  
  =RELOAD DIALPLAN (MANDATORY)
  # sudo asterisk -rx "dialplan reload"
+ # sudo fwconsole reload --verbose
