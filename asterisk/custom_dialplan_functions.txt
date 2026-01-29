@@ -1,0 +1,412 @@
+Create Custom Dialplan to get customer balance:
+===============================================
+WHY THIS IS THE BEST METHOD
+Method						Status
+AstDB						Simple, limited
+ODBC + func_odbc			FAST, CLEAN, PRO <<<BEST
+AGI (PHP)					Heavy, slow
+===============================================
+
+=Record sounds as wav format:
+=============================
+welcome_sound
+choose_lang_sound
+
+choose_service_sound_ar
+agent_wait_sound_ar
+agent_welcome_sound_ar
+enter_account_sound_ar
+enter_pin_sound_ar
+new_pin_sound_ar
+retry_pin_sound_ar
+pin_match_sound_ar
+your_balance_sound_ar
+pound_sound_ar
+invalid_entery_sound_ar
+valid_operation_sound_ar
+invalid_operation_sound_ar
+thank_you_sound_ar
+
+
+choose_service_sound_en
+agent_wait_sound_en
+agent_welcome_sound_en
+enter_account_sound_en
+enter_pin_sound_en
+new_pin_sound_en
+retry_pin_sound_en
+pin_match_sound_en
+your_balance_sound_en
+pound_sound_en
+invalid_entery_sound_en
+valid_operation_sound_en
+invalid_operation_sound_en
+thank_you_sound_en
+
+=copy sound to /var/lib/asterisk/sounds/custom
+=or upload sounds over freepbx gui
+=you will found it in /var/lib/asterisk/sounds/en/custom
+
+=========================================================
+[1] READ FROM INTERNAL SQLLITE ASTDB MAP<KEY,VAL>
+=========================================================
+insert values in internal key val;
+asterisk -rx "database put customer 101 1234"
+asterisk -rx "database put customer 102 1234"
+sudo asterisk -rx "database get customer 101"
+sudo asterisk -rx "database show customer"
+
+CLI>database put customer 101 320
+CLI>database put customer 102 730
+CLI>database get customer 101
+CLI>database show customer
+
+asterisk -rx "database put balance 101 830"
+asterisk -rx "database put balance 102 570"
+
+CLI>database put balance 101 320
+CLI>database put balance 102 730
+
+=CREATE CUSTOM DIALPLAN
+# sudo nano /etc/asterisk/extensions_custom.conf
+------------------------
+[check-balance]
+exten => s,1,Answer()
+
+ same => n,Playback(custom/enter_account_sound)
+ same => n,Read(ACCID,,6)
+
+ same => n,Playback(custom/enter_pin_sound)
+ same => n,Read(PIN,,4)
+
+ ; DEBUG: show what was entered
+ same => n,NoOp(ACCID=${ACCID})
+ same => n,NoOp(PIN=${PIN})
+ 
+ ; optional PIN check
+ same => n,GotoIf($["${DB(customer/${ACCID})}"="${PIN}"]?valid:invalid)
+ 
+ same => n(valid),Set(BALANCE=${IF($["${DB(balance/${ACCID})}"=""]?0:${DB(balance/${ACCID})})})
+ same => n,NoOp(VALUE=${BALANCE})
+
+ same => n,Playback(custom/your_balance_sound)
+ same => n,SayNumber(${BALANCE})
+ same => n,Playback(custom/pound_sound)
+ ;same => n,Goto(app-announcement,2,1)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ 
+ same => n(invalid),Playback(custom/invalid_entery_sound)
+ ;same => n,Goto(app-announcement,2,1)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ --------------------------------------
+ 
+ =RELOAD DIALPLAN (MANDATORY)
+ # sudo asterisk -rx "dialplan reload"
+ 
+ 
+======================================================
+[2] READ FROM DATABASE TABLE USING ODBC
+======================================================
+=INSTALL ODBC PACKAGES
+# sudo apt install -y alien unixodbc unixodbc-dev odbc-mariadb libmariadb
+
+=CHECK AND EDIT DRIVER
+# sudo nano /etc/odbcinst.ini
+----------------------
+[MariaDB]
+Driver= /usr/lib/x86_64-linux-gnu/odbc/libmaodbc.so
+Description=MariaDB Connector/ODBC(Unicode)
+Threading=0
+UsageCount=1
+----------------------
+
+# sudo odbcinst -q -d
+
+=CREATE ODBC DSN (DATABASE CONNECTION)
+# sudo nano /etc/odbc.ini
+----------------------
+[balance_db]
+Driver   = MariaDB
+Server   = 127.0.0.1
+Port     = 3306
+Database = balance_db
+User     = root
+Password = 181084
+----------------------
+
+=ADD DSN TO ASTERISK
+# sudo nano /etc/asterisk/res_odbc.conf
+--------------------------
+[balance_db]
+enabled => yes
+dsn => balance_db
+username => root
+password => 181084
+pre-connect => yes
+-------------------------
+
+TEST DB CONNECTION
+# sudo asterisk -rx "module reload res_odbc.so"
+# sudo asterisk -rx "odbc show"
+# sudo isql -v balance_db
+
+=LOGIN DATABASE CREATE DATABASE AND TABLES
+# sudo mariadb -u root -p
+SQL>CREATE DATABASE balance_db;
+SQL>CREATE TABLE customers (id INT PRIMARY KEY,code VARCHAR(10),pin VARCHAR(10),balance DECIMAL(10,2));
+SQL>INSERT INTO customers VALUES (1,'101', '1234', 430);
+SQL>INSERT INTO customers VALUES (2,'102', '1234', 760);
+SQL>COMMIT;
+SQL>SELECT * FROM customers;
+
+==CONFIGURE ASTERISK func_odbc
+# sudo nano /etc/asterisk/func_odbc.conf
+-------------------
+[GET_BALANCE]
+dsn=balance_db
+readsql=SELECT CAST(balance AS UNSIGNED) balance FROM customers WHERE code='${ARG1}'
+
+[CHECK_PIN]
+dsn=balance_db
+readsql=SELECT pin FROM customers WHERE code=$'{ARG1}'
+----------------------
+
+RELOAD MODULE func_odbc.so
+# sudo asterisk -rx "module reload func_odbc.so"
+
+
+=CREATE CUSTOM DIALPLAN
+# sudo nano /etc/asterisk/extensions_custom.conf
+------------------------------------------
+[get-balance_ar]
+exten => s,1,Answer()
+
+ same => n,Playback(custom/enter_account_sound_ar)
+ same => n,Read(ACCID,,4)
+ same => n,Playback(custom/enter_pin_sound_ar)
+ same => n,Read(PIN,,4)
+
+ same => n,NoOp(ACCID=${ACCID})
+ same => n,NoOp(PIN=${PIN})
+ 
+ ; get pin from DB
+ same => n,Set(DBPIN=${ODBC_CHECK_PIN(${ACCID})})
+ same => n,NoOp(DBPIN=${DBPIN})
+ 
+ same => n,GotoIf($["${DBPIN}"="${PIN}"]?valid:invalid)
+
+ same => n(valid),Set(BALANCE=${ODBC_GET_BALANCE(${ACCID})})
+ same => n,NoOp(BALANCE=${BALANCE})
+ same => n,Playback(custom/your_balance_sound_ar)
+ same => n,SayNumber(${BALANCE})
+ same => n,Playback(custom/pound_sound_ar)
+ ;same => n,Goto(app-announcement,2,1)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+
+ same => n(invalid),Playback(custom/invalid_entery_sound_ar)
+ ;same => n,Goto(app-announcement,2,1)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+---------------------------------------------------
+=RELOAD DIALPLAN (MANDATORY)
+# sudo asterisk -rx "dialplan reload"
+
+
+======================================================
+[3] READ FROM DATABASE TABLE USING AGI PHP
+======================================================
+
+=LOGIN DATABASE CREATE DATABASE AND TABLES
+# sudo mariadb -u root -p
+SQL>CREATE DATABASE balance_db;
+SQL>CREATE TABLE customers (id INT PRIMARY KEY,code VARCHAR(10),pin VARCHAR(10),balance DECIMAL(10,2));
+SQL>INSERT INTO customers VALUES (1,'101', '1234', 430);
+SQL>INSERT INTO customers VALUES (2,'102', '1234', 760);
+SQL>COMMIT;
+SQL>SELECT * FROM customers;
+
+==CREATE AGI PHP SCRIPT
+# sudo nano /var/lib/asterisk/agi-bin/get_balance.php
+------------------------
+#!/usr/bin/php -q
+<?php
+require_once('phpagi.php');
+$agi = new AGI();
+/* Get arguments from dialplan */
+$code = $argv[1];
+$pin  = $argv[2];
+/* Database connection */
+$db = new mysqli("127.0.0.1", "root", "181084", "balance_db");
+if ($db->connect_error) {
+    $agi->verbose("DB Connection Failed", 1);
+    $agi->set_variable("BALANCE", "0");
+    exit;
+}
+/* Validate customer */
+$sql = "SELECT balance FROM customers WHERE code=? AND pin=?";
+$stmt = $db->prepare($sql);
+$stmt->bind_param("ss", $code, $pin);
+$stmt->execute();
+$stmt->bind_result($balance);
+if ($stmt->fetch()) {
+    $agi->verbose("Balance found: $balance", 1);
+    $agi->set_variable("BALANCE", $balance);
+} else {
+    $agi->verbose("Invalid credentials", 1);
+    $agi->set_variable("BALANCE", "INVALID");
+}
+$stmt->close();
+$db->close();
+?>
+-------------------------------------------
+=FIX FILE PERMISSIONS
+# sudo chmod 755 /var/lib/asterisk/agi-bin/get_balance.php
+# sudo chown asterisk:asterisk /var/lib/asterisk/agi-bin/get_balance.php
+
+=CREATE DIALPLAN TO CALL AGI PHP SCRIPT
+# sudo nano /etc/asterisk/extensions_custom.conf
+----------------------------------------------------
+[get-balance-agi]
+exten => s,1,Answer()
+
+ same => n,Playback(custom/enter_account_sound_ar)
+ same => n,Read(ACCID,,4)
+ same => n,Playback(custom/enter_pin_sound_ar)
+ same => n,Read(PIN,,4)
+
+ ; Call PHP AGI
+ same => n,AGI(get_balance.php,${ACCID},${PIN})
+
+ ; Check result
+ same => n,GotoIf($["${BALANCE}"="INVALID"]?invalid)
+
+ same => n,Playback(custom/your_balance_sound_ar)
+ same => n,Set(INTBAL=${CUT(BALANCE,.,1)})
+ same => n,Set(DECBAL=${CUT(BALANCE,.,2)})
+ same => n,SayNumber(${INTBAL})
+ same => n,Playback(custom/pound_sound_ar)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+
+ same => n(invalid),Playback(custom/invalid_entery_sound_ar)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ --------------------------------------------------------
+ 
+ =RELOAD DIALPLAN (MANDATORY)
+ # sudo asterisk -rx "dialplan reload"
+ 
+ 
+ 
+ 
+ ======================================================
+[4] UPDATE DATABASE TABLE USING AGI PHP
+======================================================
+
+=LOGIN DATABASE CREATE DATABASE AND TABLES
+# sudo mariadb -u root -p
+SQL>CREATE DATABASE balance_db;
+SQL>CREATE TABLE customers (id INT PRIMARY KEY,code VARCHAR(10),pin VARCHAR(10),balance DECIMAL(10,2));
+SQL>INSERT INTO customers VALUES (1,'101', '1234', 430);
+SQL>INSERT INTO customers VALUES (2,'102', '1234', 760);
+SQL>COMMIT;
+SQL>SELECT * FROM customers;
+
+==CREATE AGI PHP SCRIPT
+# sudo nano /var/lib/asterisk/agi-bin/update_pin.php
+------------------------
+#!/usr/bin/php -q
+<?php
+require_once('phpagi.php');
+$agi = new AGI();
+
+$code     = $argv[1];
+$old_pin  = $argv[2];
+$new_pin  = $argv[3];
+
+$db = new mysqli("127.0.0.1", "root", "181084", "balance_db");
+
+if ($db->connect_error) {
+    $agi->verbose("DB Connection Failed", 1);
+    $agi->set_variable("PIN_STATUS", "ERROR");
+    exit;
+}
+
+/* verify old pin */
+$sql = "SELECT id FROM customers WHERE code=? AND pin=?";
+$stmt = $db->prepare($sql);
+$stmt->bind_param("ss", $code, $old_pin);
+$stmt->execute();
+$stmt->store_result();
+
+if ($stmt->num_rows == 0) {
+    $agi->verbose("Invalid old PIN", 1);
+    $agi->set_variable("PIN_STATUS", "INVALID");
+    exit;
+}
+$stmt->close();
+
+/* update pin */
+$update = $db->prepare("UPDATE customers SET pin=? WHERE code=?");
+$update->bind_param("ss", $new_pin, $code);
+
+if ($update->execute()) {
+    $agi->verbose("PIN Updated Successfully", 1);
+    $agi->set_variable("PIN_STATUS", "OK");
+} else {
+    $agi->set_variable("PIN_STATUS", "ERROR");
+}
+
+$update->close();
+$db->close();
+?>
+
+-------------------------------------------
+
+=FIX FILE PERMISSIONS
+# sudo chmod 755 /var/lib/asterisk/agi-bin/update_pin.php
+# sudo chown asterisk:asterisk /var/lib/asterisk/agi-bin/update_pin.php
+
+=CREATE DIALPLAN TO CALL AGI PHP SCRIPT
+# sudo nano /etc/asterisk/extensions_custom.conf
+----------------------------------------------------
+[change-pin-agi-ar]
+exten => s,1,Answer()
+
+ same => n,Playback(custom/enter_account_sound_ar)
+ same => n,Read(ACCID,,6)
+ same => n,Playback(custom/enter_pin_sound_ar)
+ same => n,Read(PIN,,6)
+ same => n,Playback(custom/new_pin_sound_ar)
+ same => n,Read(NPIN,,6)
+ same => n,Playback(custom/retry_pin_sound_ar)
+ same => n,Read(RPIN,,6)
+ 
+ ; check new pin match
+ same => n,GotoIf($["${NPIN}"="${RPIN}"]?pin_ok:pin_no)
+ 
+ ; Call PHP AGI
+ same => n(pin_ok),AGI(update_pin.php,${ACCID},${PIN},${NPIN})
+
+ ; Check result
+ same => n,GotoIf($["${PIN_STATUS}"="OK"]?success:failed)
+ 
+ same => n(success),Playback(custom/valid_operation_sound_ar)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ 
+ same => n(pin_no),Playback(custom/pin_match_sound_ar)
+ same => n,Playback(custom/invalid_operation_sound_ar)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ 
+ same => n(failed),Playback(custom/invalid_operation_sound_ar)
+ same => n,Playback(custom/thank_you_sound_ar)
+ same => n,Hangup()
+ --------------------------------------------------------
+ 
+ =RELOAD DIALPLAN (MANDATORY)
+ # sudo asterisk -rx "dialplan reload"

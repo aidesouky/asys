@@ -1,0 +1,146 @@
+# FreePBX 16 + Asterisk 18 + PHP 7.4 Installation on Ubuntu24
+**FreePBX		Asterisk			PHP
+**14			13,16				7.2
+**15			13,16,17			7.2
+**16			16,18,19			7.4
+**17			20,22				8.2
+
+[1] Update system packages
+# sudo apt update 
+# sudo apt upgrade -y
+
+[2] Fix PATH (important for fwconsole & asterisk):
+# echo 'export PATH=$PATH:/sbin:/usr/sbin' >> ~/.bashrc
+# source ~/.bashrc
+
+[3] Install Core Build Dependencies: 
+# sudo apt install -y ssh wget curl git unzip gnupg2 pkg-config build-essential subversion libicu-dev libnewt-dev libncurses5-dev libjansson-dev libxml2-dev libssl-dev uuid-dev sox libedit-dev sqlite3 libsqlite3-dev
+# sudo apt install -y incron --no-install-recommends
+
+[4] Download, Build and Install Asterisk
+# cd /usr/src
+# sudo wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-18-current.tar.gz
+# sudo tar -zxvf asterisk-18-current.tar.gz
+# cd asterisk-18.*
+# sudo contrib/scripts/get_mp3_source.sh
+# sudo contrib/scripts/install_prereq install
+# sudo ./configure
+# sudo make menuselect
+# sudo menuselect/menuselect --enable app_macro --enable format_mp3 --disable BUILD_NATIVE menuselect.makeopts
+# sudo make -j2
+# sudo make install
+# sudo make samples
+# sudo make config
+# sudo ldconfig
+
+[5] Create asterisk (user, group),set permissions and allow asterisk (user, group)
+# sudo groupadd asterisk
+# sudo useradd -r -d /var/lib/asterisk -g asterisk asterisk
+# sudo usermod -aG audio,dialout,video,plugdev,cdrom asterisk
+# sudo chown -R asterisk:asterisk /etc/asterisk
+# sudo chown -R asterisk:asterisk /var/{lib,log,spool}/asterisk
+# sudo chown -R asterisk:asterisk /usr/lib/asterisk
+
+# sudo sed -i 's|;runuser = asterisk|runuser = asterisk|g' /etc/asterisk/asterisk.conf
+# sudo sed -i 's|;rungroup = asterisk|rungroup = asterisk|g' /etc/asterisk/asterisk.conf
+# sudo grep -E ^"runuser|rungroup" /etc/asterisk/asterisk.conf
+# sudo sed -i 's|#AST_USER="asterisk"|AST_USER="asterisk"|g' /etc/default/asterisk
+# sudo sed -i 's|#AST_GROUP="asterisk"|AST_GROUP="asterisk"|g' /etc/default/asterisk
+# sudo grep -E ^"AST_USER|AST_GROUP" /etc/default/asterisk
+
+# sudo nano /etc/asterisk/asterisk.conf
+------
+runuser = asterisk
+rungroup = asterisk
+------
+# sudo nano /etc/default/asterisk
+------
+AST_USER="asterisk"
+AST_GROUP="asterisk"
+------
+
+[6] Start asterisk service
+# sudo systemctl restart asterisk
+# sudo systemctl status asterisk
+
+[7] Allow radius and fix radiusclient.conf path
+# sudo sed -i 's|;\[radius\]|\[radius\]|g' /etc/asterisk/cdr.conf
+# sudo sed -i 's|;radiuscfg => /usr/local/etc/radiusclient-ng/radiusclient.conf|radiuscfg => /etc/radcli/radiusclient.conf|g' /etc/asterisk/cdr.conf
+# sudo grep -n "radius" /etc/asterisk/cdr.conf
+# sudo sed -i 's|;radiuscfg => /usr/local/etc/radiusclient-ng/radiusclient.conf|radiuscfg => /etc/radcli/radiusclient.conf|g' /etc/asterisk/cel.conf
+# sudo grep -n "radius" /etc/asterisk/cel.conf
+
+[8] Start asterisk service
+# sudo systemctl restart asterisk
+# sudo systemctl status asterisk
+# sudo asterisk -rvvv
+
+[9] Set php repo and Install php and remove other versions
+# sudo apt purge 'php8.2*'
+# sudo apt autoremove --purge -y
+# sudo apt autoclean
+======ubuntu php7.*======================================
+# sudo add-apt-repository ppa:ondrej/php -y
+======debian php7.*======================================
+# sudo sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+# sudo wget -qO - https://packages.sury.org/php/apt.gpg | apt-key add -
+# sudo apt update
+==================================================
+# sudo apt install -y libapache2-mod-php7.4 php7.4 php7.4-cli php7.4-cgi php7.4-common php7.4-curl php7.4-mbstring php7.4-gd php7.4-mysql php7.4-bcmath php7.4-zip php7.4-xml php7.4-imap php7.4-json php7.4-snmp php7.4-gettext php7.4-fpm php-dev php-pear
+# sudo update-alternatives --config php
+
+=========add newlib in php=========
+# sudo php -i | grep extension_dir
+# nano /etc/php/7.4/cli/php.ini
+# nano /etc/php/7.4/apache2/php.ini
+===================================
+
+[10] Install all the dependencies (ubuntu) 
+# sudo apt install -y software-properties-common
+
+[11] Install web server,nodejs and database
+# sudo apt install -y apache2
+# sudo apt install -y mariadb-server mariadb-client
+# sudo apt install -y nodejs npm
+
+[12] 
+# sudo sed -i 's|^export APACHE_RUN_USER=.*|export APACHE_RUN_USER=asterisk|' /etc/apache2/envvars
+# sudo sed -i 's|^export APACHE_RUN_GROUP=.*|export APACHE_RUN_GROUP=asterisk|' /etc/apache2/envvars
+# sudo grep -E ^"export APACHE_RUN_USER|export APACHE_RUN_GROUP" /etc/apache2/envvars
+# sudo sed -i 's|AllowOverride None|AllowOverride All|' /etc/apache2/apache2.conf
+# sudo grep -n "AllowOverride" /etc/apache2/apache2.conf
+# sudo sed -i 's|\(^upload_max_filesize =\).*|\1 120M|' /etc/php/7.4/apache2/php.ini
+# sudo grep -n "upload_max_filesize" /etc/php/7.4/apache2/php.ini
+# sudo sed -i 's|\(^upload_max_filesize =\).*|\1 120M|' /etc/php/7.4/cli/php.ini
+# sudo grep -n "upload_max_filesize" /etc/php/7.4/cli/php.ini
+# sudo rm -f /var/www/html/index.html
+
+# sudo a2enmod php7.4
+# sudo a2dismod mpm_event mpm_worker
+# sudo a2enmod mpm_prefork rewrite
+# sudo systemctl restart apache2
+
+
+[13] Secure database connections(set root password)
+# sudo /usr/bin/mysql_secure_installation
+
+[13] Download and install freepbx
+# cd /usr/src
+# sudo wget http://mirror.freepbx.org/modules/packages/freepbx/freepbx-16.0-latest.tgz
+# sudo tar -zxvf freepbx-16.0-latest.tgz
+# cd freepbx
+# sudo ./start_asterisk start
+# sudo ./install -n --dbuser root --dbpass "181084"
+# sudo fwconsole ma install pm2
+
+# sudo reboot
+
+***Update web files permissions (if apache2 user is www-data)
+# sudo usermod -aG asterisk www-data
+# sudo chmod -R 775 /var/www/html
+or
+# sudo chown -R www-data:www-data /var/www/html
+# sudo chmod -R 775 /var/www/html
+# sudo chown -R www-data:www-data /var/lib/php/sessions
+# sudo chmod 1733 /var/lib/php/sessions
+# sudo chmod 775 /var/lib/php/sessions
