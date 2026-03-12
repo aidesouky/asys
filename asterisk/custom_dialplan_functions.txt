@@ -74,10 +74,10 @@ CLI>database put balance 102 730
 [check-balance]
 exten => s,1,Answer()
 
- same => n,Playback(custom/enter_account_sound)
+ same => n,Playback(custom/enter_account_sound_ar)
  same => n,Read(ACCID,,6)
 
- same => n,Playback(custom/enter_pin_sound)
+ same => n,Playback(custom/enter_pin_sound_ar)
  same => n,Read(PIN,,4)
 
  ; DEBUG: show what was entered
@@ -90,14 +90,14 @@ exten => s,1,Answer()
  same => n(valid),Set(BALANCE=${IF($["${DB(balance/${ACCID})}"=""]?0:${DB(balance/${ACCID})})})
  same => n,NoOp(VALUE=${BALANCE})
 
- same => n,Playback(custom/your_balance_sound)
+ same => n,Playback(custom/your_balance_sound_ar)
  same => n,SayNumber(${BALANCE})
- same => n,Playback(custom/pound_sound)
+ same => n,Playback(custom/pound_sound_ar)
  ;same => n,Goto(app-announcement,2,1)
  same => n,Playback(custom/thank_you_sound_ar)
  same => n,Hangup()
  
- same => n(invalid),Playback(custom/invalid_entery_sound)
+ same => n(invalid),Playback(custom/invalid_entery_sound_ar)
  ;same => n,Goto(app-announcement,2,1)
  same => n,Playback(custom/thank_you_sound_ar)
  same => n,Hangup()
