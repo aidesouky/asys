@@ -32,7 +32,7 @@ class in directory
 -----------------------------------------------------
 many classes in directory
 # javac -d src *.java
-# jar cfe myapp.jar com.myapp.MainClass -C src .
+# jar cfe myapp.jar MainClass -C src .
 -----------------------------------------------------
 class in package
 # javac -d src com/myapp/MainClass.java
@@ -49,7 +49,7 @@ class with libraries
 Main-Class: MainClass
 Class-Path: lib/lib1.jar lib/lib2.jar
 -----------------------------------------------------
-many classes with libraries
+many classes in package with libraries
 # javac -cp ".:lib/*" -d src com/myapp/*.java
 # jar cfm myapp.jar manifest.txt -C src .
 
