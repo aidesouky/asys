@@ -29,9 +29,8 @@ class only
 class in directory
 # javac MainClass.java -d src
 # jar cfe myapp.jar MainClass -C src .
-
-many classes in directory
 -----------------------------------------------------
+many classes in directory
 # javac -d src *.java
 # jar cfe myapp.jar com.myapp.MainClass -C src .
 -----------------------------------------------------
