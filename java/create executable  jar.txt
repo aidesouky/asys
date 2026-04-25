@@ -1,34 +1,58 @@
 Create Executable jar file
 ==========================
 1.create java class
-# touch MyClass.java
+# touch MainClass.java
 -- for class in package "com.myapp"
-# touch com/myapp/MyClass.java
+# touch com/myapp/MainClass.java
 
 2.write code into java file
-public class MyClass {
+public class MainClass {
     public static void main(String[] args) {
         System.out.println("Hello, world!");
     }
 }
 -- for class in package "com.myapp"
 package com.myapp;
-public class MyClass {
+public class MainClass {
     public static void main(String[] args) {
         System.out.println("Hello, world!");
     }
 }
 
 
-3.compile java file to generate MyClass.class
-# javac MyClass.java
-# javac -cp ".:lib/*" -d src com/myapp/MyClass.java
+3.compile java and create jar file
+class only
+# javac MainClass.java
+# jar cfe myapp.jar MainClass .
 
-4.create jar with class file
+class in directory
+# javac MainClass.java -d src
+# jar cfe myapp.jar MainClass -C src .
 
-# javac -cp ".:lib/*" -d src com/myapp/MyClass.java
+many classes in directory
+-----------------------------------------------------
+# javac -d src *.java
+# jar cfe myapp.jar com.myapp.MainClass -C src .
+-----------------------------------------------------
+class in package
+# javac -d src com/myapp/MainClass.java
+# jar cfe myapp.jar com.myapp.MainClass -C src .
+-----------------------------------------------------
+many classes in package
+# javac -d src com/myapp/*.java
+# jar cfe myapp.jar com.myapp.MainClass -C src .
+-----------------------------------------------------
+class with libraries
+# javac -cp ".:lib/*" -d src MainClass.java
 # jar cfm myapp.jar manifest.txt -C src .
 
-# jar cfe myapp.jar com.myapp.MyClass com/myapp/
-# javac -d src com/myapp/*.java
-# jar cfe myapp.jar com.myapp.MyClass -C src .
+Main-Class: MainClass
+Class-Path: lib/lib1.jar lib/lib2.jar
+-----------------------------------------------------
+many classes with libraries
+# javac -cp ".:lib/*" -d src com/myapp/*.java
+# jar cfm myapp.jar manifest.txt -C src .
+
+Main-Class: com.myapp.MainClass
+Class-Path: lib/lib1.jar lib/lib2.jar
+-----------------------------------------------------
