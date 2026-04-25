@@ -21,10 +21,11 @@ public class MainClass {
 
 
 3.compile java and create jar file
+-----------------------------------------------------
 class only
 # javac MainClass.java
 # jar cfe myapp.jar MainClass .
-
+-----------------------------------------------------
 class in directory
 # javac MainClass.java -d src
 # jar cfe myapp.jar MainClass -C src .
