@@ -22,14 +22,14 @@ update "MANIFEST.MF" file
 # jar ufm file.jar META-INF/MANIFEST.MF
 # jar -u -f file.jar -m META-INF/MANIFEST.MF
 
-create jar file with main class "com.example.mainclass" and mainclass file
-# jar cfe file.jar com.example.mainclass ./com/example/MainClass.class
-# jar c -f file.jar -e com.example.mainclass ./com/example/MainClass.class
+create jar file with main class "com.myapp.MainClass" and MainClass file
+# jar cfe file.jar com.myapp.MainClass ./com/myapp/MainClass.class
+# jar c -f file.jar -e com.myapp.MainClass ./com/myapp/MainClass.class
 
-change Main Class in "MANIFEST.MF" file to "com.example.mainclass"
-# jar ufe file.jar com.example.mainclass
-# jar u -f file.jar -e com.example.mainclass
+change Main Class in "MANIFEST.MF" file to "com.myapp.MainClass"
+# jar ufe file.jar com.myapp.MainClass
+# jar u -f file.jar -e com.myapp.MainClass
 
-change Main Class in "MANIFEST.MF" file to "com.example.mainclass" and insert mainclass file
-# jar ufe file.jar com.example.mainclass ./com/example/MainClass.class
-# jar u -f file.jar -e com.example.mainclass ./com/example/MainClass.class
+change Main Class in "MANIFEST.MF" file to "com.myapp.MainClass" and insert MainClass file
+# jar ufe file.jar com.myapp.MainClass ./com/myapp/MainClass.class
+# jar u -f file.jar -e com.myapp.MainClass ./com/myapp/MainClass.class
