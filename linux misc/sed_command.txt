@@ -1,0 +1,203 @@
+# sed Command in Linux — Complete Reference
+# ==========================================
+## BASIC SYNTAX
+# -------------
+sed [options] 'command' file
+some-command | sed 'command'
+
+## SUBSTITUTION
+# -------------
+# Replace first match per line
+sed 's/foo/bar/' file.txt
+
+# Replace ALL matches per line
+sed 's/foo/bar/g' file.txt
+
+# Case-insensitive
+sed 's/error/WARNING/gI' app.log
+
+# Replace only 2nd occurrence per line
+sed 's/foo/bar/2' file.txt
+
+# Use different delimiter (useful for file paths)
+sed 's|/old/path|/new/path|g' config.txt
+
+
+## EDIT FILES IN-PLACE
+# --------------------
+# Edit directly (no backup)
+sed -i 's/old.example.com/new.example.com/' /etc/apache2/apache2.conf
+
+# Edit with automatic backup (.bak file created)
+sed -i.bak 's/listen 80/listen 8080/' /etc/nginx/nginx.conf
+
+## RESTRICT TO SPECIFIC LINES
+# ----------------------------
+
+# Line 3 only
+sed '3s/foo/bar/' file.txt
+
+# Lines 5 to 10
+sed '5,10s/foo/bar/g' file.txt
+
+# Line 5 to end of file
+sed '5,$s/foo/bar/g' file.txt
+
+# Only lines starting with #
+sed '/^#/s/old/new/g' file.txt
+
+# Every line NOT starting with #
+sed '/^#/!s/old/new/g' file.txt
+
+## DELETE LINES
+# -------------
+
+# Delete blank lines
+sed '/^$/d' file.txt
+
+# Delete comment lines
+sed '/^#/d' file.txt
+
+# Delete comments AND blank lines (view active config only)
+sed '/^#/d;/^$/d' /etc/ssh/sshd_config
+
+# Delete line 5
+sed '5d' file.txt
+
+# Delete lines 10 to 20
+sed '10,20d' file.txt
+
+## PRINT LINES WITH -n AND p
+# ---------------------------
+
+# Print only lines matching ERROR
+sed -n '/ERROR/p' app.log
+
+# Print lines 10 to 20
+sed -n '10,20p' file.txt
+
+# Print everything between two patterns (grep cannot do this)
+sed -n '/START/,/END/p' file.txt
+
+## INSERT, APPEND, AND CHANGE LINES
+# -----------------------------------
+
+# Insert before line 5
+sed '5i # Added by deploy script' file.txt
+
+# Append after matching line
+sed '/^PermitRootLogin/a # Change requires sshd restart' /etc/ssh/sshd_config
+
+# Replace entire matching line
+sed '/^PermitRootLogin.*/c PermitRootLogin no' /etc/ssh/sshd_config
+
+## MULTIPLE EXPRESSIONS
+# ---------------------
+
+# Using -e flag
+sed -e 's/foo/bar/g' -e 's/baz/qux/g' file.txt
+
+# Using semicolons (same result, one pass — faster on large files)
+sed 's/foo/bar/g;s/baz/qux/g' file.txt
+
+## CAPTURE GROUPS
+# ---------------
+
+# Swap two words around a colon
+echo "hello:world" | sed 's/\(.*\):\(.*\)/\2:\1/'
+# Output: world:hello
+
+# Extract IP from a log line
+echo "client connected from 192.168.1.50 port 22" | sed 's/.*from \([0-9.]\+\).*/\1/'
+# Output: 192.168.1.50
+
+# Cleaner with extended regex (-E)
+echo "client connected from 192.168.1.50 port 22" | sed -E 's/.*from ([0-9.]+).*/\1/'
+
+## TRANSLITERATE WITH y
+# ----------------------
+
+# Lowercase to uppercase
+echo "hello" | sed 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'
+
+# Replace tabs with spaces
+sed 'y/\t/ /' file.txt
+
+## WRITE MATCHES TO A FILE
+# -------------------------
+
+# Write ERROR lines to separate file
+sed -n '/ERROR/w errors.log' app.log
+
+# Write only changed lines
+sed -n 's/foo/bar/gw changes.log' file.txt
+
+## LABELS AND BRANCHING (ADVANCED)
+# ----------------------------------
+
+# Add commas to large numbers (recursive)
+echo "1234567890" | sed -E ':loop; s/([0-9])([0-9]{3})(,|$)/\1,\2\3/; t loop'
+# Output: 1,234,567,890
+
+# Join lines ending with backslash
+sed ':a; /\\$/ { N; s/\\\n//; ta }' file.txt
+
+
+## REAL-WORLD EXAMPLES
+# ---------------------
+
+# Comment out a config directive
+sed -i 's/^PasswordAuthentication yes/# PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Uncomment a line
+sed -i 's/^# \(PermitRootLogin\)/\1/' /etc/ssh/sshd_config
+
+# Strip trailing whitespace from every line
+sed -i 's/[[:space:]]*$//' file.txt
+
+# Add a line to the end of a file
+sed -i '$a net.ipv4.ip_forward=1' /etc/sysctl.conf
+
+# Remove ANSI color codes from log output
+sed 's/\x1b\[[0-9;]*m//g' colored.log
+
+# Replace value in key=value config (preserves whitespace)
+sed -i 's/^\(max_connections\s*=\s*\).*/\1500/' /etc/mysql/my.cnf
+
+# Extract log lines between two timestamps
+sed -n '/2025-11-18 14:00/,/2025-11-18 15:00/p' /var/log/app.log
+
+# Bulk rename file extensions
+for f in *.txt; do mv "$f" "$(echo "$f" | sed 's/\.txt$/.md/')"; done
+
+
+## FULL DEPLOYMENT SCRIPT EXAMPLE
+# ---------------------------------
+
+# Four operations, one pass, no temp files
+sed -e '/^#/d' \
+    -e '/^$/d' \
+    -e "s/^hostname=.*/hostname=$(hostname)/" \
+    -e 's/^# \(log_level=info\)/\1/' \
+    app.conf.template > app.conf
+
+
+## OPTIONS REFERENCE
+# ------------------
+# -n          Suppress automatic line printing
+# -i          Edit file in-place
+# -i.bak      Edit in-place with backup
+# -e          Add an expression
+# -f          Read commands from script file
+# -E / -r     Extended regular expressions
+# --debug     Annotate execution (GNU sed 4.6+)
+
+
+## PORTABILITY: LINUX vs macOS
+# -----------------------------
+
+# macOS / BSD sed (suffix required even if empty)
+sed -i '' 's/foo/bar/g' file.txt
+
+# GNU sed / Linux (suffix optional)
+sed -i 's/foo/bar/g' file.txt
