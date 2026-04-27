@@ -1,3 +1,4 @@
+============================================
 # sed Command in Linux — Complete Reference
 # ==========================================
 ## BASIC SYNTAX
@@ -201,3 +202,202 @@ sed -i '' 's/foo/bar/g' file.txt
 
 # GNU sed / Linux (suffix optional)
 sed -i 's/foo/bar/g' file.txt
+
+
+
+=================================================
+# sed Command in Linux — DigitalOcean Reference
+# ===============================================
+# Source: digitalocean.com/community/tutorials/linux-sed-command
+
+
+## BASIC SYNTAX
+# -------------
+sed [options] 'script' file
+
+
+## COMMONLY USED OPTIONS
+# ----------------------
+# -i        In-place editing (overwrites file)
+# -n        Suppress automatic printing
+# -e        Execute multiple commands
+# -f        Read commands from a file
+# -r        Use extended regular expressions
+# -E        Use extended regular expressions (same as -r)
+# -z        Separate lines with NUL character
+# -b        Binary mode (do not strip CR characters)
+
+
+## COMMON USE CASES
+# -----------------
+
+# Setup sample file for testing
+cat > file1.txt
+# (paste your text, then Ctrl+D)
+
+
+# --- SEARCH AND REPLACE ---
+
+# Replace first occurrence per each line
+sed 's/Linux/Unix/' file1.txt
+
+# Replace ALL occurrences per each line (global)
+sed 's/Linux/Unix/g' file1.txt
+
+# In-place editing (overwrites file directly)
+sed -i 's/Linux/Unix/' file1.txt
+
+# In-place with backup (.bak file created)
+sed -i.bak 's/Unix/Linux/g' file1.txt
+
+
+# --- DELETE LINES ---
+
+# Delete line 2
+sed '2d' file1.txt
+
+# Delete lines matching a pattern
+sed '/kernel/d' file1.txt
+
+# Delete empty lines
+sed '/^$/d' file1.txt
+
+
+# --- PRINT LINES ---
+
+# Print lines 1 through 2
+sed -n '1,2p' file1.txt
+
+# Print lines matching a pattern
+sed -n '/Ubuntu/p' file1.txt
+
+
+# --- REPLACE TABS WITH SPACES ---
+
+# Replace each tab with four spaces
+sed 's/\t/    /g' file1.txt
+
+
+## ADVANCED USE CASES
+# --------------------
+
+# Insert text BEFORE line 2
+sed -i '2i\This is inserted text.' file1.txt
+
+# Append text AFTER line 3
+sed -i '3a\This is appended text.' file1.txt
+
+# Replace only the 2nd occurrence of a pattern per line
+sed 's/Linux/Unix/2' file1.txt
+
+# Replace pattern at the START of a line
+sed 's/^Linux/Unix/' file1.txt
+
+# Replace pattern at the END of a line
+sed 's/distros.$/distributions/' file1.txt
+
+# Case-insensitive replacement
+sed 's/linux/Unix/I' file1.txt
+
+# Extract lines between two patterns (inclusive)
+sed -n '/inserted/,/appended/p' file1.txt
+
+# Process multiple files at once
+sed -i 's/Linux/Unix/' file1.txt file2.txt
+
+# Add line numbers to non-empty lines
+sed '/./=' file1.txt | sed 'N;s/\n/ /'
+
+# Replace on a specific line number only
+sed '3 s/distros/distributions/' file1.txt
+
+# Replace on a range of line numbers
+sed '1,3 s/Linux/Unix/' file1.txt
+
+
+## PERFORMANCE TIPS FOR LARGE FILES
+# -----------------------------------
+
+# Use -n to minimize unnecessary output
+sed -n '/pattern/p' largefile.txt
+
+# Combine multiple commands in one pass (faster than chaining)
+sed -e 's/foo/bar/' -e '/pattern/d' largefile.txt
+
+# Stream with pipes to avoid temp files
+cat largefile.txt | sed 's/foo/bar/' > output.txt
+
+# Avoid in-place on large files — write to temp then replace
+sed 's/old/new/' largefile.txt > temp.txt && mv temp.txt largefile.txt
+
+# Use awk for very large structured data
+awk '{gsub(/old/, "new"); print}' largefile.txt > output.txt
+
+
+## SHELL SCRIPT INTEGRATION
+# --------------------------
+
+#!/bin/bash
+# Replace all occurrences of "foo" with "bar" and save result
+sed 's/foo/bar/g' input.txt > output.txt
+
+
+## sed vs ALTERNATIVES
+# ---------------------
+
+# Use sed for:
+#   - Quick substitutions and deletions
+#   - Line-based transformations
+#   - Minimal scripting overhead
+
+# Use awk for:
+#   - Structured data (CSV, TSV)
+#   - Arithmetic calculations
+#   - Formatted reports
+awk -F, '{print $1, $3}' data.csv
+
+# Use perl for:
+#   - Advanced regular expressions
+#   - Logic and conditions in text processing
+perl -pe 's/(error)/WARNING: $1/' logfile.txt
+
+
+## grep vs sed COMPARISON
+# ------------------------
+# grep  — search/filter only, no in-place editing, no multiline
+# sed   — search, replace, insert, delete, in-place, multiline
+
+# grep example
+grep 'error' log.txt
+
+# sed equivalent with replacement
+sed 's/error/warning/g' log.txt
+
+
+## FAQ QUICK REFERENCE
+# ---------------------
+
+# What does sed stand for?
+#   Stream Editor — processes text line by line
+
+# Test before editing in-place:
+sed 's/old/new/' file.txt          # preview first
+sed -i 's/old/new/' file.txt       # then apply
+
+# Chain multiple commands
+sed -e 's/foo/bar/' -e '/pattern/d' file.txt
+sed 's/foo/bar/; /pattern/d' file.txt
+
+# Remove empty lines
+sed '/^$/d' file.txt
+
+# Replace nth occurrence (e.g. 2nd)
+sed 's/foo/bar/2' file.txt
+
+# Replace globally
+sed 's/foo/bar/g' file.txt
+
+# In-place with backup
+sed -i.bak 's/foo/bar/g' file.txt
+
+
